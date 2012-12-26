@@ -16,4 +16,22 @@ describe("Suit", function() {
       expect(Suit.hearts.oppositeSuit()).toEqual(Suit.diamonds);
     });
   });
+
+  describe("toString", function() {
+    it("should return the suit name for clubs", function() {
+      expect(Suit.clubs.toString()).toEqual("Clubs");
+    });
+
+    it("should return the suit name for spades", function() {
+      expect(Suit.spades.toString()).toEqual("Spades");
+    });
+
+    it("should return the suit name for diamonds", function() {
+      expect(Suit.diamonds.toString()).toEqual("Diamonds");
+    });
+
+    it("should return the suit name for hearts", function() {
+      expect(Suit.hearts.toString()).toEqual("Hearts");
+    });
+  });
 });

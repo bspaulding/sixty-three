@@ -26,5 +26,9 @@ var Suit = (function() {
     return Suit.oppositeSuitMap[this.name.toLowerCase()];
   }
 
+  Suit.prototype.toString = function() {
+    return this.name;
+  }
+
   return Suit;
 }());
