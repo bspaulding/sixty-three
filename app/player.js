@@ -18,5 +18,13 @@ var Player = (function() {
     }
   }
 
+  Player.prototype.setScore = function(newScore) {
+    this.score = newScore;
+  }
+
+  Player.prototype.addCard = function(card) {
+    this.cards.push(card);
+  }
+
   return Player;
 }());

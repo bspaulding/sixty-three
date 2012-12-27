@@ -20,7 +20,7 @@ var Deck = (function() {
     }
 
     return cards;
-  };
+  }
 
   Deck.prototype.shuffle = function() {
     var pickedIndices = [];
@@ -34,15 +34,23 @@ var Deck = (function() {
       this.cards[i] = this.cards[newIndex];
       this.cards[newIndex] = value;
     }
-  };
+  }
+
+  Deck.prototype.pop = function() {
+    return this.cards.pop();
+  }
+
+  Deck.prototype.length = function() {
+    return this.cards.length;
+  }
 
   Deck.prototype.suits = function() {
     return Suit.suits;
-  };
+  }
 
   Deck.prototype.values = function() {
     return [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace'];
-  };
+  }
 
   return Deck;
 }());

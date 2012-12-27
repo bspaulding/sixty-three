@@ -1,11 +1,12 @@
-var HumanPlayer = (function() {
+var HumanPlayer = (function(_super) {
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  __extends(HumanPlayer, _super);
+
   function HumanPlayer() {
-    return arguments.callee.parent.apply(arguments);
+    return HumanPlayer.__super__.constructor.apply(this, arguments);
   }
 
-  HumanPlayer.prototype = Player;
-  HumanPlayer.constructor = HumanPlayer;
-  HumanPlayer.parent = Player;
-
   return HumanPlayer;
-}());
+}(Player));

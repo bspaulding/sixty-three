@@ -8,5 +8,13 @@ var Card = (function() {
     return this.value + ' of ' + this.suit;
   }
 
+  Card.prototype.equals = function(object) {
+    return object instanceof Card && object.value === this.value && object.suit === this.suit;
+  }
+
+  Card.prototype.valueOf = function() {
+    return this.toString();
+  }
+
   return Card;
 }());
