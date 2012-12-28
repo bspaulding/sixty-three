@@ -6,13 +6,13 @@ var Round = (function() {
 
   Round.prototype.play = function() {}
 
-  Round.prototype.deal = function() {
+  Round.prototype.bidForTrump = function() {
+    this.trumpSuit = Suit.spades;
     for ( var i = 0; i < this.players().length; i += 1 ) {
-      var player = this.players()[i];
-      for ( var j = 0; j < 5; j += 1 ) {
-        player.addCard(this.deck().pop());
-      }
+      this.players()[i].bid();
     }
+    this.controllingPlayer = this.players()[0];
+  }
 
     for ( var i = 0; i < 3; i += 1 ) {
       this.kiddy.push(this.deck().pop());
