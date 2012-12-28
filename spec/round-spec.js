@@ -51,12 +51,12 @@ describe("Round", function() {
   });
 
   describe("deal", function() {
-    it("should deal 5 cards to each player", function() {
+    it("should deal 9 cards to each player", function() {
       round.deal();
 
       for ( var i = 0; i < round.players().length; i += 1 ) {
         var player = round.players()[i];
-        expect(player.cards.length).toEqual(5);
+        expect(player.cards.length).toEqual(9);
       }
     });
 
@@ -66,7 +66,33 @@ describe("Round", function() {
       expect(round.kiddy.length).toEqual(3);
     });
 
-    xit("should deal 3 to players, then 3 to kiddy, then 2 to players", function() {
+    it("should deal 3 sets of 3 to players, then 3 to kiddy", function() {
+      var numCards = round.deck().cards.length;
+      var playersCards = [[], [], [], []];
+
+      for ( var i = 0; i < 3; i += 1 ) {
+        for ( var j = 0; j < round.players().length; j += 1 ) {
+          for ( var k = 0; k < 3; k += 1 ) {
+            numCards -= 1;
+            var card = round.deck().cards[numCards];
+            playersCards[j].push(card);
+          }
+        }
+      }
+
+      var kiddyCards = [];
+      for ( var i = 0; i < 3; i += 1 ) {
+        numCards -= 1;
+        kiddyCards.push(round.deck().cards[numCards]);
+      }
+
+      round.deal();
+
+      for ( var i = 0; i < playersCards.length; i += 1 ) {
+        expect(round.players()[i].cards).toEqual(playersCards[i]);
+      }
+
+      expect(round.kiddy).toEqual(kiddyCards);
     });
   });
 });

@@ -14,6 +14,16 @@ var Round = (function() {
     this.controllingPlayer = this.players()[0];
   }
 
+  Round.prototype.deal = function() {
+    for ( var k = 0; k < 3; k += 1 ) {
+      for ( var i = 0; i < this.players().length; i += 1 ) {
+        var player = this.players()[i];
+        for ( var j = 0; j < 3; j += 1 ) {
+          player.addCard(this.deck().pop());
+        }
+      }
+    }
+
     for ( var i = 0; i < 3; i += 1 ) {
       this.kiddy.push(this.deck().pop());
     }
