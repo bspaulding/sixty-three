@@ -1,0 +1,12 @@
+{
+  "name": "sixty-three",
+  "version": "1.0.0",
+  "author": "Bradley Spaulding <bradley.spaulding@motingo.com>",
+  "description": "Sixty Three is a card game.",
+  "devDependencies": {
+    "karma": "~0.8"
+  },
+  "scripts": {
+     "test": "./node_modules/.bin/karma start --single-run --browsers Firefox"
+  }
+}
