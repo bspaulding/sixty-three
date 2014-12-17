@@ -8,10 +8,17 @@ var Round = (function() {
 
   Round.prototype.bidForTrump = function() {
     this.trumpSuit = Suit.spades;
+    var highBidder;
+    var bid = 0;
     for ( var i = 0; i < this.players().length; i += 1 ) {
-      this.players()[i].bid();
+      var player = this.players()[i];
+      var playerBid = player.bid();
+      if (playerBid > bid) {
+        highBidder = player;
+        bid = playerBid;
+      }
     }
-    this.controllingPlayer = this.players()[0];
+    this.controllingPlayer = highBidder;
   }
 
   Round.prototype.deal = function() {
