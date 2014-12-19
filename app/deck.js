@@ -12,12 +12,13 @@ var Deck = (function() {
     var cards = [];
 
     var suits = this.suits();
-    var values = this.values();
+    var values = _.reject(this.values(), function(value) { return value === "Joker"; });
     for ( var i in suits ) {
       for ( var j in values ) {
         cards.push(new Card(values[j], suits[i]));
       }
     }
+    cards.push(new Card("Joker"));
 
     return cards;
   }
@@ -49,7 +50,7 @@ var Deck = (function() {
   }
 
   Deck.prototype.values = function() {
-    return [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace'];
+    return ['Joker', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace'];
   }
 
   return Deck;
