@@ -7,13 +7,20 @@ describe("Round", function() {
     round = new Round(game);
   });
 
-  describe("bidForTrump", function() {
-    it("should set trump to a Suit", function() {
-      round.bidForTrump();
+  describe("setTrump", function() {
+    it("should set trump to the controllingPlayer's #declareTrump", function() {
+      round.controllingPlayer = round.players()[0];
+      round.controllingPlayer.declareTrump = function() {
+        return Suit.spades;
+      };
+      round.setTrump();
 
       expect(round.trumpSuit).toBeInstanceOf(Suit);
+      expect(round.trumpSuit).toEqual(round.controllingPlayer.declareTrump());
     });
+  });
 
+  describe("bidForTrump", function() {
     it("should ask each player for their bid", function() {
       for ( var i = 0; i < round.players().length; i += 1 ) {
         spyOn(round.players()[i], 'bid').andCallThrough();

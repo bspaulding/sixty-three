@@ -9,7 +9,11 @@ var RandomPlayer = (function(_super) {
   }
 
   RandomPlayer.prototype.bid = function() {
-    return parseInt(Math.random() * (63-15)) + 15;
+    return parseInt(Math.random() * (63-15), 10) + 15;
+  }
+
+  RandomPlayer.prototype.declareTrump = function() {
+    return Suit.suits[parseInt(Math.random() * 4, 10)];
   }
 
   return RandomPlayer;

@@ -7,7 +7,6 @@ var Round = (function() {
   Round.prototype.play = function() {}
 
   Round.prototype.bidForTrump = function() {
-    this.trumpSuit = Suit.spades;
     var highBidder;
     var bid = 0;
     for ( var i = 0; i < this.players().length; i += 1 ) {
@@ -19,6 +18,10 @@ var Round = (function() {
       }
     }
     this.controllingPlayer = highBidder;
+  }
+
+  Round.prototype.setTrump = function() {
+    this.trumpSuit = Suit.spades;
   }
 
   Round.prototype.deal = function() {

@@ -10,7 +10,7 @@ var Player = (function() {
     this.cards = [];
   }
 
-  var methodNames = ['bid'];
+  var methodNames = ['bid', 'declareTrump'];
   for ( var i = 0; i < methodNames.length; i += 1 ) {
     var methodName = methodNames[i];
     Player.prototype[methodName] = function() {
