@@ -1,10 +1,34 @@
 describe("Round", function() {
   var round;
 
+  var spyOnPlayers = function(method) {
+    for ( var i = 0; i < round.players().length; i += 1 ) {
+      spyOn(round.players()[i], method).andCallThrough();
+    }
+  };
+
+  var expectPlayerSpies = function(method, expectation) {
+    for ( var i = 0; i < round.players().length; i += 1 ) {
+      expect(round.players()[i][method])[expectation]();
+    }
+  };
+
   beforeEach(function() {
     var game = new SixtyThree();
     game.setupPlayers();
     round = new Round(game);
+  });
+
+  describe("play", function() {
+    it("bids, plays all hands, totals score", function() {
+      spyOnPlayers('bid');
+      spyOnPlayers('playCard');
+
+      round.play();
+
+      expectPlayerSpies('bid', 'toHaveBeenCalled');
+      expectPlayerSpies('playCard', 'toHaveBeenCalled');
+    });
   });
 
   describe("setTrump", function() {
@@ -22,15 +46,9 @@ describe("Round", function() {
 
   describe("bidForTrump", function() {
     it("should ask each player for their bid", function() {
-      for ( var i = 0; i < round.players().length; i += 1 ) {
-        spyOn(round.players()[i], 'bid').andCallThrough();
-      }
-
+      spyOnPlayers('bid');
       round.bidForTrump();
-
-      for ( var i = 0; i < round.players().length; i += 1 ) {
-        expect(round.players()[i].bid).toHaveBeenCalled();
-      }
+      expectPlayerSpies('bid', 'toHaveBeenCalled');
     });
 
     it("should set controllingPlayer to a Player in the round", function() {

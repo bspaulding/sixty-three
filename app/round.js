@@ -4,7 +4,12 @@ var Round = (function() {
     this.kiddy = [];
   }
 
-  Round.prototype.play = function() {}
+  Round.prototype.play = function() {
+    this.bidForTrump();
+    _.each(this.players(), function(player) {
+      player.playCard();
+    });
+  }
 
   Round.prototype.bidForTrump = function() {
     var highBidder;

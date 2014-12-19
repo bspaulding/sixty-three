@@ -16,5 +16,9 @@ var RandomPlayer = (function(_super) {
     return Suit.suits[parseInt(Math.random() * 4, 10)];
   }
 
+  RandomPlayer.prototype.nextCardToPlay = function() {
+    return this.cards[0];
+  }
+
   return RandomPlayer;
 }(Player));
