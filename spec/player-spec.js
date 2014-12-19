@@ -34,4 +34,12 @@ describe("Player", function() {
       expect(player.hasCard(playedCard)).toEqual(false);
     });
   });
+
+  describe("numCards", function() {
+    it("returns the number of cards in the players hand", function() {
+      expect(player.numCards()).toEqual(0);
+      player.addCard(sevenOfHearts);
+      expect(player.numCards()).toEqual(1);
+    });
+  });
 });

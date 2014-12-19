@@ -45,5 +45,9 @@ var Player = (function() {
     return nextCard;
   }
 
+  Player.prototype.numCards = function() {
+    return this.cards.length;
+  }
+
   return Player;
 }());
