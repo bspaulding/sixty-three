@@ -8,9 +8,14 @@ var Player = (function() {
   function Player(name) {
     this.name = name;
     this.cards = [];
+    this._score = 0;
   }
 
-  var methodNames = ['bid', 'declareTrump'];
+  // TODO: Inject these in a strategy object, instead of using inheritance. i.e:
+  //   var randomPlayer = new Player("Name", RandomStrategy);
+  //   var humanPlayer = new Player("Name", UserStrategy);
+  // This will allow us to protect cards and score from potential cheats!
+  var methodNames = ['bid', 'declareTrump', 'nextCardToPlay'];
   for ( var i = 0; i < methodNames.length; i += 1 ) {
     var methodName = methodNames[i];
     Player.prototype[methodName] = function() {
