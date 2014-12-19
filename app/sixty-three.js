@@ -28,10 +28,10 @@ var SixtyThree = (function() {
 
   SixtyThree.prototype.topScore = function() {
     var playersSortedByScoreAsc = _.sortBy(this.players, function(player) {
-      return player.score;
+      return player.score();
     })
 
-    return playersSortedByScoreAsc[playersSortedByScoreAsc.length-1].score;
+    return _.last(playersSortedByScoreAsc).score();
   }
 
   return SixtyThree;

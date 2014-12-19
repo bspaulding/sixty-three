@@ -23,12 +23,26 @@ var Player = (function() {
     }
   }
 
-  Player.prototype.setScore = function(newScore) {
-    this.score = newScore;
+  Player.prototype.score = function(newScore) {
+    if (arguments.length > 0) {
+      this._score = newScore;
+    }
+
+    return this._score;
   }
 
   Player.prototype.addCard = function(card) {
     this.cards.push(card);
+  }
+
+  Player.prototype.hasCard = function(card) {
+    return this.cards.indexOf(card) >= 0;
+  }
+
+  Player.prototype.playCard = function() {
+    var nextCard = this.nextCardToPlay();
+    this.cards = _.reject(this.cards, function(card) { return card.equals(nextCard); });
+    return nextCard;
   }
 
   return Player;

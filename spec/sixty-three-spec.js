@@ -21,7 +21,7 @@ describe("SixtyThree", function() {
     it("should return the highest player's score", function() {
       sixtyThree.setupPlayers();
       for ( var i = 0; i < sixtyThree.players.length; i += 1 ) {
-        sixtyThree.players[i].setScore(10 * i);
+        sixtyThree.players[i].score(10 * i);
       }
 
       expect(sixtyThree.topScore()).toEqual(10 * (sixtyThree.players.length - 1));
