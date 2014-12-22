@@ -1,16 +1,16 @@
 var matchers = {};
 
 matchers.toBeInstanceOf = function(expected) {
-  var actual = this.actual;
-  var notText = this.isNot ? " not" : "";
-
-  this.message = function() {
-    return "Expected " + actual + notText + " to be an instance of " + expected.name;
-  }
-
-  return this.actual instanceof expected;
+  return {
+    compare: function(actual, expected) {
+      return {
+        pass: (actual instanceof expected),
+        message: "Expected " + actual + " to be an instance of " + expected.name
+      };
+    }
+  };
 }
 
 beforeEach(function() {
-  this.addMatchers(matchers);
+  jasmine.addMatchers(matchers);
 });

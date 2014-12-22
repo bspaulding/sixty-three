@@ -3,7 +3,7 @@ describe("Round", function() {
 
   var spyOnPlayers = function(method) {
     for ( var i = 0; i < round.players().length; i += 1 ) {
-      spyOn(round.players()[i], method).andCallThrough();
+      spyOn(round.players()[i], method).and.callThrough();
     }
   };
 
@@ -77,12 +77,12 @@ describe("Round", function() {
       for ( var i = 0; i < round.players().length; i += 1 ) {
         if ( i != 2 ) {
           var player = round.players()[i];
-          spyOn(player, 'bid').andReturn(0);
+          spyOn(player, 'bid').and.returnValue(0);
         }
       }
 
       var winningPlayer = round.players()[2];
-      spyOn(winningPlayer, 'bid').andReturn(63);
+      spyOn(winningPlayer, 'bid').and.returnValue(63);
 
       round.bidForTrump();
 

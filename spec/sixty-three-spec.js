@@ -7,12 +7,12 @@ describe("SixtyThree", function() {
 
   describe("gameIsOver", function() {
     it("should return true when topScore is >= 200", function() {
-      spyOn(sixtyThree, 'topScore').andReturn(200);
+      spyOn(sixtyThree, 'topScore').and.returnValue(200);
       expect(sixtyThree.gameIsOver()).toEqual(true);
     });
 
     it("should return false when topScore is < 200", function() {
-      spyOn(sixtyThree, 'topScore').andReturn(199);
+      spyOn(sixtyThree, 'topScore').and.returnValue(199);
       expect(sixtyThree.gameIsOver()).toEqual(false);
     });
   });
