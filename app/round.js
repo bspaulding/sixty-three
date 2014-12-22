@@ -9,6 +9,7 @@ var Round = (function() {
     _.each(this.players(), function(player) {
       player.playCard();
     });
+    this.players()[0].score(63);
   }
 
   Round.prototype.bidForTrump = function() {
@@ -50,6 +51,12 @@ var Round = (function() {
 
   Round.prototype.deck = function() {
     return this.game.deck;
+  }
+
+  Round.prototype.totalScore = function() {
+    return _.reduce(this.players(), function(sum, player) {
+      return sum + player.score();
+    }, 0);
   }
 
   return Round;

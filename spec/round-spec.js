@@ -21,6 +21,7 @@ describe("Round", function() {
 
   describe("play", function() {
     it("bids, plays all hands, totals score", function() {
+      expect(round.totalScore()).toEqual(0);
       spyOnPlayers('bid');
       spyOnPlayers('playCard');
 
@@ -28,6 +29,20 @@ describe("Round", function() {
 
       expectPlayerSpies('bid', 'toHaveBeenCalled');
       expectPlayerSpies('playCard', 'toHaveBeenCalled');
+      expect(round.totalScore()).toEqual(63);
+    });
+  });
+
+  describe("totalScore", function() {
+    it("equals the sum of players' scores", function() {
+      expect(round.totalScore()).toEqual(0);
+
+      round.players()[0].score(10);
+      round.players()[1].score(11);
+      round.players()[2].score(12);
+      round.players()[3].score(13);
+
+      expect(round.totalScore()).toEqual(46);
     });
   });
 
