@@ -20,5 +20,9 @@ var RandomPlayer = (function(_super) {
     return this.cards[0];
   }
 
+  RandomPlayer.prototype.cardsToDiscard = function() {
+    return this.cards.slice(6);
+  }
+
   return RandomPlayer;
 }(Player));
