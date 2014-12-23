@@ -1,16 +1,22 @@
 describe("Round", function() {
   var round;
 
-  var spyOnPlayers = function(method) {
+  var eachPlayer = function(f) {
     for ( var i = 0; i < round.players().length; i += 1 ) {
-      spyOn(round.players()[i], method).and.callThrough();
+      f(round.players()[i]);
     }
   };
 
+  var spyOnPlayers = function(method) {
+    eachPlayer(function(player) {
+      spyOn(player, method).and.callThrough();
+    });
+  };
+
   var expectPlayerSpies = function(method, expectation) {
-    for ( var i = 0; i < round.players().length; i += 1 ) {
-      expect(round.players()[i][method])[expectation]();
-    }
+    eachPlayer(function(player) {
+      expect(player[method])[expectation]();
+    });
   };
 
   beforeEach(function() {
@@ -20,16 +26,37 @@ describe("Round", function() {
   });
 
   describe("play", function() {
-    it("bids, plays all hands, totals score", function() {
+    it("deals, bids, deals, plays all hands, totals score", function() {
+      spyOn(round, 'deal').and.callThrough();
+      spyOn(round, 'redeal').and.callThrough();
       expect(round.totalScore()).toEqual(0);
       spyOnPlayers('bid');
       spyOnPlayers('playCard');
 
       round.play();
 
+      expect(round.deal).toHaveBeenCalled();
       expectPlayerSpies('bid', 'toHaveBeenCalled');
+      expect(round.redeal).toHaveBeenCalled();
       expectPlayerSpies('playCard', 'toHaveBeenCalled');
+      eachPlayer(function(player) {
+        expect(player['playCard'].calls.count()).toEqual(6);
+        expect(player.numCards()).toEqual(0);
+      });
+      round.players()
       expect(round.totalScore()).toEqual(63);
+    });
+  });
+
+  describe("redeal", function() {
+    it("should call discard, re-deal to 6 cards each", function() {
+      spyOnPlayers('discard');
+      round.setTrump();
+      round.redeal();
+      expectPlayerSpies('discard', 'toHaveBeenCalled');
+      _.each(round.players(), function(player) {
+        expect(player.numCards()).toEqual(6);
+      });
     });
   });
 

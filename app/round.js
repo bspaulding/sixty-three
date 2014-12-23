@@ -5,10 +5,14 @@ var Round = (function() {
   }
 
   Round.prototype.play = function() {
+    this.deal();
     this.bidForTrump();
-    _.each(this.players(), function(player) {
-      player.playCard();
-    });
+    this.redeal();
+    for (var i = 0; i < 6; i += 1) {
+      _.each(this.players(), function(player) {
+        player.playCard();
+      });
+    }
     this.players()[0].score(63);
   }
 
@@ -45,12 +49,26 @@ var Round = (function() {
     }
   }
 
+  Round.prototype.redeal = function() {
+    var self = this;
+    _.each(this.players(), function(player) {
+      player.discard();
+      while (player.numCards() < 6) {
+        player.addCard(self.draw());
+      }
+    });
+  }
+
   Round.prototype.players = function() {
     return this.game.players;
   }
 
   Round.prototype.deck = function() {
     return this.game.deck;
+  }
+
+  Round.prototype.draw = function() {
+    return this.deck().draw();
   }
 
   Round.prototype.totalScore = function() {
