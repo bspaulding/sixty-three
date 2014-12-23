@@ -6,6 +6,7 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
     plugins: [
       'karma-jasmine',
+      'karma-coverage',
       'karma-chrome-launcher',
       'karma-firefox-launcher',
       'karma-phantomjs-launcher',
@@ -27,7 +28,7 @@ module.exports = function(config) {
 
     // test results reporter to use
     // possible values: 'dots', 'progress', 'junit'
-    reporters: ['progress', 'osx'],
+    reporters: ['progress', 'osx', 'coverage'],
 
     // web server port
     port: 9876,
@@ -61,5 +62,13 @@ module.exports = function(config) {
     // Continuous Integration mode
     // if true, it capture browsers, run tests and exit
     singleRun: false,
+
+    preprocessors: {
+      'app/**/*.js': ['coverage']
+    },
+
+    coverageReporter: {
+      type: 'text-summary'
+    }
   });
 };
