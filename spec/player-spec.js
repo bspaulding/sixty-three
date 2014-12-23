@@ -42,4 +42,43 @@ describe("Player", function() {
       expect(player.numCards()).toEqual(1);
     });
   });
+
+  describe("discard", function() {
+    it("calls cardsToDiscard, removes discarded cards", function() {
+      player.addCard(sevenOfHearts);
+      expect(player.hasCard(sevenOfHearts)).toEqual(true);
+      spyOn(player, 'cardsToDiscard').and.callFake(function() {
+        return [sevenOfHearts];
+      });
+
+      player.discard();
+
+      expect(player.cardsToDiscard).toHaveBeenCalled();
+      expect(player.hasCard(sevenOfHearts)).toEqual(false);
+    });
+
+    it("throws InsufficientDiscard if too many cards remain", function() {
+      player.addCard(new Card(7, Suit.hearts));
+      player.addCard(new Card(8, Suit.hearts));
+      player.addCard(new Card(9, Suit.hearts));
+      player.addCard(new Card(6, Suit.hearts));
+      player.addCard(new Card(5, Suit.hearts));
+      player.addCard(new Card(4, Suit.hearts));
+      player.addCard(new Card(3, Suit.hearts));
+      player.addCard(new Card(2, Suit.hearts));
+      player.addCard(new Card(10, Suit.hearts));
+      expect(player.numCards()).toEqual(9);
+
+      spyOn(player, 'cardsToDiscard').and.callFake(function() {
+        return [
+          (new Card(2, Suit.hearts)),
+          (new Card(10, Suit.hearts)),
+        ];
+      });
+
+      expect(function() {
+        player.discard();
+      }).toThrowError(InsufficientDiscard);
+    });
+  });
 });
