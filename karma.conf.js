@@ -8,7 +8,8 @@ module.exports = function(config) {
       'karma-jasmine',
       'karma-chrome-launcher',
       'karma-firefox-launcher',
-      'karma-osx-reporter'
+      'karma-phantomjs-launcher',
+      'karma-osx-reporter',
     ],
 
     // list of files / patterns to load in the browser
@@ -52,7 +53,7 @@ module.exports = function(config) {
     // - Safari (only Mac)
     // - PhantomJS
     // - IE (only Windows)
-    browsers: ['Chrome'],
+    browsers: ['Chrome','Firefox','PhantomJS'],
 
     // If browser does not capture in given timeout [ms], kill it
     captureTimeout: 60000,
