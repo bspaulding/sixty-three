@@ -41,6 +41,8 @@ var Deck = (function() {
     return this.cards.pop();
   }
 
+  Deck.prototype.draw = Deck.prototype.pop;
+
   Deck.prototype.length = function() {
     return this.cards.length;
   }
