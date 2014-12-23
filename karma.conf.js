@@ -7,7 +7,8 @@ module.exports = function(config) {
     plugins: [
       'karma-jasmine',
       'karma-chrome-launcher',
-      'karma-firefox-launcher'
+      'karma-firefox-launcher',
+      'karma-osx-reporter'
     ],
 
     // list of files / patterns to load in the browser
@@ -25,7 +26,7 @@ module.exports = function(config) {
 
     // test results reporter to use
     // possible values: 'dots', 'progress', 'junit'
-    reporters: ['progress'],
+    reporters: ['progress', 'osx'],
 
     // web server port
     port: 9876,
