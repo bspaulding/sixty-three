@@ -78,7 +78,7 @@ describe("Player", function() {
 
       expect(function() {
         player.discard();
-      }).toThrowError(InsufficientDiscard);
+      }).toThrowError(Player.InsufficientDiscard);
     });
   });
 });

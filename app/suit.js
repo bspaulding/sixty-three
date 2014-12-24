@@ -1,4 +1,6 @@
-var Suit = (function() {
+var Suit = (function () {
+  "use strict";
+
   function Suit(name) {
     this.name = name;
   }
@@ -20,15 +22,19 @@ var Suit = (function() {
     "clubs": Suit.spades,
     "diamonds": Suit.hearts,
     "hearts": Suit.diamonds
-  }
+  };
 
-  Suit.prototype.oppositeSuit = function() {
+  Suit.prototype.oppositeSuit = function () {
     return Suit.oppositeSuitMap[this.name.toLowerCase()];
-  }
+  };
 
-  Suit.prototype.toString = function() {
+  Suit.prototype.toString = function () {
     return this.name;
-  }
+  };
+
+  Suit.prototype.equals = function (object) {
+    return object instanceof Suit && object.name === this.name;
+  };
 
   return Suit;
 }());
