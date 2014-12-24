@@ -1,22 +1,6 @@
-/*global Suit: false, Player: false */
+/*global __extends: false, Suit: false, Player: false */
 var RandomPlayer = (function (_super) {
   "use strict";
-
-  var __extends = function (child, parent) {
-      var key;
-      for (key in parent) {
-        if (parent.hasOwnProperty(key)) {
-          child[key] = parent[key];
-        }
-      }
-      function Ctor() {
-        this.constructor = child;
-      }
-      Ctor.prototype = parent.prototype;
-      child.prototype = new Ctor();
-      child.__super__ = parent.prototype;
-      return child;
-    };
 
   __extends(RandomPlayer, _super);
 
