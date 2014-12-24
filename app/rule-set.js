@@ -1,14 +1,18 @@
-function TrumpUndefinedError(message) {
-  this.name = arguments.callee.name
-  this.message = message;
-};
-TrumpUndefinedError.prototype = Error.prototype;
+/*global _: false */
+var RuleSet = (function () {
+  "use strict";
 
-var RuleSet = (function() {
+  function TrumpUndefinedError(message) {
+    this.name = 'TrumpUndefinedError';
+    this.message = message;
+  }
+  TrumpUndefinedError.prototype = Error.prototype;
+
   function RuleSet() {
+    return this;
   }
 
-  RuleSet.prototype.winningCardForCards = function(cards) {
+  RuleSet.prototype.winningCardForCards = function (cards) {
     this.ensureTrumpIsDefined();
 
     //if ( this.numTrumpInCards(cards) === 0 ) {
@@ -16,66 +20,66 @@ var RuleSet = (function() {
     //}
 
     return this.orderByValue(this.selectTrump(cards))[0];
-  }
+  };
 
-  RuleSet.prototype.orderByValue = function(cards) {
+  RuleSet.prototype.orderByValue = function (cards) {
     var self = this;
-    return _.sortBy(cards, function(card) {
+    return _.sortBy(cards, function (card) {
       return self.rankValueForCard(card);
     });
-  }
+  };
 
-  RuleSet.prototype.rankValueForCard = function(card) {
+  RuleSet.prototype.rankValueForCard = function (card) {
     var normalizedCardValue = String(card.value).toLowerCase();
-    if ( card.value === 5 && card.suit === this.trumpSuit.oppositeSuit() ) {
+    if (card.value === 5 && card.suit === this.trumpSuit.oppositeSuit()) {
       normalizedCardValue = "opposite 5";
     }
 
     return this.orderedCardValues.indexOf(normalizedCardValue);
-  }
+  };
 
   RuleSet.prototype.orderedCardValues = ["joker", "2", "3", "4", "opposite 5", "5", "6", "7", "8", "9", "10", "jack", "queen", "king", "ace"];
 
-  RuleSet.prototype.numTrumpInCards = function(cards) {
+  RuleSet.prototype.numTrumpInCards = function (cards) {
     return this.selectBySuit(cards, this.trumpSuit).length;
-  }
+  };
 
-  RuleSet.prototype.selectTrump = function(cards) {
+  RuleSet.prototype.selectTrump = function (cards) {
     return this.selectBySuit(cards, this.trumpSuit);
-  }
+  };
 
-  RuleSet.prototype.selectBySuit = function(cards, suit) {
-    return _.select(cards, function(card) {
-      return card.suit == suit;
+  RuleSet.prototype.selectBySuit = function (cards, suit) {
+    return _.select(cards, function (card) {
+      return card.suit === suit;
     });
-  }
+  };
 
-  RuleSet.prototype.pointsForCard = function(card) {
+  RuleSet.prototype.pointsForCard = function (card) {
     this.ensureTrumpIsDefined();
 
-    if ( this.cardIsOppositeFive(card) ) {
+    if (this.cardIsOppositeFive(card)) {
       return 5;
     }
 
-    if ( !this.cardIsTrump(card) ) {
+    if (!this.cardIsTrump(card)) {
       return 0;
     }
 
     var points = this.valuePointMap[String(card.value).toLowerCase()];
-    if ( 'undefined' === typeof points ) {
+    if (undefined === points) {
       return 0;
     }
 
     return points;
-  }
+  };
 
-  RuleSet.prototype.cardIsOppositeFive = function(card) {
+  RuleSet.prototype.cardIsOppositeFive = function (card) {
     return card.suit === this.oppositeSuit() && card.value === 5;
-  }
+  };
 
-  RuleSet.prototype.oppositeSuit = function() {
+  RuleSet.prototype.oppositeSuit = function () {
     return this.trumpSuit.oppositeSuit();
-  }
+  };
 
   RuleSet.prototype.valuePointMap = {
     "ace":   1,
@@ -86,27 +90,29 @@ var RuleSet = (function() {
     "5":     5,
     "2":     1,
     "joker": 15
-  }
+  };
 
-  RuleSet.prototype.cardIsTrump = function(card) {
+  RuleSet.prototype.cardIsTrump = function (card) {
     this.ensureTrumpIsDefined();
 
     return this.trumpSuit === card.suit || String(card.value).toLowerCase() === "joker";
-  }
+  };
 
-  RuleSet.prototype.setTrump = function(trumpSuit) {
+  RuleSet.prototype.setTrump = function (trumpSuit) {
     this.trumpSuit = trumpSuit;
-  }
+  };
 
-  RuleSet.prototype.resetTrump = function() {
+  RuleSet.prototype.resetTrump = function () {
     delete this.trumpSuit;
-  }
+  };
 
-  RuleSet.prototype.ensureTrumpIsDefined = function() {
-    if ( 'undefined' === typeof this.trumpSuit ) {
+  RuleSet.prototype.ensureTrumpIsDefined = function () {
+    if (undefined === this.trumpSuit) {
       throw new TrumpUndefinedError();
     }
-  }
+  };
+
+  RuleSet.TrumpUndefinedError = TrumpUndefinedError;
 
   return RuleSet;
 }());

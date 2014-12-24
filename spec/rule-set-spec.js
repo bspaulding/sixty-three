@@ -178,7 +178,7 @@ describe("RuleSet", function() {
       var card = new Card("Joker");
       expect(function() {
         ruleSet.cardIsTrump(card)
-      }).toThrow(new TrumpUndefinedError());
+      }).toThrow(new RuleSet.TrumpUndefinedError());
     });
   });
 });

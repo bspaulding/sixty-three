@@ -32,5 +32,9 @@ var Suit = (function () {
     return this.name;
   };
 
+  Suit.prototype.equals = function (object) {
+    return object instanceof Suit && object.name === this.name;
+  };
+
   return Suit;
 }());
