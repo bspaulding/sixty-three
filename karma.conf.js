@@ -68,7 +68,10 @@ module.exports = function(config) {
     },
 
     coverageReporter: {
-      type: 'text-summary'
+      reporters: [
+        { type: 'text-summary' },
+        { type: 'lcovonly', subdir: '.', file: 'lcov.info' },
+      ]
     }
   });
 };

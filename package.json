@@ -4,6 +4,7 @@
   "author": "Bradley Spaulding <bradley.spaulding@motingo.com>",
   "description": "Sixty Three is a card game.",
   "devDependencies": {
+    "codeclimate-test-reporter": "0.0.4",
     "jasmine-core": "^2.1.3",
     "jslint": "^0.7.1",
     "karma": "~0.12",
@@ -17,6 +18,7 @@
   },
   "scripts": {
     "pretest": "./node_modules/.bin/jslint app/**/*.js",
-    "test": "./node_modules/.bin/karma start --single-run --browsers Firefox,PhantomJS"
+    "test": "./node_modules/.bin/karma start --single-run --browsers Firefox,PhantomJS",
+    "posttest": "CODECLIMATE_REPO_TOKEN=682c1f21008687a6e42652ab387db30fe4e944434b8e1e05abe273703258f35e ./node_modules/.bin/codeclimate < ./coverage/lcov.info"
   }
 }
