@@ -2,7 +2,7 @@ describe("Round", function() {
   var round;
 
   var eachPlayer = function(f) {
-    for ( var i = 0; i < round.players().length; i += 1 ) {
+    for (var i = 0; i < round.players().length; i += 1) {
       f(round.players()[i]);
     }
   };
@@ -40,10 +40,10 @@ describe("Round", function() {
       expect(round.redeal).toHaveBeenCalled();
       expectPlayerSpies('playCard', 'toHaveBeenCalled');
       eachPlayer(function(player) {
-        expect(player['playCard'].calls.count()).toEqual(6);
+        expect(player.playCard.calls.count()).toEqual(6);
         expect(player.numCards()).toEqual(0);
       });
-      round.players()
+      round.players();
       expect(round.totalScore()).toEqual(63);
     });
   });
@@ -101,8 +101,8 @@ describe("Round", function() {
     });
 
     it("should set controllingPlayer to the Player who bids the highest", function() {
-      for ( var i = 0; i < round.players().length; i += 1 ) {
-        if ( i != 2 ) {
+      for (var i = 0; i < round.players().length; i += 1) {
+        if (i != 2) {
           var player = round.players()[i];
           spyOn(player, 'bid').and.returnValue(0);
         }
@@ -121,7 +121,7 @@ describe("Round", function() {
     it("should deal 9 cards to each player", function() {
       round.deal();
 
-      for ( var i = 0; i < round.players().length; i += 1 ) {
+      for (var i = 0; i < round.players().length; i += 1) {
         var player = round.players()[i];
         expect(player.cards.length).toEqual(9);
       }
@@ -137,9 +137,9 @@ describe("Round", function() {
       var numCards = round.deck().cards.length;
       var playersCards = [[], [], [], []];
 
-      for ( var i = 0; i < 3; i += 1 ) {
-        for ( var j = 0; j < round.players().length; j += 1 ) {
-          for ( var k = 0; k < 3; k += 1 ) {
+      for (var i = 0; i < 3; i += 1) {
+        for (var j = 0; j < round.players().length; j += 1) {
+          for (var k = 0; k < 3; k += 1) {
             numCards -= 1;
             var card = round.deck().cards[numCards];
             playersCards[j].push(card);
@@ -148,14 +148,14 @@ describe("Round", function() {
       }
 
       var kiddyCards = [];
-      for ( var i = 0; i < 3; i += 1 ) {
+      for (i = 0; i < 3; i += 1) {
         numCards -= 1;
         kiddyCards.push(round.deck().cards[numCards]);
       }
 
       round.deal();
 
-      for ( var i = 0; i < playersCards.length; i += 1 ) {
+      for (i = 0; i < playersCards.length; i += 1) {
         expect(round.players()[i].cards).toEqual(playersCards[i]);
       }
 
