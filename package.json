@@ -4,6 +4,11 @@
   "author": "Bradley Spaulding <bradley.spaulding@motingo.com>",
   "description": "Sixty Three is a card game.",
   "devDependencies": {
+    "babel-core": "6.3.26",
+    "babel-loader": "6.2.0",
+    "babel-preset-es2015": "6.3.13",
+    "babel-preset-react": "6.3.13",
+    "babel-preset-stage-2": "6.3.13",
     "codeclimate-test-reporter": "0.0.4",
     "jasmine-core": "^2.1.3",
     "jslint": "^0.7.1",
@@ -14,7 +19,8 @@
     "karma-firefox-launcher": "^0.1.3",
     "karma-jasmine": "^0.3.2",
     "karma-osx-reporter": "^0.1.0",
-    "karma-phantomjs-launcher": "^0.1.4"
+    "karma-phantomjs-launcher": "^0.1.4",
+    "webpack": "1.12.9"
   },
   "scripts": {
     "pretest": "./node_modules/.bin/jslint app/**/*.js",
