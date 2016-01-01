@@ -5,6 +5,7 @@ module.exports = function(config) {
 
     frameworks: ['jasmine'],
     plugins: [
+      'karma-babel-preprocessor',
       'karma-jasmine',
       'karma-coverage',
       'karma-chrome-launcher',
@@ -64,7 +65,7 @@ module.exports = function(config) {
     singleRun: false,
 
     preprocessors: {
-      'app/**/*.js': ['coverage']
+      'app/**/*.js': ['babel', 'coverage']
     },
 
     coverageReporter: {
