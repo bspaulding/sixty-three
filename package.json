@@ -1,0 +1,6 @@
+{
+  "name": "sixty-three",
+  "devDependencies": {
+    "elm": "^0.18.0"
+  }
+}
