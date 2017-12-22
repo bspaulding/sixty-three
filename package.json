@@ -1,6 +1,9 @@
 {
   "name": "sixty-three",
   "devDependencies": {
-    "elm": "^0.18.0"
+    "elm": "^0.18.0",
+    "elm-live": "^2.7.5",
+    "elm-oracle": "^1.1.1",
+    "elm-test": "^0.18.9"
   }
 }
