@@ -26,7 +26,7 @@ instance Display Card where
               Spades -> "♠️"
          in T.pack $ suit' ++ "  " ++ show face
 
-newtype Cards = Cards [Card]
+newtype Cards = Cards [Card] deriving (Show)
 
 instance Display Cards where
   display (Cards xs) = mconcat $ [start] ++ intersperse separator (map display xs) ++ [stop]
@@ -47,3 +47,12 @@ faces = generateEnumValues
 deck :: Cards
 deck =
   Cards $ Joker : [FaceCard suit face | suit <- suits, face <- faces]
+
+deal :: Cards -> (Cards, Cards, Cards, Cards, Cards)
+deal (Cards cards) =
+  ( Cards $ take 12 cards,
+    Cards $ take 12 $ drop 12 cards,
+    Cards $ take 12 $ drop 24 cards,
+    Cards $ take 12 $ drop 36 cards,
+    Cards $ drop 48 cards
+  )
