@@ -59,7 +59,7 @@ deal (Cards cards) =
   )
 
 data GameState = GameState
-  { currentBid :: (Player, Int),
+  { currentBid :: Maybe (Player, Int),
     bidPassed :: Map Player Bool,
     hands :: [Cards],
     kitty :: Cards,
@@ -75,7 +75,7 @@ data Trick = Trick Player Cards deriving (Eq, Show)
 initialGameState :: GameState
 initialGameState =
   GameState
-    { currentBid = (PlayerFour, 25),
+    { currentBid = Nothing,
       bidPassed = Map.empty,
       hands = [],
       kitty = Cards [],
@@ -94,13 +94,21 @@ enumNext a = if maxBound == a then minBound else succ a
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
   | playerInControl state == player = case action of
-    Bid amount -> state {currentBid = (player, amount), playerInControl = enumNext player}
+    Bid amount ->
+      if amount /= 126 && (amount > 63 || amount < 25)
+        then state
+        else case currentBid state of
+          Just currentBid_ ->
+            if amount > snd currentBid_
+              then state {currentBid = Just (player, amount), playerInControl = enumNext player}
+              else state
+          Nothing -> state {currentBid = Just (player, amount), playerInControl = enumNext player}
     BidPass -> state {bidPassed = Map.insert player True (bidPassed state), playerInControl = enumNext player}
     _ -> state
   | otherwise = state
 
 -- selectors
-getBid :: GameState -> (Player, Int)
+getBid :: GameState -> Maybe (Player, Int)
 getBid = currentBid
 
 getCurrentPlayer :: GameState -> Player
