@@ -39,23 +39,26 @@ spec = do
                in all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
   describe "initial state" $ do
     it "should set bids to 0" $ do
-      getBid initialGameState PlayerOne `shouldBe` 0
-      getBid initialGameState PlayerTwo `shouldBe` 0
-      getBid initialGameState PlayerThree `shouldBe` 0
-      getBid initialGameState PlayerFour `shouldBe` 0
+      getBid initialGameState `shouldBe` (PlayerFour, 25)
   describe "happy path game" $ do
     it "can set bid" $ do
       let bid1 = reducer initialGameState (PlayerOne, Bid 25)
-      getBid bid1 PlayerOne `shouldBe` 25
+      getBid bid1 `shouldBe` (PlayerOne, 25)
       getCurrentPlayer bid1 `shouldBe` PlayerTwo
       let bid2 = reducer bid1 (PlayerTwo, Bid 26)
-      getBid bid2 PlayerTwo `shouldBe` 26
+      getBid bid2 `shouldBe` (PlayerTwo, 26)
       getCurrentPlayer bid2 `shouldBe` PlayerThree
       let bid3 = reducer bid2 (PlayerThree, Bid 27)
-      getBid bid3 PlayerThree `shouldBe` 27
+      getBid bid3 `shouldBe` (PlayerThree, 27)
       getCurrentPlayer bid3 `shouldBe` PlayerFour
       let bid4 = reducer bid3 (PlayerFour, Bid 28)
-      getBid bid4 PlayerFour `shouldBe` 28
+      getBid bid4 `shouldBe` (PlayerFour, 28)
       getCurrentPlayer bid4 `shouldBe` PlayerOne
     it "can't set bid if not your turn" $ do
-      getBid (reducer initialGameState (PlayerTwo, Bid 25)) PlayerTwo `shouldBe` 0
+      getBid (reducer initialGameState (PlayerTwo, Bid 25)) `shouldBe` getBid initialGameState
+    it "can't bid less than max bid" $ do
+      let bid1 = reducer initialGameState (PlayerOne, Bid 40)
+      getBid bid1 `shouldBe` (PlayerOne, 40)
+      getCurrentPlayer bid1 `shouldBe` PlayerTwo
+      let bid2 = reducer bid1 (PlayerTwo, Bid 39)
+      bid2 `shouldBe` bid1
