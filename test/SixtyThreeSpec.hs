@@ -37,3 +37,14 @@ spec = do
        in let (cards, _) = shuffle deckCards (mkStdGen i)
            in let (hand1, hand2, hand3, hand4, kitty) = deal (Cards cards)
                in all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
+  describe "initial state" $ do
+    it "should set bids to 0" $ do
+      getBid initialGameState PlayerOne `shouldBe` 0
+      getBid initialGameState PlayerTwo `shouldBe` 0
+      getBid initialGameState PlayerThree `shouldBe` 0
+      getBid initialGameState PlayerFour `shouldBe` 0
+  describe "happy path game" $ do
+    it "can set bid" $ do
+      getBid (reducer initialGameState (PlayerOne, Bid 25)) PlayerOne `shouldBe` 25
+    it "can't set bid if not your turn" $ do
+      getBid (reducer initialGameState (PlayerTwo, Bid 25)) PlayerTwo `shouldBe` 0

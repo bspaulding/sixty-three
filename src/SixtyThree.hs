@@ -4,6 +4,7 @@
 module SixtyThree where
 
 import Data.List (intersperse)
+import qualified Data.Map as Map
 import qualified Data.Text as T
 import Import
 import Prelude (enumFrom, toEnum)
@@ -26,7 +27,7 @@ instance Display Card where
               Spades -> "♠️"
          in T.pack $ suit' ++ "  " ++ show face
 
-newtype Cards = Cards [Card] deriving (Show)
+newtype Cards = Cards [Card] deriving (Eq, Show)
 
 instance Display Cards where
   display (Cards xs) = mconcat $ [start] ++ intersperse separator (map display xs) ++ [stop]
@@ -56,3 +57,43 @@ deal (Cards cards) =
     Cards $ take 12 $ drop 36 cards,
     Cards $ drop 48 cards
   )
+
+data GameState = GameState
+  { bids :: Map Player Int,
+    hands :: [Cards],
+    kitty :: Cards,
+    tricks :: [Trick],
+    playerInControl :: Player
+  }
+  deriving (Eq, Show)
+
+data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour deriving (Eq, Ord, Show)
+
+data Trick = Trick Player Cards deriving (Eq, Show)
+
+initialGameState :: GameState
+initialGameState =
+  GameState
+    { bids = Map.empty,
+      hands = [],
+      kitty = Cards [],
+      tricks = [],
+      playerInControl = PlayerOne
+    }
+
+data GameAction
+  = BidPass
+  | Bid Int
+  | Play Card
+
+reducer :: GameState -> (Player, GameAction) -> GameState
+reducer state (player, action)
+  | playerInControl state == player = case action of
+    Bid amount -> state {bids = Map.insert player amount (bids state)}
+    _ -> state
+  | otherwise = state
+
+-- selectors
+getBid :: GameState -> Player -> Int
+getBid state player =
+  Map.findWithDefault 0 player (bids state)
