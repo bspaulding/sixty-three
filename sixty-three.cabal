@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 91173e2350b3fa6c47a85c876bc0316a2b0d874d84bcacd9cad890aaa55193c6
+-- hash: 8d67ce4cd1540a0ccff86abef37f6aa1af7dfbe2366d5bc3d9ec95a1a7206688
 
 name:           sixty-three
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.11 && <10
+    , containers
     , random
     , rio >=0.1.12.0
     , text
@@ -54,6 +55,7 @@ executable sixty-three-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.11 && <10
+    , containers
     , optparse-simple
     , random
     , rio >=0.1.12.0
@@ -73,6 +75,7 @@ test-suite sixty-three-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.11 && <10
+    , containers
     , hspec
     , random
     , rio >=0.1.12.0
