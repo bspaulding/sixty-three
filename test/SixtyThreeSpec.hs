@@ -45,6 +45,17 @@ spec = do
       getBid initialGameState PlayerFour `shouldBe` 0
   describe "happy path game" $ do
     it "can set bid" $ do
-      getBid (reducer initialGameState (PlayerOne, Bid 25)) PlayerOne `shouldBe` 25
+      let bid1 = reducer initialGameState (PlayerOne, Bid 25)
+      getBid bid1 PlayerOne `shouldBe` 25
+      getCurrentPlayer bid1 `shouldBe` PlayerTwo
+      let bid2 = reducer bid1 (PlayerTwo, Bid 26)
+      getBid bid2 PlayerTwo `shouldBe` 26
+      getCurrentPlayer bid2 `shouldBe` PlayerThree
+      let bid3 = reducer bid2 (PlayerThree, Bid 27)
+      getBid bid3 PlayerThree `shouldBe` 27
+      getCurrentPlayer bid3 `shouldBe` PlayerFour
+      let bid4 = reducer bid3 (PlayerFour, Bid 28)
+      getBid bid4 PlayerFour `shouldBe` 28
+      getCurrentPlayer bid4 `shouldBe` PlayerOne
     it "can't set bid if not your turn" $ do
       getBid (reducer initialGameState (PlayerTwo, Bid 25)) PlayerTwo `shouldBe` 0

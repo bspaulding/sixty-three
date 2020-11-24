@@ -7,7 +7,7 @@ import Data.List (intersperse)
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Import
-import Prelude (enumFrom, toEnum)
+import Prelude (enumFrom, succ, toEnum)
 
 data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Show)
 
@@ -60,6 +60,7 @@ deal (Cards cards) =
 
 data GameState = GameState
   { bids :: Map Player Int,
+    bidPassed :: Map Player Bool,
     hands :: [Cards],
     kitty :: Cards,
     tricks :: [Trick],
@@ -67,7 +68,7 @@ data GameState = GameState
   }
   deriving (Eq, Show)
 
-data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour deriving (Eq, Ord, Show)
+data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour deriving (Bounded, Enum, Eq, Ord, Show)
 
 data Trick = Trick Player Cards deriving (Eq, Show)
 
@@ -75,6 +76,7 @@ initialGameState :: GameState
 initialGameState =
   GameState
     { bids = Map.empty,
+      bidPassed = Map.empty,
       hands = [],
       kitty = Cards [],
       tricks = [],
@@ -86,10 +88,14 @@ data GameAction
   | Bid Int
   | Play Card
 
+enumNext :: (Eq a, Bounded a, Enum a) => a -> a
+enumNext a = if maxBound == a then minBound else succ a
+
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
   | playerInControl state == player = case action of
-    Bid amount -> state {bids = Map.insert player amount (bids state)}
+    Bid amount -> state {bids = Map.insert player amount (bids state), playerInControl = enumNext player}
+    BidPass -> state {bidPassed = Map.insert player True (bidPassed state), playerInControl = enumNext player}
     _ -> state
   | otherwise = state
 
@@ -97,3 +103,6 @@ reducer state (player, action)
 getBid :: GameState -> Player -> Int
 getBid state player =
   Map.findWithDefault 0 player (bids state)
+
+getCurrentPlayer :: GameState -> Player
+getCurrentPlayer = playerInControl
