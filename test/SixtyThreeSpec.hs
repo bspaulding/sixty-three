@@ -10,6 +10,7 @@ import System.Random
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Util
+import Prelude (foldl)
 
 hasAceOrFace :: Cards -> Bool
 hasAceOrFace (Cards cards) = not $ null acesAndFaces
@@ -42,6 +43,8 @@ spec = do
       getBid initialGameState `shouldBe` Nothing
     it "starts with PlayerOne" $ do
       getCurrentPlayer initialGameState `shouldBe` PlayerOne
+    it "starts bidding" $ do
+      getBiddingComplete initialGameState `shouldBe` False
 
   describe "bidding" $ do
     it "can set bid" $ do
@@ -81,3 +84,21 @@ spec = do
       reducer initialGameState (PlayerOne, Bid 127) `shouldBe` initialGameState
       let double = reducer initialGameState (PlayerOne, Bid 126)
       getBid double `shouldBe` Just (PlayerOne, 126)
+
+    it "bid is won when three players pass" $ do
+      let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass)]
+      let state = foldl reducer initialGameState actions
+      getBid state `shouldBe` Just (PlayerTwo, 30)
+      getBiddingComplete state `shouldBe` True
+
+    it "bid is defaulted to the dealer at 25 if the others pass and no bid" $ do
+      let actions = [(PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let state = foldl reducer initialGameState actions
+      getDealer state `shouldBe` PlayerFour
+      getBid state `shouldBe` Just (PlayerFour, 25)
+
+    it "bid is won when double 63 is bid" $ do
+      let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 126)]
+      let state = foldl reducer initialGameState actions
+      getBid state `shouldBe` Just (PlayerTwo, 126)
+      getBiddingComplete state `shouldBe` True

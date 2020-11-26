@@ -59,7 +59,8 @@ deal (Cards cards) =
   )
 
 data GameState = GameState
-  { currentBid :: Maybe (Player, Int),
+  { dealer :: Player,
+    currentBid :: Maybe (Player, Integer),
     bidPassed :: Map Player Bool,
     hands :: [Cards],
     kitty :: Cards,
@@ -75,7 +76,8 @@ data Trick = Trick Player Cards deriving (Eq, Show)
 initialGameState :: GameState
 initialGameState =
   GameState
-    { currentBid = Nothing,
+    { dealer = PlayerFour,
+      currentBid = Nothing,
       bidPassed = Map.empty,
       hands = [],
       kitty = Cards [],
@@ -85,7 +87,7 @@ initialGameState =
 
 data GameAction
   = BidPass
-  | Bid Int
+  | Bid Integer
   | Play Card
 
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
@@ -103,13 +105,25 @@ reducer state (player, action)
               then state {currentBid = Just (player, amount), playerInControl = enumNext player}
               else state
           Nothing -> state {currentBid = Just (player, amount), playerInControl = enumNext player}
-    BidPass -> state {bidPassed = Map.insert player True (bidPassed state), playerInControl = enumNext player}
+    BidPass ->
+      let newBidPassed = Map.insert player True (bidPassed state)
+       in if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
+            then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
+            else state {bidPassed = newBidPassed, playerInControl = enumNext player}
     _ -> state
   | otherwise = state
 
 -- selectors
-getBid :: GameState -> Maybe (Player, Int)
+getDealer :: GameState -> Player
+getDealer = dealer
+
+getBid :: GameState -> Maybe (Player, Integer)
 getBid = currentBid
 
 getCurrentPlayer :: GameState -> Player
 getCurrentPlayer = playerInControl
+
+getBiddingComplete :: GameState -> Bool
+getBiddingComplete state =
+  Just 126 == fmap snd (getBid state)
+    || 3 == length (filter id $ Map.elems (bidPassed state))
