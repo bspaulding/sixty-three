@@ -65,7 +65,8 @@ data GameState = GameState
     hands           :: Map Player [Card],
     kitty           :: [Card],
     tricks          :: [Trick],
-    playerInControl :: Player
+    playerInControl :: Player,
+    cardsInPlay     :: Map Player Card
   }
   deriving (Eq, Show)
 
@@ -76,13 +77,14 @@ data Trick = Trick Player Cards deriving (Eq, Show)
 initialGameState :: GameState
 initialGameState =
   GameState
-    { dealer = PlayerFour,
-      currentBid = Nothing,
-      bidPassed = Map.empty,
-      hands = Map.empty,
-      kitty = [],
-      tricks = [],
-      playerInControl = PlayerOne
+    { dealer = PlayerFour
+    , currentBid = Nothing
+    , bidPassed = Map.empty
+    , hands = Map.empty
+    , kitty = []
+    , tricks = []
+    , playerInControl = PlayerOne
+    , cardsInPlay = Map.empty
     }
 
 data GameAction

@@ -1,16 +1,16 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module SixtyThreeSpec (spec) where
 
-import Import
-import Shuffle
-import SixtyThree
-import System.Random
-import Test.Hspec
-import Test.Hspec.QuickCheck
-import Util
-import Prelude (foldl)
+import           Import
+import           Prelude               (foldl)
+import           Shuffle
+import           SixtyThree
+import           System.Random
+import           Test.Hspec
+import           Test.Hspec.QuickCheck
+import           Util
 
 playGame :: [(Player, GameAction)] -> GameState
 playGame = foldl reducer initialGameState
@@ -20,11 +20,11 @@ hasAceOrFace (Cards cards) = not $ null acesAndFaces
   where
     acesAndFaces = filter isAceOrFace cards
     isAceOrFace :: Card -> Bool
-    isAceOrFace (FaceCard _ Ace) = True
-    isAceOrFace (FaceCard _ King) = True
+    isAceOrFace (FaceCard _ Ace)   = True
+    isAceOrFace (FaceCard _ King)  = True
     isAceOrFace (FaceCard _ Queen) = True
-    isAceOrFace (FaceCard _ Jack) = True
-    isAceOrFace _ = False
+    isAceOrFace (FaceCard _ Jack)  = True
+    isAceOrFace _                  = False
 
 spec :: Spec
 spec = do
@@ -117,8 +117,19 @@ spec = do
       getBiddingComplete state `shouldBe` True
 
   describe "tricking" $ do
+    it "disallows playing a card not in the player's hand" $ do
+      let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass), (PlayerTwo, Play (FaceCard Hearts Two))]
+      let state = playGame actions
+      state `shouldBe` state
+
+    it "cannot play a card if you already have a card in play" $ do
+      pending
+
+    it "playing a card puts it in play and removes it from your hand" $ do
+      pending
+
     it "happy path game" $ do
-      -- TODO: add more player actions here and assert the final round state/score/etc.
+      pendingWith "add more player actions here and assert the final round state/score/etc."
       let actions = [(PlayerFour, Deal), (PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass)]
       let state = playGame actions
       getBiddingComplete state `shouldBe` True
