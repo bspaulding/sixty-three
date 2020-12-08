@@ -1,13 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module SixtyThree where
 
-import Data.List (intersperse)
-import qualified Data.Map as Map
+import           Data.List (intersperse)
+import qualified Data.Map  as Map
 import qualified Data.Text as T
-import Import
-import Prelude (enumFrom, succ, toEnum)
+import           Import
+import           Prelude   (enumFrom, succ, toEnum)
 
 data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Show)
 
@@ -21,10 +21,10 @@ instance Display Card where
       Joker -> "Joker"
       FaceCard suit face ->
         let suit' = case suit of
-              Hearts -> "♥️"
+              Hearts   -> "♥️"
               Diamonds -> "♦️"
-              Clubs -> "♣️"
-              Spades -> "♠️"
+              Clubs    -> "♣️"
+              Spades   -> "♠️"
          in T.pack $ suit' ++ "  " ++ show face
 
 newtype Cards = Cards [Card] deriving (Eq, Show)
@@ -59,12 +59,12 @@ deal (Cards cards) =
   )
 
 data GameState = GameState
-  { dealer :: Player,
-    currentBid :: Maybe (Player, Integer),
-    bidPassed :: Map Player Bool,
-    hands :: [Cards],
-    kitty :: Cards,
-    tricks :: [Trick],
+  { dealer          :: Player,
+    currentBid      :: Maybe (Player, Integer),
+    bidPassed       :: Map Player Bool,
+    hands           :: Map Player [Card],
+    kitty           :: [Card],
+    tricks          :: [Trick],
     playerInControl :: Player
   }
   deriving (Eq, Show)
@@ -79,22 +79,30 @@ initialGameState =
     { dealer = PlayerFour,
       currentBid = Nothing,
       bidPassed = Map.empty,
-      hands = [],
-      kitty = Cards [],
+      hands = Map.empty,
+      kitty = [],
       tricks = [],
       playerInControl = PlayerOne
     }
 
 data GameAction
-  = BidPass
+  = Deal
+  | BidPass
   | Bid Integer
   | Play Card
+  deriving (Eq, Show)
 
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
 enumNext a = if maxBound == a then minBound else succ a
 
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
+  | dealer state == player && action == Deal =
+    let (Cards hand1, Cards hand2, Cards hand3, Cards hand4, Cards kitty) = deal deck
+     in state
+          { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)]
+          , kitty = kitty
+          }
   | playerInControl state == player = case action of
     Bid amount ->
       if amount /= 126 && (amount > 63 || amount < 25)
@@ -127,3 +135,10 @@ getBiddingComplete :: GameState -> Bool
 getBiddingComplete state =
   Just 126 == fmap snd (getBid state)
     || 3 == length (filter id $ Map.elems (bidPassed state))
+
+getKitty :: GameState -> [Card]
+getKitty = kitty
+
+getHand :: Player -> GameState -> [Card]
+getHand player state =
+  Map.findWithDefault [] player (hands state)

@@ -12,6 +12,9 @@ import Test.Hspec.QuickCheck
 import Util
 import Prelude (foldl)
 
+playGame :: [(Player, GameAction)] -> GameState
+playGame = foldl reducer initialGameState
+
 hasAceOrFace :: Cards -> Bool
 hasAceOrFace (Cards cards) = not $ null acesAndFaces
   where
@@ -33,6 +36,16 @@ spec = do
       length hand3 `shouldBe` 12
       length hand4 `shouldBe` 12
       length kitty `shouldBe` 5
+
+    it "deal action deals cards" $ do
+      let state = playGame [(dealer initialGameState, Deal)]
+      getBiddingComplete state `shouldBe` False
+      length (getHand PlayerOne state) `shouldBe` 12
+      length (getHand PlayerTwo state) `shouldBe` 12
+      length (getHand PlayerThree state) `shouldBe` 12
+      length (getHand PlayerFour state) `shouldBe` 12
+      length (getKitty state) `shouldBe` 5
+
     prop "ace or face" $ \i ->
       let (Cards deckCards) = deck
        in let (cards, _) = shuffle deckCards (mkStdGen i)
@@ -101,4 +114,11 @@ spec = do
       let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 126)]
       let state = foldl reducer initialGameState actions
       getBid state `shouldBe` Just (PlayerTwo, 126)
+      getBiddingComplete state `shouldBe` True
+
+  describe "tricking" $ do
+    it "happy path game" $ do
+      -- TODO: add more player actions here and assert the final round state/score/etc.
+      let actions = [(PlayerFour, Deal), (PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass)]
+      let state = playGame actions
       getBiddingComplete state `shouldBe` True
