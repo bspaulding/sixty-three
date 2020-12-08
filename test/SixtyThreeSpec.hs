@@ -4,7 +4,7 @@
 module SixtyThreeSpec (spec) where
 
 import           Import
-import           Prelude               (foldl)
+import           Prelude               (foldl, head)
 import           Shuffle
 import           SixtyThree
 import           System.Random
@@ -126,7 +126,12 @@ spec = do
       pending
 
     it "playing a card puts it in play and removes it from your hand" $ do
-      pending
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let state = playGame actions
+      let card = Prelude.head $ getHand PlayerFour state
+      let state1 = reducer state (PlayerFour, Play card)
+      getHand PlayerFour state1 `shouldSatisfy` (not . any (card ==))
+      getCardInPlay PlayerFour state1 `shouldBe` Just card
 
     it "happy path game" $ do
       pendingWith "add more player actions here and assert the final round state/score/etc."

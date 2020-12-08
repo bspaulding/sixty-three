@@ -120,6 +120,11 @@ reducer state (player, action)
        in if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
             then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
             else state {bidPassed = newBidPassed, playerInControl = enumNext player}
+    Play card ->
+      let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
+      in state { hands = Map.insert player newHand (hands state)
+               , cardsInPlay = Map.insert player card (cardsInPlay state)
+               }
     _ -> state
   | otherwise = state
 
@@ -144,3 +149,6 @@ getKitty = kitty
 getHand :: Player -> GameState -> [Card]
 getHand player state =
   Map.findWithDefault [] player (hands state)
+
+getCardInPlay :: Player -> GameState -> Maybe Card
+getCardInPlay player state = Map.lookup player (cardsInPlay state)
