@@ -58,6 +58,7 @@ tests:
     dependencies:
     - sixty-three
     - hspec
+    - QuickCheck
 
     ghc-options:
     - -threaded

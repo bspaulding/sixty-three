@@ -10,14 +10,15 @@ import SixtyThree
 import System.Random
 import Test.Hspec
 import Test.Hspec.QuickCheck
+import Test.QuickCheck
 import Util
 import Prelude (foldl, head)
 
 playGame :: [(Player, GameAction)] -> GameState
 playGame = foldl reducer initialGameState
 
-hasAceOrFace :: Cards -> Bool
-hasAceOrFace (Cards cards) = not $ null acesAndFaces
+hasAceOrFace :: [Card] -> Bool
+hasAceOrFace cards = not $ null acesAndFaces
   where
     acesAndFaces = filter isAceOrFace cards
     isAceOrFace :: Card -> Bool
@@ -26,6 +27,13 @@ hasAceOrFace (Cards cards) = not $ null acesAndFaces
     isAceOrFace (FaceCard _ Queen) = True
     isAceOrFace (FaceCard _ Jack) = True
     isAceOrFace _ = False
+
+prop_ace_or_face i = tabulate "ace or face gen seed" [show i] $ all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
+  where
+    -- forAll (QC.shuffle deckCards)
+
+    (cards, _) = Shuffle.shuffle deck (mkStdGen i)
+    (hand1, hand2, hand3, hand4, kitty) = deal cards
 
 spec :: Spec
 spec = do
@@ -43,7 +51,7 @@ spec = do
 
   describe "deal" $ do
     it "returns four hands, kitty, and rest" $ do
-      let (Cards hand1, Cards hand2, Cards hand3, Cards hand4, Cards kitty) = deal deck
+      let (hand1, hand2, hand3, hand4, kitty) = deal deck
       length hand1 `shouldBe` 12
       length hand2 `shouldBe` 12
       length hand3 `shouldBe` 12
@@ -59,11 +67,8 @@ spec = do
       length (getHand PlayerFour state) `shouldBe` 12
       length (getKitty state) `shouldBe` 5
 
-    prop "ace or face" $ \i ->
-      let (Cards deckCards) = deck
-       in let (cards, _) = shuffle deckCards (mkStdGen i)
-           in let (hand1, hand2, hand3, hand4, kitty) = deal (Cards cards)
-               in all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
+    it "always deals hands with ace or face" $ property $ prop_ace_or_face
+
   describe "initial state" $ do
     it "no bids" $ do
       getBid initialGameState `shouldBe` Nothing

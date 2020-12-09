@@ -69,17 +69,17 @@ suits = generateEnumValues
 faces :: [Face]
 faces = generateEnumValues
 
-deck :: Cards
+deck :: [Card]
 deck =
-  Cards $ Joker : [FaceCard suit face | suit <- suits, face <- faces]
+  Joker : [FaceCard suit face | suit <- suits, face <- faces]
 
-deal :: Cards -> (Cards, Cards, Cards, Cards, Cards)
-deal (Cards cards) =
-  ( Cards $ take 12 cards,
-    Cards $ take 12 $ drop 12 cards,
-    Cards $ take 12 $ drop 24 cards,
-    Cards $ take 12 $ drop 36 cards,
-    Cards $ drop 48 cards
+deal :: [Card] -> ([Card], [Card], [Card], [Card], [Card])
+deal cards =
+  ( take 12 cards,
+    take 12 $ drop 12 cards,
+    take 12 $ drop 24 cards,
+    take 12 $ drop 36 cards,
+    drop 48 cards
   )
 
 data GameState = GameState
@@ -125,10 +125,10 @@ enumNext a = if maxBound == a then minBound else succ a
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
   | dealer state == player && action == Deal =
-    let (Cards hand1, Cards hand2, Cards hand3, Cards hand4, Cards kitty) = deal deck
+    let (hand1, hand2, hand3, hand4, kitty') = deal deck
      in state
           { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)],
-            kitty = kitty
+            kitty = kitty'
           }
   | playerInControl state == player = case action of
     Bid amount ->

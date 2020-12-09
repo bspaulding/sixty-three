@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8d67ce4cd1540a0ccff86abef37f6aa1af7dfbe2366d5bc3d9ec95a1a7206688
+-- hash: aff5b3c1121d5f76264b59ebe026bb0e0e2d97a32233e230a554e273647eaa8c
 
 name:           sixty-three
 version:        0.1.0.0
@@ -74,7 +74,8 @@ test-suite sixty-three-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.11 && <10
+      QuickCheck
+    , base >=4.11 && <10
     , containers
     , hspec
     , random
