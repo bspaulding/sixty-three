@@ -7,6 +7,8 @@ import Data.List (intersperse)
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import Import
+import Shuffle
+import System.Random
 import Prelude (enumFrom, succ, toEnum)
 
 data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Show)
@@ -73,14 +75,30 @@ deck :: [Card]
 deck =
   Joker : [FaceCard suit face | suit <- suits, face <- faces]
 
-deal :: [Card] -> ([Card], [Card], [Card], [Card], [Card])
-deal cards =
-  ( take 12 cards,
-    take 12 $ drop 12 cards,
-    take 12 $ drop 24 cards,
-    take 12 $ drop 36 cards,
-    drop 48 cards
-  )
+deal :: RandomGen g => [Card] -> g -> (([Card], [Card], [Card], [Card], [Card]), g)
+deal unshuffled gen =
+  if all hasAceOrFace [hand1, hand2, hand3, hand4]
+    then (dealt, gen')
+    else deal cards gen'
+  where
+    (cards, gen') = shuffle unshuffled gen
+    hand1 = take 12 cards
+    hand2 = take 12 $ drop 12 cards
+    hand3 = take 12 $ drop 24 cards
+    hand4 = take 12 $ drop 36 cards
+    kitty_ = drop 48 cards
+    dealt = (hand1, hand2, hand3, hand4, kitty_)
+
+hasAceOrFace :: [Card] -> Bool
+hasAceOrFace cards = not $ null acesAndFaces
+  where
+    acesAndFaces = filter isAceOrFace cards
+    isAceOrFace :: Card -> Bool
+    isAceOrFace (FaceCard _ Ace) = True
+    isAceOrFace (FaceCard _ King) = True
+    isAceOrFace (FaceCard _ Queen) = True
+    isAceOrFace (FaceCard _ Jack) = True
+    isAceOrFace _ = False
 
 data GameState = GameState
   { dealer :: Player,
@@ -91,7 +109,8 @@ data GameState = GameState
     tricks :: [Map Player Card],
     playerInControl :: Player,
     cardsInPlay :: Map Player Card,
-    trump :: Maybe Suit
+    trump :: Maybe Suit,
+    g :: StdGen
   }
   deriving (Eq, Show)
 
@@ -108,7 +127,8 @@ initialGameState =
       tricks = [],
       playerInControl = PlayerOne,
       cardsInPlay = Map.empty,
-      trump = Nothing
+      trump = Nothing,
+      g = mkStdGen 0
     }
 
 data GameAction
@@ -125,10 +145,11 @@ enumNext a = if maxBound == a then minBound else succ a
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
   | dealer state == player && action == Deal =
-    let (hand1, hand2, hand3, hand4, kitty') = deal deck
+    let ((hand1, hand2, hand3, hand4, kitty'), g') = deal deck (g state)
      in state
           { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)],
-            kitty = kitty'
+            kitty = kitty',
+            g = g'
           }
   | playerInControl state == player = case action of
     Bid amount ->

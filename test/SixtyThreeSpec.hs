@@ -17,23 +17,11 @@ import Prelude (foldl, head)
 playGame :: [(Player, GameAction)] -> GameState
 playGame = foldl reducer initialGameState
 
-hasAceOrFace :: [Card] -> Bool
-hasAceOrFace cards = not $ null acesAndFaces
+prop_ace_or_face i =
+  withMaxSuccess 1000 $
+    all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
   where
-    acesAndFaces = filter isAceOrFace cards
-    isAceOrFace :: Card -> Bool
-    isAceOrFace (FaceCard _ Ace) = True
-    isAceOrFace (FaceCard _ King) = True
-    isAceOrFace (FaceCard _ Queen) = True
-    isAceOrFace (FaceCard _ Jack) = True
-    isAceOrFace _ = False
-
-prop_ace_or_face i = tabulate "ace or face gen seed" [show i] $ all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
-  where
-    -- forAll (QC.shuffle deckCards)
-
-    (cards, _) = Shuffle.shuffle deck (mkStdGen i)
-    (hand1, hand2, hand3, hand4, kitty) = deal cards
+    (hand1, hand2, hand3, hand4, kitty) = fst $ deal deck (mkStdGen i)
 
 spec :: Spec
 spec = do
@@ -51,7 +39,7 @@ spec = do
 
   describe "deal" $ do
     it "returns four hands, kitty, and rest" $ do
-      let (hand1, hand2, hand3, hand4, kitty) = deal deck
+      let (hand1, hand2, hand3, hand4, kitty) = fst $ deal deck (mkStdGen 1)
       length hand1 `shouldBe` 12
       length hand2 `shouldBe` 12
       length hand3 `shouldBe` 12
