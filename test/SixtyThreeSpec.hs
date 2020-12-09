@@ -4,6 +4,7 @@
 module SixtyThreeSpec (spec) where
 
 import           Import
+import qualified Data.Map  as Map
 import           Prelude               (foldl, head)
 import           Shuffle
 import           SixtyThree
@@ -28,6 +29,18 @@ hasAceOrFace (Cards cards) = not $ null acesAndFaces
 
 spec :: Spec
 spec = do
+  describe "card points" $ do
+    it "scores cards according to trump" $ do
+      cardScore Hearts (FaceCard Hearts Ace) `shouldBe` 1
+      cardScore Hearts (FaceCard Hearts King) `shouldBe` 25
+      cardScore Hearts (FaceCard Hearts Jack) `shouldBe` 1
+      cardScore Hearts (FaceCard Hearts Ten) `shouldBe` 1
+      cardScore Hearts (FaceCard Hearts Nine) `shouldBe` 9
+      cardScore Hearts (FaceCard Hearts Five) `shouldBe` 5
+      cardScore Hearts (FaceCard Diamonds Five) `shouldBe` 5
+      cardScore Hearts (FaceCard Hearts Two) `shouldBe` 1
+      cardScore Hearts Joker `shouldBe` 15
+
   describe "deal" $ do
     it "returns four hands, kitty, and rest" $ do
       let (Cards hand1, Cards hand2, Cards hand3, Cards hand4, Cards kitty) = deal deck
@@ -118,12 +131,32 @@ spec = do
 
   describe "tricking" $ do
     it "disallows playing a card not in the player's hand" $ do
-      let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass), (PlayerTwo, Play (FaceCard Hearts Two))]
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
       let state = playGame actions
-      state `shouldBe` state
+      getCurrentPlayer state `shouldBe` PlayerFour
+      let notYourCard = Prelude.head $ getHand PlayerOne state
+
+      let state1 = reducer state (PlayerFour, Play notYourCard)
+      getCardInPlay PlayerFour state1 `shouldBe` Nothing
+      getHand PlayerOne state1 `shouldSatisfy` any (notYourCard ==)
+      getHand PlayerFour state1 `shouldSatisfy` not . any (notYourCard ==)
+      getCurrentPlayer state1 `shouldBe` PlayerFour
 
     it "cannot play a card if you already have a card in play" $ do
-      pending
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let state = playGame actions
+      let card = Prelude.head $ getHand PlayerFour state
+      let state1 = reducer state (PlayerFour, Play card)
+      -- sanity check there's a card in play
+      getCardInPlay PlayerFour state1 `shouldBe` Just card
+
+      -- now try to play another card
+      let card2 = Prelude.head $ getHand PlayerFour state1
+      card2 /= card `shouldBe` True
+      let state2 = reducer state1 (PlayerFour, Play card2)
+      getCardInPlay PlayerFour state2 `shouldBe` Just card
+      getHand PlayerFour state2 `shouldSatisfy` any (card /=)
+      getHand PlayerFour state2 `shouldSatisfy` any (card2 ==)
 
     it "playing a card puts it in play and removes it from your hand" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
@@ -132,9 +165,44 @@ spec = do
       let state1 = reducer state (PlayerFour, Play card)
       getHand PlayerFour state1 `shouldSatisfy` (not . any (card ==))
       getCardInPlay PlayerFour state1 `shouldBe` Just card
+      getCurrentPlayer state1 `shouldSatisfy` not . (PlayerFour ==)
+      length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
 
     it "happy path game" $ do
-      pendingWith "add more player actions here and assert the final round state/score/etc."
-      let actions = [(PlayerFour, Deal), (PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass)]
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
       let state = playGame actions
       getBiddingComplete state `shouldBe` True
+      getCurrentPlayer state `shouldBe` PlayerFour
+
+      let numCards = length (getHand (getCurrentPlayer state) state)
+      let state4 = playTrickRound state
+      -- after one round of plays, each player should have one less card in their hands
+      length (getHand PlayerOne state4) `shouldBe` numCards - 1
+      length (getHand PlayerTwo state4) `shouldBe` numCards - 1
+      length (getHand PlayerThree state4) `shouldBe` numCards - 1
+      length (getHand PlayerFour state4) `shouldBe` numCards - 1
+      getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne state),(PlayerTwo, Prelude.head $ getHand PlayerTwo state),(PlayerThree, Prelude.head $ getHand PlayerThree state), (PlayerFour, Prelude.head $ getHand PlayerFour state)]]
+
+      -- ok let's start from zero and play all the tricks
+      let state5 = playAllTricks state
+      getHand PlayerOne state5 `shouldBe` []
+      getHand PlayerTwo state5 `shouldBe` []
+      getHand PlayerThree state5 `shouldBe` []
+      getHand PlayerFour state5 `shouldBe` []
+      getCardInPlay PlayerOne state5 `shouldBe` Nothing
+
+      pendingWith "add more player actions here and assert the final round state/score/etc."
+
+-- play a trick turn, the current player simply plays the first card in their hand
+playTurn :: GameState -> GameState
+playTurn state = reducer state (player, Play card)
+  where
+    player = getCurrentPlayer state
+    card = Prelude.head $ getHand player state
+
+-- play a one trick round
+playTrickRound :: GameState -> GameState
+playTrickRound state = foldl (\s _ -> playTurn s) state [0..3]
+
+playAllTricks :: GameState -> GameState
+playAllTricks state = foldl (\s _ -> playTrickRound s) state [0..11]

@@ -1,13 +1,13 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module SixtyThree where
 
-import           Data.List (intersperse)
-import qualified Data.Map  as Map
+import Data.List (intersperse)
+import qualified Data.Map as Map
 import qualified Data.Text as T
-import           Import
-import           Prelude   (enumFrom, succ, toEnum)
+import Import
+import Prelude (enumFrom, succ, toEnum)
 
 data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Show)
 
@@ -21,10 +21,10 @@ instance Display Card where
       Joker -> "Joker"
       FaceCard suit face ->
         let suit' = case suit of
-              Hearts   -> "♥️"
+              Hearts -> "♥️"
               Diamonds -> "♦️"
-              Clubs    -> "♣️"
-              Spades   -> "♠️"
+              Clubs -> "♣️"
+              Spades -> "♠️"
          in T.pack $ suit' ++ "  " ++ show face
 
 newtype Cards = Cards [Card] deriving (Eq, Show)
@@ -35,6 +35,30 @@ instance Display Cards where
       separator = displayBytesUtf8 ", "
       start = displayBytesUtf8 "["
       stop = displayBytesUtf8 "]"
+
+oppositeTrump :: Suit -> Suit
+oppositeTrump s =
+  case s of
+    Hearts -> Diamonds
+    Diamonds -> Hearts
+    Spades -> Clubs
+    Clubs -> Spades
+
+cardScore :: Suit -> Card -> Integer
+cardScore trump card =
+  case card of
+    FaceCard suit face ->
+      case (suit == trump, suit == oppositeTrump trump, face) of
+        (True, False, Ace) -> 1
+        (True, False, King) -> 25
+        (True, False, Jack) -> 1
+        (True, False, Ten) -> 1
+        (True, False, Nine) -> 9
+        (True, False, Five) -> 5
+        (False, True, Five) -> 5
+        (True, False, Two) -> 1
+        _ -> 0
+    Joker -> 15
 
 generateEnumValues :: (Enum a) => [a]
 generateEnumValues = enumFrom (toEnum 0)
@@ -59,32 +83,30 @@ deal (Cards cards) =
   )
 
 data GameState = GameState
-  { dealer          :: Player,
-    currentBid      :: Maybe (Player, Integer),
-    bidPassed       :: Map Player Bool,
-    hands           :: Map Player [Card],
-    kitty           :: [Card],
-    tricks          :: [Trick],
+  { dealer :: Player,
+    currentBid :: Maybe (Player, Integer),
+    bidPassed :: Map Player Bool,
+    hands :: Map Player [Card],
+    kitty :: [Card],
+    tricks :: [Map Player Card],
     playerInControl :: Player,
-    cardsInPlay     :: Map Player Card
+    cardsInPlay :: Map Player Card
   }
   deriving (Eq, Show)
 
 data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour deriving (Bounded, Enum, Eq, Ord, Show)
 
-data Trick = Trick Player Cards deriving (Eq, Show)
-
 initialGameState :: GameState
 initialGameState =
   GameState
-    { dealer = PlayerFour
-    , currentBid = Nothing
-    , bidPassed = Map.empty
-    , hands = Map.empty
-    , kitty = []
-    , tricks = []
-    , playerInControl = PlayerOne
-    , cardsInPlay = Map.empty
+    { dealer = PlayerFour,
+      currentBid = Nothing,
+      bidPassed = Map.empty,
+      hands = Map.empty,
+      kitty = [],
+      tricks = [],
+      playerInControl = PlayerOne,
+      cardsInPlay = Map.empty
     }
 
 data GameAction
@@ -102,8 +124,8 @@ reducer state (player, action)
   | dealer state == player && action == Deal =
     let (Cards hand1, Cards hand2, Cards hand3, Cards hand4, Cards kitty) = deal deck
      in state
-          { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)]
-          , kitty = kitty
+          { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)],
+            kitty = kitty
           }
   | playerInControl state == player = case action of
     Bid amount ->
@@ -121,10 +143,24 @@ reducer state (player, action)
             then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
             else state {bidPassed = newBidPassed, playerInControl = enumNext player}
     Play card ->
-      let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
-      in state { hands = Map.insert player newHand (hands state)
-               , cardsInPlay = Map.insert player card (cardsInPlay state)
-               }
+      if any (card ==) (Map.findWithDefault [] player (hands state))
+        then
+          let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
+              newCardsInPlay = Map.insert player card (cardsInPlay state)
+              roundIsOver = Map.size newCardsInPlay == 4
+           in state
+                { hands = Map.insert player newHand (hands state),
+                  cardsInPlay =
+                    if roundIsOver
+                      then Map.empty
+                      else newCardsInPlay,
+                  tricks =
+                    if roundIsOver
+                      then newCardsInPlay : tricks state
+                      else tricks state,
+                  playerInControl = enumNext player
+                }
+        else state
     _ -> state
   | otherwise = state
 
@@ -152,3 +188,6 @@ getHand player state =
 
 getCardInPlay :: Player -> GameState -> Maybe Card
 getCardInPlay player state = Map.lookup player (cardsInPlay state)
+
+getTricks :: GameState -> [Map Player Card]
+getTricks = tricks
