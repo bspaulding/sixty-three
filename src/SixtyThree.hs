@@ -45,10 +45,10 @@ oppositeTrump s =
     Clubs -> Spades
 
 cardScore :: Suit -> Card -> Integer
-cardScore trump card =
+cardScore trumpSuit card =
   case card of
     FaceCard suit face ->
-      case (suit == trump, suit == oppositeTrump trump, face) of
+      case (suit == trumpSuit, suit == oppositeTrump trumpSuit, face) of
         (True, False, Ace) -> 1
         (True, False, King) -> 25
         (True, False, Jack) -> 1
@@ -90,7 +90,8 @@ data GameState = GameState
     kitty :: [Card],
     tricks :: [Map Player Card],
     playerInControl :: Player,
-    cardsInPlay :: Map Player Card
+    cardsInPlay :: Map Player Card,
+    trump :: Maybe Suit
   }
   deriving (Eq, Show)
 
@@ -106,7 +107,8 @@ initialGameState =
       kitty = [],
       tricks = [],
       playerInControl = PlayerOne,
-      cardsInPlay = Map.empty
+      cardsInPlay = Map.empty,
+      trump = Nothing
     }
 
 data GameAction
@@ -114,6 +116,7 @@ data GameAction
   | BidPass
   | Bid Integer
   | Play Card
+  | PickTrump Suit
   deriving (Eq, Show)
 
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
@@ -143,7 +146,7 @@ reducer state (player, action)
             then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
             else state {bidPassed = newBidPassed, playerInControl = enumNext player}
     Play card ->
-      if any (card ==) (Map.findWithDefault [] player (hands state))
+      if trump state /= Nothing && any (card ==) (Map.findWithDefault [] player (hands state))
         then
           let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
               newCardsInPlay = Map.insert player card (cardsInPlay state)
@@ -161,6 +164,7 @@ reducer state (player, action)
                   playerInControl = enumNext player
                 }
         else state
+    PickTrump suit -> state {trump = Just suit}
     _ -> state
   | otherwise = state
 
@@ -191,3 +195,6 @@ getCardInPlay player state = Map.lookup player (cardsInPlay state)
 
 getTricks :: GameState -> [Map Player Card]
 getTricks = tricks
+
+getTrump :: GameState -> Maybe Suit
+getTrump = trump

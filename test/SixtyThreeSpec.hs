@@ -1,17 +1,17 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module SixtyThreeSpec (spec) where
 
-import           Import
-import qualified Data.Map  as Map
-import           Prelude               (foldl, head)
-import           Shuffle
-import           SixtyThree
-import           System.Random
-import           Test.Hspec
-import           Test.Hspec.QuickCheck
-import           Util
+import qualified Data.Map as Map
+import Import
+import Shuffle
+import SixtyThree
+import System.Random
+import Test.Hspec
+import Test.Hspec.QuickCheck
+import Util
+import Prelude (foldl, head)
 
 playGame :: [(Player, GameAction)] -> GameState
 playGame = foldl reducer initialGameState
@@ -21,11 +21,11 @@ hasAceOrFace (Cards cards) = not $ null acesAndFaces
   where
     acesAndFaces = filter isAceOrFace cards
     isAceOrFace :: Card -> Bool
-    isAceOrFace (FaceCard _ Ace)   = True
-    isAceOrFace (FaceCard _ King)  = True
+    isAceOrFace (FaceCard _ Ace) = True
+    isAceOrFace (FaceCard _ King) = True
     isAceOrFace (FaceCard _ Queen) = True
-    isAceOrFace (FaceCard _ Jack)  = True
-    isAceOrFace _                  = False
+    isAceOrFace (FaceCard _ Jack) = True
+    isAceOrFace _ = False
 
 spec :: Spec
 spec = do
@@ -130,6 +130,16 @@ spec = do
       getBiddingComplete state `shouldBe` True
 
   describe "tricking" $ do
+    it "can't play a card until trump is declared" $ do
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let state = playGame actions
+      let card = Prelude.head $ getHand PlayerFour state
+      -- nothing should change, action should be ignored
+      reducer state (PlayerFour, Play card) `shouldBe` state
+
+      let stateTrump = reducer state (PlayerFour, PickTrump Hearts)
+      getTrump stateTrump `shouldBe` Just Hearts
+
     it "disallows playing a card not in the player's hand" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
       let state = playGame actions
@@ -143,7 +153,7 @@ spec = do
       getCurrentPlayer state1 `shouldBe` PlayerFour
 
     it "cannot play a card if you already have a card in play" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
       let card = Prelude.head $ getHand PlayerFour state
       let state1 = reducer state (PlayerFour, Play card)
@@ -159,7 +169,7 @@ spec = do
       getHand PlayerFour state2 `shouldSatisfy` any (card2 ==)
 
     it "playing a card puts it in play and removes it from your hand" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
       let card = Prelude.head $ getHand PlayerFour state
       let state1 = reducer state (PlayerFour, Play card)
@@ -169,7 +179,7 @@ spec = do
       length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
 
     it "happy path game" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
       getBiddingComplete state `shouldBe` True
       getCurrentPlayer state `shouldBe` PlayerFour
@@ -181,7 +191,7 @@ spec = do
       length (getHand PlayerTwo state4) `shouldBe` numCards - 1
       length (getHand PlayerThree state4) `shouldBe` numCards - 1
       length (getHand PlayerFour state4) `shouldBe` numCards - 1
-      getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne state),(PlayerTwo, Prelude.head $ getHand PlayerTwo state),(PlayerThree, Prelude.head $ getHand PlayerThree state), (PlayerFour, Prelude.head $ getHand PlayerFour state)]]
+      getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne state), (PlayerTwo, Prelude.head $ getHand PlayerTwo state), (PlayerThree, Prelude.head $ getHand PlayerThree state), (PlayerFour, Prelude.head $ getHand PlayerFour state)]]
 
       -- ok let's start from zero and play all the tricks
       let state5 = playAllTricks state
@@ -202,7 +212,7 @@ playTurn state = reducer state (player, Play card)
 
 -- play a one trick round
 playTrickRound :: GameState -> GameState
-playTrickRound state = foldl (\s _ -> playTurn s) state [0..3]
+playTrickRound state = foldl (\s _ -> playTurn s) state [0 .. 3]
 
 playAllTricks :: GameState -> GameState
-playAllTricks state = foldl (\s _ -> playTrickRound s) state [0..11]
+playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
