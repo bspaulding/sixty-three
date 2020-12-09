@@ -203,6 +203,8 @@ spec = do
 
       pendingWith "add more player actions here and assert the final round state/score/etc."
 
+-- game playing helper functions
+
 -- play a trick turn, the current player simply plays the first card in their hand
 playTurn :: GameState -> GameState
 playTurn state = reducer state (player, Play card)
