@@ -140,6 +140,9 @@ spec = do
 
     it "always deals hands with ace or face" $ property $ prop_ace_or_face
 
+    it "can optionally deal with misdeals, and dealer loses turn" $ do
+      pending
+
   describe "initial state" $ do
     it "no bids" $ do
       getBid initialGameState `shouldBe` Nothing
