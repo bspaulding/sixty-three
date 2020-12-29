@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 957a224fd8e60913444416dfc5a31039b7d887a266b9a469df77c9effaf90a33
+-- hash: b22edeb11411b07323f7f9982a20e3d1cca3440468923f84bc17a038b46232d7
 
 name:           sixty-three
 version:        0.1.0.0
@@ -32,7 +32,6 @@ library
       Shuffle
       SixtyThree
       Types
-      Util
   other-modules:
       Paths_sixty_three
   hs-source-dirs:
@@ -68,7 +67,6 @@ test-suite sixty-three-test
   main-is: Spec.hs
   other-modules:
       SixtyThreeSpec
-      UtilSpec
       Paths_sixty_three
   hs-source-dirs:
       test

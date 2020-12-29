@@ -12,7 +12,6 @@ import System.Random
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
-import Util
 import Prelude (foldl, head)
 
 playGame :: [(Player, GameAction)] -> GameState
