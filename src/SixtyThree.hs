@@ -3,18 +3,37 @@
 
 module SixtyThree where
 
-import Data.List (intersperse)
+import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Import
 import Shuffle
 import System.Random
-import Prelude (enumFrom, succ, toEnum)
+import Prelude (enumFrom, foldl, head, succ, toEnum)
 
 data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Ord, Show)
 
-data Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace deriving (Enum, Eq, Ord, Show)
+data Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace deriving (Enum, Eq, Show)
+
+rank :: Face -> Integer
+rank f = case f of
+  Two -> 2
+  Three -> 3
+  Four -> 4
+  Five -> 5
+  Six -> 6
+  Seven -> 7
+  Eight -> 8
+  Nine -> 9
+  Ten -> 10
+  Jack -> 11
+  Queen -> 12
+  King -> 13
+  Ace -> 14
+
+instance Ord Face where
+  compare a b = compare (rank a) (rank b)
 
 data Card = FaceCard Suit Face | Joker deriving (Eq, Ord, Show)
 
@@ -33,7 +52,7 @@ instance Display Card where
 newtype Cards = Cards [Card] deriving (Eq, Show)
 
 instance Display Cards where
-  display (Cards xs) = mconcat $ [start] ++ intersperse separator (map display xs) ++ [stop]
+  display (Cards xs) = mconcat $ [start] ++ List.intersperse separator (map display xs) ++ [stop]
     where
       separator = displayBytesUtf8 ", "
       start = displayBytesUtf8 "["
@@ -100,6 +119,44 @@ hasAceOrFace cards = not $ null acesAndFaces
     isAceOrFace (FaceCard _ Queen) = True
     isAceOrFace (FaceCard _ Jack) = True
     isAceOrFace _ = False
+
+isTrump :: Suit -> Card -> Bool
+isTrump trump (FaceCard suit Five) = suit == trump || suit == oppositeTrump trump
+isTrump trump (FaceCard suit face) = suit == trump
+isTrump trump Joker = True
+
+compareCards :: Suit -> Card -> Card -> Ordering
+compareCards trump a b =
+  case (a, b) of
+    (FaceCard asuit aface, FaceCard bsuit bface) ->
+      case (isTrump trump a, isTrump trump b) of
+        (True, True) -> case (asuit == trump, bsuit == trump) of
+          (True, False) -> GT
+          (False, True) -> LT
+          _ -> compare aface bface
+        (True, False) -> GT
+        (False, True) -> LT
+        (False, False) -> compare aface bface
+    (Joker, _) -> if isTrump trump b then LT else GT
+    (_, Joker) -> if isTrump trump a then GT else LT
+    _ -> LT
+
+scoreTrick :: Suit -> Map Player Card -> (Player, Integer)
+scoreTrick trump trick = (winner, totalScore)
+  where
+    scores = Map.toList $ Map.map (cardScore trump) trick
+    totalScore = foldl (+) 0 (map snd scores)
+    sortedCards = List.sortBy (\(_, a) (_, b) -> compare b a) (Map.toList trick)
+    winner = fst . head $ sortedCards
+
+scoreTricks :: Suit -> [Map Player Card] -> Map Player Integer
+scoreTricks trump tricks = foldl foldScores Map.empty scores
+  where
+    scores :: [(Player, Integer)]
+    scores = List.map (scoreTrick trump) tricks
+    foldScores :: Map Player Integer -> (Player, Integer) -> Map Player Integer
+    foldScores acc (winner, score) =
+      Map.insert winner (score + Map.findWithDefault 0 winner acc) acc
 
 data GameState = GameState
   { dealer :: Player,

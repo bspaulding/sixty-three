@@ -25,6 +25,53 @@ prop_ace_or_face i =
 
 spec :: Spec
 spec = do
+  describe "compareCards" $ do
+    it "orders them by trump then face rank" $ do
+      let a = FaceCard Hearts Ace
+      let b = FaceCard Hearts Five
+      let c = FaceCard Diamonds Five
+      let d = FaceCard Spades Jack
+
+      compareCards Hearts a b `shouldBe` GT
+      compareCards Hearts a c `shouldBe` GT
+      compareCards Hearts a d `shouldBe` GT
+      compareCards Hearts b a `shouldBe` LT
+      compareCards Hearts b c `shouldBe` GT
+      compareCards Hearts b d `shouldBe` GT
+      compareCards Hearts c a `shouldBe` LT
+      compareCards Hearts c b `shouldBe` LT
+      compareCards Hearts c d `shouldBe` GT
+      compareCards Hearts d a `shouldBe` LT
+      compareCards Hearts d b `shouldBe` LT
+      compareCards Hearts d c `shouldBe` LT
+
+      compareCards Hearts Joker d `shouldBe` GT
+      compareCards Hearts Joker (FaceCard Hearts Two) `shouldBe` LT
+      compareCards Hearts (FaceCard Hearts Two) Joker `shouldBe` GT
+
+  describe "scoreTrick" $ do
+    it "returns the winning player and the total points" $ do
+      pending
+      let trick = Map.fromList [(PlayerFour, FaceCard Hearts King), (PlayerOne, FaceCard Hearts Two), (PlayerTwo, FaceCard Hearts Ten), (PlayerThree, FaceCard Hearts Jack)]
+      scoreTrick Hearts trick `shouldBe` (PlayerFour, 28)
+      let trick' =
+            Map.fromList
+              [ (PlayerFour, FaceCard Hearts Ace),
+                (PlayerOne, FaceCard Hearts Five),
+                (PlayerTwo, FaceCard Diamonds Five),
+                (PlayerThree, FaceCard Spades Jack)
+              ]
+      scoreTrick Hearts trick' `shouldBe` (PlayerFour, 11)
+
+  describe "scoreTricks" $ do
+    it "returns a map of player to score for all the tricks" $ do
+      pending
+      let tricks =
+            [ Map.fromList [(PlayerFour, FaceCard Hearts King), (PlayerOne, FaceCard Hearts Two), (PlayerTwo, FaceCard Hearts Ten), (PlayerThree, FaceCard Hearts Jack)],
+              Map.fromList [(PlayerFour, FaceCard Hearts Ace), (PlayerOne, FaceCard Hearts Five), (PlayerTwo, FaceCard Diamonds Five), (PlayerThree, FaceCard Spades Jack)]
+            ]
+      scoreTricks Hearts tricks `shouldBe` Map.fromList [(PlayerFour, 39)]
+
   describe "card points" $ do
     it "scores cards according to trump" $ do
       cardScore Hearts (FaceCard Hearts Ace) `shouldBe` 1
