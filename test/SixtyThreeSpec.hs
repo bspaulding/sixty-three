@@ -122,6 +122,25 @@ spec = do
       getBid state `shouldBe` Just (PlayerTwo, 126)
       getBiddingComplete state `shouldBe` True
 
+  describe "discarding" $ do
+    it "cannot discard to less than 6 cards" $ do
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let state = playGame actions
+      let player = getCurrentPlayer state
+      let cardsToDiscard = take 7 (getHand player state)
+      let stateDiscarded = reducer state (player, SixtyThree.Discard cardsToDiscard)
+
+      state `shouldBe` stateDiscarded
+
+    it "cannot discard to more than 6 cards" $ do
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let state = playGame actions
+      let player = getCurrentPlayer state
+      let cardsToDiscard = take 5 (getHand player state)
+      let stateDiscarded = reducer state (player, SixtyThree.Discard cardsToDiscard)
+
+      state `shouldBe` stateDiscarded
+
   describe "tricking" $ do
     it "can't play a card until trump is declared" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
@@ -170,24 +189,6 @@ spec = do
       getCardInPlay PlayerFour state1 `shouldBe` Just card
       getCurrentPlayer state1 `shouldSatisfy` not . (PlayerFour ==)
       length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
-
-    it "cannot discard to less than 6 cards" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playGame actions
-      let player = getCurrentPlayer state
-      let cardsToDiscard = take 7 (getHand player state)
-      let stateDiscarded = reducer state (player, SixtyThree.Discard cardsToDiscard)
-
-      state `shouldBe` stateDiscarded
-
-    it "cannot discard to more than 6 cards" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playGame actions
-      let player = getCurrentPlayer state
-      let cardsToDiscard = take 5 (getHand player state)
-      let stateDiscarded = reducer state (player, SixtyThree.Discard cardsToDiscard)
-
-      state `shouldBe` stateDiscarded
 
     it "happy path game" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
