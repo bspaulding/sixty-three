@@ -5,17 +5,18 @@ module SixtyThree where
 
 import Data.List (intersperse)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import Import
 import Shuffle
 import System.Random
 import Prelude (enumFrom, succ, toEnum)
 
-data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Show)
+data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Ord, Show)
 
-data Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace deriving (Enum, Eq, Show)
+data Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace deriving (Enum, Eq, Ord, Show)
 
-data Card = FaceCard Suit Face | Joker deriving (Eq, Show)
+data Card = FaceCard Suit Face | Joker deriving (Eq, Ord, Show)
 
 instance Display Card where
   textDisplay card =
@@ -109,12 +110,16 @@ data GameState = GameState
     tricks :: [Map Player Card],
     playerInControl :: Player,
     cardsInPlay :: Map Player Card,
+    discarded :: [Card],
     trump :: Maybe Suit,
     g :: StdGen
   }
   deriving (Eq, Show)
 
 data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour deriving (Bounded, Enum, Eq, Ord, Show)
+
+players :: [Player]
+players = generateEnumValues
 
 initialGameState :: GameState
 initialGameState =
@@ -127,6 +132,7 @@ initialGameState =
       tricks = [],
       playerInControl = PlayerOne,
       cardsInPlay = Map.empty,
+      discarded = [],
       trump = Nothing,
       g = mkStdGen 0
     }
@@ -137,6 +143,7 @@ data GameAction
   | Bid Integer
   | Play Card
   | PickTrump Suit
+  | Discard [Card]
   deriving (Eq, Show)
 
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
@@ -167,7 +174,7 @@ reducer state (player, action)
             then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
             else state {bidPassed = newBidPassed, playerInControl = enumNext player}
     Play card ->
-      if trump state /= Nothing && any (card ==) (Map.findWithDefault [] player (hands state))
+      if getAllPlayersDiscarded state && trump state /= Nothing && any (card ==) (Map.findWithDefault [] player (hands state))
         then
           let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
               newCardsInPlay = Map.insert player card (cardsInPlay state)
@@ -186,6 +193,14 @@ reducer state (player, action)
                 }
         else state
     PickTrump suit -> state {trump = Just suit}
+    Discard cards ->
+      let hand = Set.fromList $ getHand player state
+          newHand = Set.toList $ Set.difference hand (Set.fromList cards)
+       in state
+            { hands = Map.insert player newHand (hands state),
+              playerInControl = enumNext player,
+              discarded = discarded state ++ cards
+            }
     _ -> state
   | otherwise = state
 
@@ -219,3 +234,7 @@ getTricks = tricks
 
 getTrump :: GameState -> Maybe Suit
 getTrump = trump
+
+getAllPlayersDiscarded :: GameState -> Bool
+getAllPlayersDiscarded state =
+  all (<= 6) $ Map.elems $ Map.map length (hands state)

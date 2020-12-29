@@ -147,7 +147,7 @@ spec = do
 
     it "cannot play a card if you already have a card in play" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playGame actions
+      let state = playAllDiscards $ playGame actions
       let card = Prelude.head $ getHand PlayerFour state
       let state1 = reducer state (PlayerFour, Play card)
       -- sanity check there's a card in play
@@ -163,7 +163,7 @@ spec = do
 
     it "playing a card puts it in play and removes it from your hand" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playGame actions
+      let state = playAllDiscards $ playGame actions
       let card = Prelude.head $ getHand PlayerFour state
       let state1 = reducer state (PlayerFour, Play card)
       getHand PlayerFour state1 `shouldSatisfy` (not . any (card ==))
@@ -177,17 +177,32 @@ spec = do
       getBiddingComplete state `shouldBe` True
       getCurrentPlayer state `shouldBe` PlayerFour
 
-      let numCards = length (getHand (getCurrentPlayer state) state)
-      let state4 = playTrickRound state
+      -- we've each got 12 cards before discarding
+      length (getHand PlayerOne state) `shouldBe` 12
+      length (getHand PlayerTwo state) `shouldBe` 12
+      length (getHand PlayerThree state) `shouldBe` 12
+      length (getHand PlayerFour state) `shouldBe` 12
+
+      let stateDiscarded = playAllDiscards state
+      getAllPlayersDiscarded stateDiscarded `shouldBe` True
+
+      -- we've each got 6 cards after discarding
+      length (getHand PlayerOne stateDiscarded) `shouldBe` 6
+      length (getHand PlayerTwo stateDiscarded) `shouldBe` 6
+      length (getHand PlayerThree stateDiscarded) `shouldBe` 6
+      length (getHand PlayerFour stateDiscarded) `shouldBe` 6
+
+      -- sidebar here...
+      let state4 = playTrickRound stateDiscarded
       -- after one round of plays, each player should have one less card in their hands
-      length (getHand PlayerOne state4) `shouldBe` numCards - 1
-      length (getHand PlayerTwo state4) `shouldBe` numCards - 1
-      length (getHand PlayerThree state4) `shouldBe` numCards - 1
-      length (getHand PlayerFour state4) `shouldBe` numCards - 1
-      getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne state), (PlayerTwo, Prelude.head $ getHand PlayerTwo state), (PlayerThree, Prelude.head $ getHand PlayerThree state), (PlayerFour, Prelude.head $ getHand PlayerFour state)]]
+      length (getHand PlayerOne state4) `shouldBe` 5
+      length (getHand PlayerTwo state4) `shouldBe` 5
+      length (getHand PlayerThree state4) `shouldBe` 5
+      length (getHand PlayerFour state4) `shouldBe` 5
+      getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne stateDiscarded), (PlayerTwo, Prelude.head $ getHand PlayerTwo stateDiscarded), (PlayerThree, Prelude.head $ getHand PlayerThree stateDiscarded), (PlayerFour, Prelude.head $ getHand PlayerFour stateDiscarded)]]
 
       -- ok let's start from zero and play all the tricks
-      let state5 = playAllTricks state
+      let state5 = playAllTricks stateDiscarded
       getHand PlayerOne state5 `shouldBe` []
       getHand PlayerTwo state5 `shouldBe` []
       getHand PlayerThree state5 `shouldBe` []
@@ -211,3 +226,14 @@ playTrickRound state = foldl (\s _ -> playTurn s) state [0 .. 3]
 
 playAllTricks :: GameState -> GameState
 playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
+
+playDiscard :: GameState -> GameState
+playDiscard state =
+  reducer state (player, SixtyThree.Discard discardedCards)
+  where
+    discardedCards = take 6 (getHand player state)
+    player = getCurrentPlayer state
+
+playAllDiscards :: GameState -> GameState
+playAllDiscards state =
+  foldl (\s _ -> playDiscard s) state [0 .. 3]
