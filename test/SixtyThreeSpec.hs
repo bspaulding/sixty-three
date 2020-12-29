@@ -5,6 +5,7 @@ module SixtyThreeSpec (spec) where
 
 import qualified Data.List as List
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Import
 import Shuffle
 import SixtyThree
@@ -58,8 +59,16 @@ instance Arbitrary Face where
 instance Arbitrary Card where
   arbitrary = frequency [(1, return Joker), (51, FaceCard <$> arbitrary <*> arbitrary)]
 
+instance Arbitrary Player where
+  arbitrary = elements players
+
 spec :: Spec
 spec = do
+  describe "partner" $ do
+    it "should always be your partners' partner" $
+      property $
+        \player -> partner (partner player) === player
+
   describe "isTrump" $ do
     it "returns true if card is trump" $ property $ prop_is_trump
 
@@ -212,6 +221,9 @@ spec = do
       getBiddingComplete state `shouldBe` True
 
   describe "discarding" $ do
+    it "cannot discard a trump worth points, if you must discard trump" $ do
+      pending
+
     it "cannot pass the joker if you do not have the ace" $ do
       pending
 
@@ -340,6 +352,28 @@ spec = do
       totalScore `shouldBe` 63
 
       pendingWith "add the passing card mechanic"
+
+    it "passing cards because you have too many trump" $ do
+      let hand1 = map (FaceCard Hearts) (drop 1 faces)
+      let hand2 = map (FaceCard Diamonds) (drop 1 faces)
+      let hand3 = map (FaceCard Spades) (drop 1 faces)
+      let hand4 = map (FaceCard Clubs) (drop 1 faces)
+      let kitty = map (\suit -> FaceCard suit Two) suits ++ [Joker]
+
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let state' =
+            (playGame actions)
+              { kitty = kitty,
+                hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)]
+              }
+      let state = reducer state' (PlayerFour, PickTrump Clubs)
+
+      getCurrentPlayer state `shouldBe` PlayerFour
+
+      let cardsToPass = [FaceCard Clubs Three, FaceCard Clubs Four, FaceCard Clubs Five]
+      let passedState = foldl reducer state [(PlayerFour, PassCards cardsToPass)]
+      getHand PlayerTwo passedState `shouldBe` hand2 ++ cardsToPass
+      getHand PlayerFour passedState `shouldBe` List.sort (kitty ++ (drop 3 hand4))
 
 -- game playing helper functions
 

@@ -158,6 +158,7 @@ scoreTricks trump tricks = foldl foldScores Map.empty scores
     foldScores acc (winner, score) =
       Map.insert winner (score + Map.findWithDefault 0 winner acc) acc
 
+-- lists of cards should probably be sets of cards
 data GameState = GameState
   { dealer :: Player,
     currentBid :: Maybe (Player, Integer),
@@ -201,10 +202,19 @@ data GameAction
   | Play Card
   | PickTrump Suit
   | Discard [Card]
+  | PassCards [Card]
   deriving (Eq, Show)
 
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
 enumNext a = if maxBound == a then minBound else succ a
+
+partner :: Player -> Player
+partner p =
+  case p of
+    PlayerOne -> PlayerThree
+    PlayerTwo -> PlayerFour
+    PlayerThree -> PlayerOne
+    PlayerFour -> PlayerTwo
 
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
@@ -256,7 +266,12 @@ reducer state (player, action)
               kitty = [],
               hands = Map.insert player newHand (hands state)
             }
-    -- TODO: is there a timing bug here, where since we force order in discarding, we would deadlock waiting for a player with too few trump to receive trump from a partner?
+    PassCards cards ->
+      let partner' = partner player
+          newHand = (Map.findWithDefault [] partner' (hands state)) ++ cards
+          newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
+          newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
+       in state {hands = newHands}
     Discard cards ->
       case (trump state) of
         Nothing -> state -- cannot discard if trump not selected!
