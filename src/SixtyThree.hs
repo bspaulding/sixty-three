@@ -196,11 +196,14 @@ reducer state (player, action)
     Discard cards ->
       let hand = Set.fromList $ getHand player state
           newHand = Set.toList $ Set.difference hand (Set.fromList cards)
-       in state
-            { hands = Map.insert player newHand (hands state),
-              playerInControl = enumNext player,
-              discarded = discarded state ++ cards
-            }
+       in if length newHand == 6
+            then
+              state
+                { hands = Map.insert player newHand (hands state),
+                  playerInControl = enumNext player,
+                  discarded = discarded state ++ cards
+                }
+            else state
     _ -> state
   | otherwise = state
 
