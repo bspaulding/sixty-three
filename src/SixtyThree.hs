@@ -250,17 +250,24 @@ reducer state (player, action)
                 }
         else state
     PickTrump suit -> state {trump = Just suit}
+    -- TODO: is there a timing bug here, where since we force order in discarding, we would deadlock waiting for a player with too few trump to receive trump from a partner?
     Discard cards ->
-      let hand = Set.fromList $ getHand player state
-          newHand = Set.toList $ Set.difference hand (Set.fromList cards)
-       in if length newHand == 6
-            then
-              state
-                { hands = Map.insert player newHand (hands state),
-                  playerInControl = enumNext player,
-                  discarded = discarded state ++ cards
-                }
-            else state
+      case (trump state) of
+        Nothing -> state -- cannot discard if trump not selected!
+        Just t ->
+          if any (isTrump t) cards
+            then state -- cannot discard trump!
+            else
+              let hand = Set.fromList $ getHand player state
+                  newHand = Set.toList $ Set.difference hand (Set.fromList cards)
+               in if length newHand == 6
+                    then
+                      state
+                        { hands = Map.insert player newHand (hands state),
+                          playerInControl = enumNext player,
+                          discarded = discarded state ++ cards
+                        }
+                    else state
     _ -> state
   | otherwise = state
 

@@ -24,8 +24,46 @@ prop_ace_or_face i =
   where
     (hand1, hand2, hand3, hand4, kitty) = fst $ deal deck (mkStdGen i)
 
+prop_is_trump :: Suit -> Card -> Property
+prop_is_trump trumpSuit card =
+  classify (card == Joker) "joker" $
+    classify
+      ( case card of
+          FaceCard suit _ -> suit == trumpSuit
+          _ -> False
+      )
+      "in suit"
+      $ classify
+        ( case card of
+            FaceCard suit Five -> suit == oppositeTrump trumpSuit
+            _ -> False
+        )
+        "opposite five"
+        $ classify
+          ( case card of
+              FaceCard suit _ -> suit /= trumpSuit
+              _ -> False
+          )
+          "out of suit"
+          $ isTrump trumpSuit card
+            === case card of
+              Joker -> True
+              FaceCard suit face -> suit == trumpSuit || (suit == oppositeTrump trumpSuit && face == Five)
+
+instance Arbitrary Suit where
+  arbitrary = elements suits
+
+instance Arbitrary Face where
+  arbitrary = elements faces
+
+instance Arbitrary Card where
+  arbitrary = frequency [(1, return Joker), (51, FaceCard <$> arbitrary <*> arbitrary)]
+
 spec :: Spec
 spec = do
+  describe "isTrump" $ do
+    it "returns true if card is trump" $ property $ prop_is_trump
+
   describe "compareCards" $ do
     it "orders them by trump then face rank" $ do
       let a = FaceCard Hearts Ace
@@ -276,6 +314,11 @@ spec = do
 
       pendingWith "add more player actions here and assert the final round state/score/etc."
 
+      let scoredTricks = scoreTricks Hearts (tricks state5)
+      scoredTricks `shouldBe` Map.empty
+      let totalScore = foldl (+) 0 $ Map.elems $ scoredTricks
+      totalScore `shouldBe` 63
+
 -- game playing helper functions
 
 -- play a trick turn, the current player simply plays the first card in their hand
@@ -294,10 +337,13 @@ playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
 
 playDiscard :: GameState -> GameState
 playDiscard state =
-  reducer state (player, SixtyThree.Discard discardedCards)
-  where
-    discardedCards = take 6 (getHand player state)
-    player = getCurrentPlayer state
+  case (getTrump state) of
+    Nothing -> state -- no trump wtf are we doing?
+    Just t ->
+      reducer state (player, SixtyThree.Discard discardedCards)
+      where
+        discardedCards = take 6 $ filter (not . (isTrump t)) (getHand player state)
+        player = getCurrentPlayer state
 
 playAllDiscards :: GameState -> GameState
 playAllDiscards state =
