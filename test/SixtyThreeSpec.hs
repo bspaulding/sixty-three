@@ -3,6 +3,7 @@
 
 module SixtyThreeSpec (spec) where
 
+import qualified Data.List as List
 import qualified Data.Map as Map
 import Import
 import Shuffle
@@ -51,7 +52,6 @@ spec = do
 
   describe "scoreTrick" $ do
     it "returns the winning player and the total points" $ do
-      pending
       let trick = Map.fromList [(PlayerFour, FaceCard Hearts King), (PlayerOne, FaceCard Hearts Two), (PlayerTwo, FaceCard Hearts Ten), (PlayerThree, FaceCard Hearts Jack)]
       scoreTrick Hearts trick `shouldBe` (PlayerFour, 28)
       let trick' =
@@ -65,7 +65,6 @@ spec = do
 
   describe "scoreTricks" $ do
     it "returns a map of player to score for all the tricks" $ do
-      pending
       let tricks =
             [ Map.fromList [(PlayerFour, FaceCard Hearts King), (PlayerOne, FaceCard Hearts Two), (PlayerTwo, FaceCard Hearts Ten), (PlayerThree, FaceCard Hearts Jack)],
               Map.fromList [(PlayerFour, FaceCard Hearts Ace), (PlayerOne, FaceCard Hearts Five), (PlayerTwo, FaceCard Diamonds Five), (PlayerThree, FaceCard Spades Jack)]

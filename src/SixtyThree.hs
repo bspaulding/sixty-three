@@ -146,7 +146,7 @@ scoreTrick trump trick = (winner, totalScore)
   where
     scores = Map.toList $ Map.map (cardScore trump) trick
     totalScore = foldl (+) 0 (map snd scores)
-    sortedCards = List.sortBy (\(_, a) (_, b) -> compare b a) (Map.toList trick)
+    sortedCards = List.sortBy (\(_, a) (_, b) -> compareCards trump b a) (Map.toList trick)
     winner = fst . head $ sortedCards
 
 scoreTricks :: Suit -> [Map Player Card] -> Map Player Integer
