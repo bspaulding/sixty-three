@@ -336,7 +336,7 @@ spec = do
       let totalScore = foldl (+) 0 $ Map.elems $ scoredTricks
       totalScore `shouldBe` 63
 
-      pendingWith "add more player actions here and assert the final round state/score/etc."
+      pendingWith "add the passing card mechanic"
 
 -- game playing helper functions
 
