@@ -249,7 +249,13 @@ reducer state (player, action)
                   playerInControl = enumNext player
                 }
         else state
-    PickTrump suit -> state {trump = Just suit}
+    PickTrump suit ->
+      let newHand = (kitty state) ++ Map.findWithDefault [] player (hands state)
+       in state
+            { trump = Just suit,
+              kitty = [],
+              hands = Map.insert player newHand (hands state)
+            }
     -- TODO: is there a timing bug here, where since we force order in discarding, we would deadlock waiting for a player with too few trump to receive trump from a partner?
     Discard cards ->
       case (trump state) of

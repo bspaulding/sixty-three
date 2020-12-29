@@ -149,6 +149,9 @@ spec = do
       getBiddingComplete initialGameState `shouldBe` False
 
   describe "bidding" $ do
+    it "can configure a minimum bid" $ do
+      pending
+
     it "can set bid" $ do
       let bid1 = reducer initialGameState (PlayerOne, Bid 25)
       getBid bid1 `shouldBe` Just (PlayerOne, 25)
@@ -206,6 +209,9 @@ spec = do
       getBiddingComplete state `shouldBe` True
 
   describe "discarding" $ do
+    it "cannot pass the joker if you do not have the ace" $ do
+      pending
+
     it "cannot discard to less than 6 cards" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
@@ -225,6 +231,9 @@ spec = do
       state `shouldBe` stateDiscarded
 
   describe "tricking" $ do
+    it "must lead trump on the first round" $ do
+      pending
+
     it "can't play a card until trump is declared" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
       let state = playGame actions
@@ -273,6 +282,16 @@ spec = do
       getCurrentPlayer state1 `shouldSatisfy` not . (PlayerFour ==)
       length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
 
+    it "can play off trump if lead with off trump" $ do
+      pending
+
+    it "cannot play off trump if lead with trump" $ do
+      pending
+
+    it "have no trump left but lead with trump" $ do
+      -- TODO: irl you would just discard and not play any further, this reveals to all that you have no trump
+      pending
+
     it "happy path game" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
@@ -283,7 +302,8 @@ spec = do
       length (getHand PlayerOne state) `shouldBe` 12
       length (getHand PlayerTwo state) `shouldBe` 12
       length (getHand PlayerThree state) `shouldBe` 12
-      length (getHand PlayerFour state) `shouldBe` 12
+      length (getHand PlayerFour state) `shouldBe` 17
+      getKitty state `shouldBe` []
 
       let stateDiscarded = playAllDiscards state
       getAllPlayersDiscarded stateDiscarded `shouldBe` True
@@ -311,12 +331,12 @@ spec = do
       getHand PlayerFour state5 `shouldBe` []
       getCardInPlay PlayerOne state5 `shouldBe` Nothing
 
-      pendingWith "add more player actions here and assert the final round state/score/etc."
-
       let scoredTricks = scoreTricks Hearts (tricks state5)
-      scoredTricks `shouldBe` Map.empty
+      scoredTricks `shouldBe` Map.fromList [(PlayerOne, 46), (PlayerTwo, 15), (PlayerThree, 1), (PlayerFour, 1)]
       let totalScore = foldl (+) 0 $ Map.elems $ scoredTricks
       totalScore `shouldBe` 63
+
+      pendingWith "add more player actions here and assert the final round state/score/etc."
 
 -- game playing helper functions
 
@@ -334,6 +354,7 @@ playTrickRound state = foldl (\s _ -> playTurn s) state [0 .. 3]
 playAllTricks :: GameState -> GameState
 playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
 
+-- TODO: prefer to discard higher faced off trump
 playDiscard :: GameState -> GameState
 playDiscard state =
   case (getTrump state) of
@@ -341,7 +362,10 @@ playDiscard state =
     Just t ->
       reducer state (player, SixtyThree.Discard discardedCards)
       where
-        discardedCards = take 6 $ filter (not . (isTrump t)) (getHand player state)
+        -- TODO: there's a bug here i think if you don't have enough non trump cards need to pass
+        discardedCards = take ((length hand) - 6) nonTrumpCards
+        nonTrumpCards = filter (not . (isTrump t)) hand
+        hand = (getHand player state)
         player = getCurrentPlayer state
 
 playAllDiscards :: GameState -> GameState
