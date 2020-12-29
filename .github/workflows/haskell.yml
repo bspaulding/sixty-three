@@ -31,7 +31,8 @@ jobs:
           ${{ runner.os }}-build-
           ${{ runner.os }}-
     - name: Set user level stack config
-      run: echo "allow-newer: true" > /home/runner/.stack/config.yaml
+      run: |
+      echo "allow-newer: true" > /home/runner/.stack/config.yaml
     - name: Build
       run: stack build
     - name: Run tests
