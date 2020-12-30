@@ -351,7 +351,7 @@ spec = do
       let totalScore = foldl (+) 0 $ Map.elems $ scoredTricks
       totalScore `shouldBe` 63
 
-      pendingWith "add the passing card mechanic"
+      pendingWith "need to play the full game, is over when one team is at 200 pts"
 
     it "passing cards because you have too many trump" $ do
       let hand1 = map (FaceCard Hearts) (drop 1 faces)
