@@ -10,6 +10,7 @@ import qualified Data.Text as T
 import Import
 import Shuffle
 import System.Random
+import Util
 import Prelude (enumFrom, foldl, head, succ, toEnum)
 
 data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Ord, Show)
@@ -158,6 +159,8 @@ scoreTricks trump tricks = foldl foldScores Map.empty scores
     foldScores acc (winner, score) =
       Map.insert winner (score + Map.findWithDefault 0 winner acc) acc
 
+type Round = ((Player, Integer), [Map Player Card])
+
 -- lists of cards should probably be sets of cards
 data GameState = GameState
   { dealer :: Player,
@@ -170,6 +173,7 @@ data GameState = GameState
     cardsInPlay :: Map Player Card,
     discarded :: [Card],
     trump :: Maybe Suit,
+    previousRounds :: [Round],
     g :: StdGen
   }
   deriving (Eq, Show)
@@ -192,6 +196,7 @@ initialGameState =
       cardsInPlay = Map.empty,
       discarded = [],
       trump = Nothing,
+      previousRounds = [],
       g = mkStdGen 0
     }
 
@@ -215,6 +220,25 @@ partner p =
     PlayerTwo -> PlayerFour
     PlayerThree -> PlayerOne
     PlayerFour -> PlayerTwo
+
+maybeFinishRound :: GameState -> GameState
+maybeFinishRound state =
+  if null allHands
+    then -- TODO: move bid and tricks to previousRounds, reset game for next round
+    case currentBid state of
+      Just bid ->
+        initialGameState
+          { previousRounds = (bid, tricks state) : previousRounds state,
+            -- TODO: maybe a resetRound function here
+            dealer = enumNext (dealer state),
+            playerInControl = enumNext (enumNext (dealer state)),
+            g = g state
+          }
+      -- TODO this should really be an error or something
+      Nothing -> state
+    else state
+  where
+    allHands = concatMap (`getHand` state) players
 
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
@@ -246,18 +270,19 @@ reducer state (player, action)
           let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
               newCardsInPlay = Map.insert player card (cardsInPlay state)
               roundIsOver = Map.size newCardsInPlay == 4
-           in state
-                { hands = Map.insert player newHand (hands state),
-                  cardsInPlay =
-                    if roundIsOver
-                      then Map.empty
-                      else newCardsInPlay,
-                  tricks =
-                    if roundIsOver
-                      then newCardsInPlay : tricks state
-                      else tricks state,
-                  playerInControl = enumNext player
-                }
+           in maybeFinishRound $
+                state
+                  { hands = Map.insert player newHand (hands state),
+                    cardsInPlay =
+                      if roundIsOver
+                        then Map.empty
+                        else newCardsInPlay,
+                    tricks =
+                      if roundIsOver
+                        then newCardsInPlay : tricks state
+                        else tricks state,
+                    playerInControl = enumNext player
+                  }
         else state
     PickTrump suit ->
       let newHand = (kitty state) ++ Map.findWithDefault [] player (hands state)
@@ -326,3 +351,6 @@ getTrump = trump
 getAllPlayersDiscarded :: GameState -> Bool
 getAllPlayersDiscarded state =
   all (<= 6) $ Map.elems $ Map.map length (hands state)
+
+getLastRound :: GameState -> Maybe Round
+getLastRound = safeHead . previousRounds

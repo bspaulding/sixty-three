@@ -340,16 +340,21 @@ spec = do
 
       -- ok let's start from zero and play all the tricks
       let state5 = playAllTricks stateDiscarded
+
+      let tricks' = snd <$> getLastRound state5
+      let scoredTricks = scoreTricks Hearts <$> tricks'
+      scoredTricks `shouldBe` Just (Map.fromList [(PlayerOne, 46), (PlayerTwo, 15), (PlayerThree, 1), (PlayerFour, 1)])
+      let totalScore = foldl (+) 0 <$> Map.elems <$> scoredTricks
+      totalScore `shouldBe` Just 63
+
+      -- assert round was reset and ready for next
+      getDealer state5 `shouldBe` enumNext (dealer initialGameState)
+      getCurrentPlayer state5 `shouldBe` enumNext (enumNext (dealer initialGameState))
       getHand PlayerOne state5 `shouldBe` []
       getHand PlayerTwo state5 `shouldBe` []
       getHand PlayerThree state5 `shouldBe` []
       getHand PlayerFour state5 `shouldBe` []
       getCardInPlay PlayerOne state5 `shouldBe` Nothing
-
-      let scoredTricks = scoreTricks Hearts (tricks state5)
-      scoredTricks `shouldBe` Map.fromList [(PlayerOne, 46), (PlayerTwo, 15), (PlayerThree, 1), (PlayerFour, 1)]
-      let totalScore = foldl (+) 0 $ Map.elems $ scoredTricks
-      totalScore `shouldBe` 63
 
       pendingWith "need to play the full game, is over when one team is at 200 pts"
 
@@ -358,7 +363,7 @@ spec = do
       let hand2 = map (FaceCard Diamonds) (drop 1 faces)
       let hand3 = map (FaceCard Spades) (drop 1 faces)
       let hand4 = map (FaceCard Clubs) (drop 1 faces)
-      let kitty = map (\suit -> FaceCard suit Two) suits ++ [Joker]
+      let kitty = map (`FaceCard` Two) suits ++ [Joker]
 
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
       let state' =
