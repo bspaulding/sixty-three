@@ -341,10 +341,8 @@ spec = do
       -- ok let's start from zero and play all the tricks
       let state5 = playAllTricks stateDiscarded
 
-      let tricks' = snd <$> getLastRound state5
-      let scoredTricks = scoreTricks Hearts <$> tricks'
-      scoredTricks `shouldBe` Just (Map.fromList [(PlayerOne, 46), (PlayerTwo, 15), (PlayerThree, 1), (PlayerFour, 1)])
-      let totalScore = foldl (+) 0 <$> Map.elems <$> scoredTricks
+      let scores = snd <$> getLastRound state5
+      let totalScore = foldl (+) 0 <$> Map.elems <$> scores
       totalScore `shouldBe` Just 63
 
       -- assert round was reset and ready for next
@@ -380,6 +378,17 @@ spec = do
       let passedState = foldl reducer state [(PlayerFour, PassCards cardsToPass)]
       getHand PlayerTwo passedState `shouldBe` hand2 ++ cardsToPass
       getHand PlayerFour passedState `shouldBe` List.sort (kitty ++ (drop 3 hand4))
+
+  describe "calcTotalScore" $ do
+    it "total scores for each pair" $ do
+      calcTotalScore [] `shouldBe` (0, 0)
+      calcTotalScore [Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)]] `shouldBe` (63, 0)
+      calcTotalScore [Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)]] `shouldBe` (53, 10)
+      calcTotalScore
+        [ Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)],
+          Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)]
+        ]
+        `shouldBe` (116, 10)
 
 -- game playing helper functions
 

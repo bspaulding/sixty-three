@@ -159,7 +159,7 @@ scoreTricks trump tricks = foldl foldScores Map.empty scores
     foldScores acc (winner, score) =
       Map.insert winner (score + Map.findWithDefault 0 winner acc) acc
 
-type Round = ((Player, Integer), [Map Player Card])
+type Round = ((Player, Integer), Map Player Integer)
 
 -- lists of cards should probably be sets of cards
 data GameState = GameState
@@ -225,17 +225,17 @@ maybeFinishRound :: GameState -> GameState
 maybeFinishRound state =
   if null allHands
     then -- TODO: move bid and tricks to previousRounds, reset game for next round
-    case currentBid state of
-      Just bid ->
+    case (currentBid state, trump state) of
+      (Just bid, Just t) ->
         initialGameState
-          { previousRounds = (bid, tricks state) : previousRounds state,
+          { previousRounds = (bid, scoreTricks t (tricks state)) : previousRounds state,
             -- TODO: maybe a resetRound function here
             dealer = enumNext (dealer state),
             playerInControl = enumNext (enumNext (dealer state)),
             g = g state
           }
       -- TODO this should really be an error or something
-      Nothing -> state
+      _ -> state
     else state
   where
     allHands = concatMap (`getHand` state) players
@@ -354,6 +354,20 @@ getAllPlayersDiscarded state =
 
 getLastRound :: GameState -> Maybe Round
 getLastRound = safeHead . previousRounds
+
+getTotalScore :: GameState -> (Integer, Integer)
+getTotalScore state = calcTotalScore $ map snd (previousRounds state)
+
+calcTotalScore :: [Map Player Integer] -> (Integer, Integer)
+calcTotalScore tricks = (teamOdd, teamEven)
+  where
+    playerOne = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerOne) tricks
+    playerTwo :: Integer
+    playerTwo = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerTwo) tricks
+    playerThree = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerThree) tricks
+    playerFour = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerFour) tricks
+    teamOdd = playerOne + playerThree
+    teamEven = playerTwo + playerFour
 
 getGameOver :: GameState -> Bool
 getGameOver state = False
