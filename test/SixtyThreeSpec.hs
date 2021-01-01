@@ -382,13 +382,28 @@ spec = do
   describe "calcTotalScore" $ do
     it "total scores for each pair" $ do
       calcTotalScore [] `shouldBe` (0, 0)
-      calcTotalScore [Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)]] `shouldBe` (63, 0)
-      calcTotalScore [Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)]] `shouldBe` (53, 10)
+      calcTotalScore [((PlayerOne, 25), Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)])] `shouldBe` (63, 0)
+      calcTotalScore [((PlayerOne, 25), Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)])] `shouldBe` (53, 10)
       calcTotalScore
-        [ Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)],
-          Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)]
+        [ ((PlayerOne, 25), Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)]),
+          ((PlayerOne, 25), Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)])
         ]
         `shouldBe` (116, 10)
+      calcTotalScore
+        [ ((PlayerOne, 25), Map.fromList [(PlayerOne, 60), (PlayerTwo, 0), (PlayerThree, 3), (PlayerFour, 0)]),
+          ((PlayerOne, 25), Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)]),
+          ((PlayerOne, 25), Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)]),
+          ((PlayerOne, 25), Map.fromList [(PlayerOne, 31), (PlayerTwo, 32), (PlayerThree, 0), (PlayerFour, 0)])
+        ]
+        `shouldBe` (200, 52)
+
+    it "records a negative score if a team did not make their bid" $ do
+      calcTotalScore
+        [((PlayerOne, 63), Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)])]
+        `shouldBe` (-63, 10)
+      calcTotalScore
+        [((PlayerTwo, 63), Map.fromList [(PlayerOne, 50), (PlayerTwo, 9), (PlayerThree, 3), (PlayerFour, 1)])]
+        `shouldBe` (53, -63)
 
 -- game playing helper functions
 

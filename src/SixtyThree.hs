@@ -356,18 +356,28 @@ getLastRound :: GameState -> Maybe Round
 getLastRound = safeHead . previousRounds
 
 getTotalScore :: GameState -> (Integer, Integer)
-getTotalScore state = calcTotalScore $ map snd (previousRounds state)
+getTotalScore state = calcTotalScore (previousRounds state)
 
-calcTotalScore :: [Map Player Integer] -> (Integer, Integer)
-calcTotalScore tricks = (teamOdd, teamEven)
+calcTotalScore :: [Round] -> (Integer, Integer)
+calcTotalScore rounds = (teamOdd, teamEven)
   where
-    playerOne = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerOne) tricks
-    playerTwo :: Integer
-    playerTwo = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerTwo) tricks
-    playerThree = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerThree) tricks
-    playerFour = foldl (+) 0 $ map (Map.findWithDefault 0 PlayerFour) tricks
-    teamOdd = playerOne + playerThree
-    teamEven = playerTwo + playerFour
+    roundScores = map calcRoundScore rounds
+    addTuples (a1, b1) (a2, b2) = (a1 + a2, b1 + b2)
+    (teamOdd, teamEven) = foldl addTuples (0, 0) roundScores
+
+calcRoundScore :: Round -> (Integer, Integer)
+calcRoundScore ((bidder, bid), scores) = (teamOdd, teamEven)
+  where
+    playerOne = Map.findWithDefault 0 PlayerOne scores
+    playerTwo = Map.findWithDefault 0 PlayerTwo scores
+    playerThree = Map.findWithDefault 0 PlayerThree scores
+    playerFour = Map.findWithDefault 0 PlayerFour scores
+    teamOdd' = playerOne + playerThree
+    teamOdd = if (bidder == PlayerOne || bidder == PlayerThree) && teamOdd' < bid then - bid else teamOdd'
+    teamEven' = playerTwo + playerFour
+    teamEven = if (bidder == PlayerTwo || bidder == PlayerFour) && teamEven' < bid then - bid else teamEven'
 
 getGameOver :: GameState -> Bool
-getGameOver state = False
+getGameOver state = teamOddScore >= 200 || teamEvenScore >= 200
+  where
+    (teamOddScore, teamEvenScore) = getTotalScore state
