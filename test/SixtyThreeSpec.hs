@@ -377,7 +377,7 @@ spec = do
       let cardsToPass = [FaceCard Clubs Three, FaceCard Clubs Four, FaceCard Clubs Five]
       let passedState = foldl reducer state [(PlayerFour, PassCards cardsToPass)]
       getHand PlayerTwo passedState `shouldBe` hand2 ++ cardsToPass
-      getHand PlayerFour passedState `shouldBe` List.sort (kitty ++ (drop 3 hand4))
+      getHand PlayerFour passedState `shouldBe` List.sort (kitty ++ drop 3 hand4)
 
   describe "calcTotalScore" $ do
     it "total scores for each pair" $ do
