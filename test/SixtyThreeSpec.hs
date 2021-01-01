@@ -355,6 +355,7 @@ spec = do
       getHand PlayerThree state5 `shouldBe` []
       getHand PlayerFour state5 `shouldBe` []
       getCardInPlay PlayerOne state5 `shouldBe` Nothing
+      getGameOver state5 `shouldBe` False
 
       pendingWith "need to play the full game, is over when one team is at 200 pts"
 

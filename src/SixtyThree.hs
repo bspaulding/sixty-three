@@ -354,3 +354,6 @@ getAllPlayersDiscarded state =
 
 getLastRound :: GameState -> Maybe Round
 getLastRound = safeHead . previousRounds
+
+getGameOver :: GameState -> Bool
+getGameOver state = False
