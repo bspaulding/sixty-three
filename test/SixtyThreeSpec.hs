@@ -357,6 +357,9 @@ spec = do
 
       pendingWith "need to play the full game, is over when one team is at 200 pts"
 
+    it "disallows any actions if the game is over" $ do
+      pendingWith "maybe this is a property test? ie given a constructed completed game state, and any arbitrary GameAction, it should be idenity"
+
     it "passing cards because you have too many trump" $ do
       let hand1 = map (FaceCard Hearts) (drop 1 faces)
       let hand2 = map (FaceCard Diamonds) (drop 1 faces)
