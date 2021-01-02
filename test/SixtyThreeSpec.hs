@@ -70,7 +70,7 @@ spec = do
         \player -> partner (partner player) === player
 
   describe "isTrump" $ do
-    it "returns true if card is trump" $ property $ prop_is_trump
+    it "returns true if card is trump" $ property prop_is_trump
 
   describe "compareCards" $ do
     it "orders them by trump then face rank" $ do
@@ -147,7 +147,7 @@ spec = do
       length (getHand PlayerFour state) `shouldBe` 12
       length (getKitty state) `shouldBe` 5
 
-    it "always deals hands with ace or face" $ property $ prop_ace_or_face
+    it "always deals hands with ace or face" $ property prop_ace_or_face
 
     it "can optionally deal with misdeals, and dealer loses turn" $ do
       pending
@@ -427,15 +427,15 @@ playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
 -- TODO: prefer to discard higher faced off trump
 playDiscard :: GameState -> GameState
 playDiscard state =
-  case (getTrump state) of
+  case getTrump state of
     Nothing -> state -- no trump wtf are we doing?
     Just t ->
       reducer state (player, SixtyThree.Discard discardedCards)
       where
         -- TODO: there's a bug here i think if you don't have enough non trump cards need to pass
-        discardedCards = take ((length hand) - 6) nonTrumpCards
-        nonTrumpCards = filter (not . (isTrump t)) hand
-        hand = (getHand player state)
+        discardedCards = take (length hand - 6) nonTrumpCards
+        nonTrumpCards = filter (not . isTrump t) hand
+        hand = getHand player state
         player = getCurrentPlayer state
 
 playAllDiscards :: GameState -> GameState
