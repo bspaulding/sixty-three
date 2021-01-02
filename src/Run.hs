@@ -11,6 +11,6 @@ import System.Random (getStdGen)
 run :: RIO App ()
 run = do
   logInfo "We're inside the application!"
-  g <- liftIO getStdGen
-  let (shuffled, _) = shuffle deck g
+  gen <- liftIO getStdGen
+  let (shuffled, _) = shuffle deck gen
   logInfo $ display (Cards shuffled)

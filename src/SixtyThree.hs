@@ -122,39 +122,38 @@ hasAceOrFace cards = not $ null acesAndFaces
     isAceOrFace _ = False
 
 isTrump :: Suit -> Card -> Bool
-isTrump trump (FaceCard suit Five) = suit == trump || suit == oppositeTrump trump
-isTrump trump (FaceCard suit face) = suit == trump
-isTrump trump Joker = True
+isTrump t (FaceCard suit Five) = suit == t || suit == oppositeTrump t
+isTrump t (FaceCard suit _) = suit == t
+isTrump _ Joker = True
 
 compareCards :: Suit -> Card -> Card -> Ordering
-compareCards trump a b =
+compareCards trumpSuit a b =
   case (a, b) of
     (FaceCard asuit aface, FaceCard bsuit bface) ->
-      case (isTrump trump a, isTrump trump b) of
-        (True, True) -> case (asuit == trump, bsuit == trump) of
+      case (isTrump trumpSuit a, isTrump trumpSuit b) of
+        (True, True) -> case (asuit == trumpSuit, bsuit == trumpSuit) of
           (True, False) -> GT
           (False, True) -> LT
           _ -> compare aface bface
         (True, False) -> GT
         (False, True) -> LT
         (False, False) -> compare aface bface
-    (Joker, _) -> if isTrump trump b then LT else GT
-    (_, Joker) -> if isTrump trump a then GT else LT
-    _ -> LT
+    (Joker, _) -> if isTrump trumpSuit b then LT else GT
+    (_, Joker) -> if isTrump trumpSuit a then GT else LT
 
 scoreTrick :: Suit -> Map Player Card -> (Player, Integer)
-scoreTrick trump trick = (winner, totalScore)
+scoreTrick trumpSuit trick = (winner, totalScore)
   where
-    scores = Map.toList $ Map.map (cardScore trump) trick
+    scores = Map.toList $ Map.map (cardScore trumpSuit) trick
     totalScore = foldl (+) 0 (map snd scores)
-    sortedCards = List.sortBy (\(_, a) (_, b) -> compareCards trump b a) (Map.toList trick)
+    sortedCards = List.sortBy (\(_, a) (_, b) -> compareCards trumpSuit b a) (Map.toList trick)
     winner = fst . head $ sortedCards
 
 scoreTricks :: Suit -> [Map Player Card] -> Map Player Integer
-scoreTricks trump tricks = foldl foldScores Map.empty scores
+scoreTricks trumpSuit ts = foldl foldScores Map.empty scores
   where
     scores :: [(Player, Integer)]
-    scores = List.map (scoreTrick trump) tricks
+    scores = List.map (scoreTrick trumpSuit) ts
     foldScores :: Map Player Integer -> (Player, Integer) -> Map Player Integer
     foldScores acc (winner, score) =
       Map.insert winner (score + Map.findWithDefault 0 winner acc) acc
@@ -285,7 +284,7 @@ reducer state (player, action)
                   }
         else state
     PickTrump suit ->
-      let newHand = (kitty state) ++ Map.findWithDefault [] player (hands state)
+      let newHand = kitty state ++ Map.findWithDefault [] player (hands state)
        in state
             { trump = Just suit,
               kitty = [],
@@ -293,12 +292,12 @@ reducer state (player, action)
             }
     PassCards cards ->
       let partner' = partner player
-          newHand = (Map.findWithDefault [] partner' (hands state)) ++ cards
+          newHand = Map.findWithDefault [] partner' (hands state) ++ cards
           newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
           newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
        in state {hands = newHands}
     Discard cards ->
-      case (trump state) of
+      case trump state of
         Nothing -> state -- cannot discard if trump not selected!
         Just t ->
           if any (isTrump t) cards
