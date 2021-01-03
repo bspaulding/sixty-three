@@ -65,6 +65,20 @@ instance Arbitrary Card where
 instance Arbitrary Player where
   arbitrary = elements players
 
+instance Arbitrary GameAction where
+  arbitrary =
+    oneof
+      [ return Deal,
+        return BidPass,
+        Bid <$> arbitrary,
+        Play <$> arbitrary,
+        PickTrump <$> arbitrary,
+        -- TODO: state prop here, can't discard cards you don't have!
+        SixtyThree.Discard <$> arbitrary,
+        -- TODO: state prop here, can't pass cards you don't have!
+        PassCards <$> arbitrary
+      ]
+
 spec :: Spec
 spec = do
   describe "partner" $ do
