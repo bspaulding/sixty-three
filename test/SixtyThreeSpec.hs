@@ -13,10 +13,13 @@ import System.Random
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
-import Prelude (foldl, head)
+import Prelude (foldl, head, print)
 
 playGame :: [(Player, GameAction)] -> GameState
 playGame = foldl reducer initialGameState
+
+playGameFrom :: GameState -> [(Player, GameAction)] -> GameState
+playGameFrom = foldl reducer
 
 prop_ace_or_face i =
   withMaxSuccess 1000 $
@@ -159,6 +162,10 @@ spec = do
       getCurrentPlayer initialGameState `shouldBe` PlayerOne
     it "starts bidding" $ do
       getBiddingComplete initialGameState `shouldBe` False
+
+  describe "dealing" $ do
+    it "cannot redeal if game in progress!" $ do
+      pending
 
   describe "bidding" $ do
     it "can configure a minimum bid" $ do
@@ -308,54 +315,37 @@ spec = do
       pending
 
     it "happy path game" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playGame actions
-      getBiddingComplete state `shouldBe` True
-      getCurrentPlayer state `shouldBe` PlayerFour
+      state1 <- playHappyPathRound initialGameState
+      getTotalScore state1 `shouldBe` (47, -25)
+      getGameOver state1 `shouldBe` False
 
-      -- we've each got 12 cards before discarding
-      length (getHand PlayerOne state) `shouldBe` 12
-      length (getHand PlayerTwo state) `shouldBe` 12
-      length (getHand PlayerThree state) `shouldBe` 12
-      length (getHand PlayerFour state) `shouldBe` 17
-      getKitty state `shouldBe` []
+      state2 <- playHappyPathRound state1
+      getTotalScore state2 `shouldBe` (22, 24)
+      getGameOver state2 `shouldBe` False
 
-      let stateDiscarded = playAllDiscards state
-      getAllPlayersDiscarded stateDiscarded `shouldBe` True
+      state3 <- playHappyPathRound state2
+      getTotalScore state3 `shouldBe` (28, 81)
+      getGameOver state3 `shouldBe` False
 
-      -- we've each got 6 cards after discarding
-      length (getHand PlayerOne stateDiscarded) `shouldBe` 6
-      length (getHand PlayerTwo stateDiscarded) `shouldBe` 6
-      length (getHand PlayerThree stateDiscarded) `shouldBe` 6
-      length (getHand PlayerFour stateDiscarded) `shouldBe` 6
+      state4 <- playHappyPathRound state3
+      getTotalScore state4 `shouldBe` (65, 107)
+      getGameOver state4 `shouldBe` False
 
-      -- sidebar here...
-      let state4 = playTrickRound stateDiscarded
-      -- after one round of plays, each player should have one less card in their hands
-      length (getHand PlayerOne state4) `shouldBe` 5
-      length (getHand PlayerTwo state4) `shouldBe` 5
-      length (getHand PlayerThree state4) `shouldBe` 5
-      length (getHand PlayerFour state4) `shouldBe` 5
-      getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne stateDiscarded), (PlayerTwo, Prelude.head $ getHand PlayerTwo stateDiscarded), (PlayerThree, Prelude.head $ getHand PlayerThree stateDiscarded), (PlayerFour, Prelude.head $ getHand PlayerFour stateDiscarded)]]
-
-      -- ok let's start from zero and play all the tricks
-      let state5 = playAllTricks stateDiscarded
-
-      let scores = snd <$> getLastRound state5
-      let totalScore = foldl (+) 0 <$> Map.elems <$> scores
-      totalScore `shouldBe` Just 63
-
-      -- assert round was reset and ready for next
-      getDealer state5 `shouldBe` enumNext (dealer initialGameState)
-      getCurrentPlayer state5 `shouldBe` enumNext (enumNext (dealer initialGameState))
-      getHand PlayerOne state5 `shouldBe` []
-      getHand PlayerTwo state5 `shouldBe` []
-      getHand PlayerThree state5 `shouldBe` []
-      getHand PlayerFour state5 `shouldBe` []
-      getCardInPlay PlayerOne state5 `shouldBe` Nothing
+      state5 <- playHappyPathRound state4
+      getTotalScore state5 `shouldBe` (86, 149)
       getGameOver state5 `shouldBe` False
 
-      pendingWith "need to play the full game, is over when one team is at 200 pts"
+      state6 <- playHappyPathRound state5
+      getTotalScore state6 `shouldBe` (134, 164)
+      getGameOver state6 `shouldBe` False
+
+      state7 <- playHappyPathRound state6
+      getTotalScore state7 `shouldBe` (186, 139)
+      getGameOver state7 `shouldBe` False
+
+      state8 <- playHappyPathRound state7
+      getTotalScore state8 `shouldBe` (247, 141)
+      getGameOver state8 `shouldBe` True
 
     it "disallows any actions if the game is over" $ do
       pendingWith "maybe this is a property test? ie given a constructed completed game state, and any arbitrary GameAction, it should be idenity"
@@ -409,6 +399,57 @@ spec = do
         `shouldBe` (53, -63)
 
 -- game playing helper functions
+
+playHappyPathRound initialState = do
+  getBiddingComplete initialState `shouldBe` False
+  let theDealer = dealer initialState
+  let actions = [(theDealer, Deal), (enumNext theDealer, BidPass), ((enumNext . enumNext) theDealer, BidPass), ((enumNext . enumNext . enumNext) theDealer, BidPass), (theDealer, PickTrump Hearts)]
+  let state = playGameFrom initialState actions
+  getBiddingComplete state `shouldBe` True
+  getCurrentPlayer state `shouldBe` theDealer
+
+  -- we've each got 12 cards before discarding
+  length (getHand PlayerOne state) `shouldBe` if theDealer == PlayerOne then 17 else 12
+  length (getHand PlayerTwo state) `shouldBe` if theDealer == PlayerTwo then 17 else 12
+  length (getHand PlayerThree state) `shouldBe` if theDealer == PlayerThree then 17 else 12
+  length (getHand PlayerFour state) `shouldBe` if theDealer == PlayerFour then 17 else 12
+  getKitty state `shouldBe` []
+
+  let stateDiscarded = playAllDiscards state
+  getAllPlayersDiscarded stateDiscarded `shouldBe` True
+
+  -- we've each got 6 cards after discarding
+  length (getHand PlayerOne stateDiscarded) `shouldBe` 6
+  length (getHand PlayerTwo stateDiscarded) `shouldBe` 6
+  length (getHand PlayerThree stateDiscarded) `shouldBe` 6
+  length (getHand PlayerFour stateDiscarded) `shouldBe` 6
+
+  -- sidebar here...
+  let state4 = playTrickRound stateDiscarded
+  -- after one round of plays, each player should have one less card in their hands
+  length (getHand PlayerOne state4) `shouldBe` 5
+  length (getHand PlayerTwo state4) `shouldBe` 5
+  length (getHand PlayerThree state4) `shouldBe` 5
+  length (getHand PlayerFour state4) `shouldBe` 5
+  getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne stateDiscarded), (PlayerTwo, Prelude.head $ getHand PlayerTwo stateDiscarded), (PlayerThree, Prelude.head $ getHand PlayerThree stateDiscarded), (PlayerFour, Prelude.head $ getHand PlayerFour stateDiscarded)]]
+
+  -- ok let's start from zero and play all the tricks
+  let state5 = playAllTricks stateDiscarded
+
+  let scores = snd <$> getLastRound state5
+  let totalScore = foldl (+) 0 <$> Map.elems <$> scores
+  totalScore `shouldBe` Just 63
+
+  -- assert round was reset and ready for next
+  getDealer state5 `shouldBe` enumNext (dealer initialState)
+  getCurrentPlayer state5 `shouldBe` enumNext (enumNext (dealer initialState))
+  getHand PlayerOne state5 `shouldBe` []
+  getHand PlayerTwo state5 `shouldBe` []
+  getHand PlayerThree state5 `shouldBe` []
+  getHand PlayerFour state5 `shouldBe` []
+  getCardInPlay PlayerOne state5 `shouldBe` Nothing
+
+  return state5
 
 -- play a trick turn, the current player simply plays the first card in their hand
 playTurn :: GameState -> GameState
