@@ -79,6 +79,29 @@ instance Arbitrary GameAction where
         PassCards <$> arbitrary
       ]
 
+gameOverState :: GameState
+gameOverState = initialGameState {previousRounds = rounds}
+  where
+    rounds = [round, round]
+    round :: Round
+    round = ((PlayerOne, 25), Map.fromList [(PlayerOne, 126)])
+
+classifyAction :: GameAction -> String
+classifyAction a =
+  case a of
+    Deal -> "Deal"
+    BidPass -> "BidPass"
+    Bid _ -> "Bid"
+    Play _ -> "Play"
+    PickTrump _ -> "PickTrump"
+    SixtyThree.Discard _ -> "Discard"
+    PassCards _ -> "PassCards"
+
+prop_game_over :: Player -> GameAction -> Property
+prop_game_over player action =
+  classify True (classifyAction action) $
+    reducer gameOverState (player, action) === gameOverState
+
 spec :: Spec
 spec = do
   describe "partner" $ do
@@ -361,8 +384,7 @@ spec = do
       getTotalScore state8 `shouldBe` (247, 141)
       getGameOver state8 `shouldBe` True
 
-    it "disallows any actions if the game is over" $ do
-      pendingWith "maybe this is a property test? ie given a constructed completed game state, and any arbitrary GameAction, it should be idenity"
+    it "disallows any actions if the game is over" $ property prop_game_over
 
     it "passing cards because you have too many trump" $ do
       let hand1 = map (FaceCard Hearts) (drop 1 faces)

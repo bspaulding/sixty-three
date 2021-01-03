@@ -241,6 +241,7 @@ maybeFinishRound state =
 
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state (player, action)
+  | getGameOver state = state
   | dealer state == player && action == Deal =
     let ((hand1, hand2, hand3, hand4, kitty'), g') = deal deck (g state)
      in state
