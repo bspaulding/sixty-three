@@ -5,7 +5,7 @@ module Shuffle (shuffle) where
 
 import Import
 import System.Random
-import Prelude (head, splitAt)
+import Prelude (head, splitAt, tail)
 
 shuffle :: RandomGen g => [a] -> g -> ([a], g)
 shuffle ls = shuffle' ls []
@@ -16,5 +16,5 @@ shuffle ls = shuffle' ls []
       let (k, g') = randomR (0, length l - 1) g
       let (lead, xs') = splitAt k l
       let x = head xs'
-      let xs = drop 1 xs
+      let xs = tail xs'
       shuffle' (lead ++ xs) (x : acc) g'
