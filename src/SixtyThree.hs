@@ -301,8 +301,8 @@ reducer state (player, action)
       case trump state of
         Nothing -> state -- cannot discard if trump not selected!
         Just t ->
-          if any (isTrump t) cards
-            then state -- cannot discard trump!
+          if foldl (+) 0 (map (cardScore t) cards) > 0
+            then state -- cannot discard trump worth points!
             else
               let hand = Set.fromList $ getHand player state
                   newHand = Set.toList $ Set.difference hand (Set.fromList cards)

@@ -266,7 +266,31 @@ spec = do
 
   describe "discarding" $ do
     it "cannot discard a trump worth points, if you must discard trump" $ do
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let diamonds = map (FaceCard Diamonds) faces
+      let clubs = map (FaceCard Clubs) faces
+      let spades = map (FaceCard Spades) faces
+      let hearts = map (FaceCard Hearts) faces
+      let newHands =
+            Map.fromList
+              [ (PlayerOne, drop 1 diamonds),
+                (PlayerTwo, drop 1 clubs),
+                (PlayerThree, drop 1 spades),
+                (PlayerFour, drop 1 hearts)
+              ]
+      let state = (playGame actions) {hands = newHands, trump = Just Hearts}
+      getCurrentPlayer state `shouldBe` PlayerFour
+      let nineOfHearts = FaceCard Hearts Nine
+      List.find (== nineOfHearts) (getHand PlayerFour state) `shouldBe` Just nineOfHearts
+
+      let discardedPoints = reducer state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Nine])
+      discardedPoints `shouldBe` state
+
       pending
+      let discardedNoPoints = reducer state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Three])
+      cardScore Hearts (FaceCard Hearts Three) `shouldBe` 0
+      foldl (+) 0 (map (cardScore Hearts) [FaceCard Hearts Three]) `shouldBe` 0
+      getHand PlayerFour discardedNoPoints `shouldBe` drop 2 hearts
 
     it "cannot pass the joker if you do not have the ace" $ do
       pending
