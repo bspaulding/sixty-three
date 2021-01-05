@@ -240,82 +240,91 @@ maybeFinishRound state =
     allHands = concatMap (`getHand` state) players
 
 reducer :: GameState -> (Player, GameAction) -> GameState
-reducer state (player, action)
-  | getGameOver state = state
+reducer state action = case reducerSafe state action of
+  Left err -> state -- TODO: later maybe throw: error err
+  Right newState -> newState
+
+reducerSafe :: GameState -> (Player, GameAction) -> Either String GameState
+reducerSafe state (player, action)
+  | getGameOver state = Right state
   | dealer state == player && action == Deal =
     let ((hand1, hand2, hand3, hand4, kitty'), g') = deal deck (g state)
-     in state
-          { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)],
-            kitty = kitty',
-            g = g'
-          }
+     in Right
+          state
+            { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)],
+              kitty = kitty',
+              g = g'
+            }
   | playerInControl state == player = case action of
     Bid amount ->
       if amount /= 126 && (amount > 63 || amount < 25)
-        then state
+        then Left "Bid must be between 25 and 63, or double 63 (126)."
         else case currentBid state of
           Just currentBid_ ->
             if amount > snd currentBid_
-              then state {currentBid = Just (player, amount), playerInControl = enumNext player}
-              else state
-          Nothing -> state {currentBid = Just (player, amount), playerInControl = enumNext player}
+              then Right state {currentBid = Just (player, amount), playerInControl = enumNext player}
+              else Left $ "You cannot bid less than the current bid of " ++ show (snd currentBid_)
+          Nothing -> Right state {currentBid = Just (player, amount), playerInControl = enumNext player}
     BidPass ->
       let newBidPassed = Map.insert player True (bidPassed state)
        in if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
-            then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
-            else state {bidPassed = newBidPassed, playerInControl = enumNext player}
+            then Right state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
+            else Right state {bidPassed = newBidPassed, playerInControl = enumNext player}
     Play card ->
       if getAllPlayersDiscarded state && trump state /= Nothing && any (card ==) (Map.findWithDefault [] player (hands state))
         then
           let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
               newCardsInPlay = Map.insert player card (cardsInPlay state)
               roundIsOver = Map.size newCardsInPlay == 4
-           in maybeFinishRound $
-                state
-                  { hands = Map.insert player newHand (hands state),
-                    cardsInPlay =
-                      if roundIsOver
-                        then Map.empty
-                        else newCardsInPlay,
-                    tricks =
-                      if roundIsOver
-                        then newCardsInPlay : tricks state
-                        else tricks state,
-                    playerInControl = enumNext player
-                  }
-        else state
+           in Right $
+                maybeFinishRound $
+                  state
+                    { hands = Map.insert player newHand (hands state),
+                      cardsInPlay =
+                        if roundIsOver
+                          then Map.empty
+                          else newCardsInPlay,
+                      tricks =
+                        if roundIsOver
+                          then newCardsInPlay : tricks state
+                          else tricks state,
+                      playerInControl = enumNext player
+                    }
+        else Left "You cannot play a card right now!"
     PickTrump suit ->
       let newHand = kitty state ++ Map.findWithDefault [] player (hands state)
-       in state
-            { trump = Just suit,
-              kitty = [],
-              hands = Map.insert player newHand (hands state)
-            }
+       in Right
+            state
+              { trump = Just suit,
+                kitty = [],
+                hands = Map.insert player newHand (hands state)
+              }
     PassCards cards ->
       let partner' = partner player
           newHand = Map.findWithDefault [] partner' (hands state) ++ cards
           newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
           newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
-       in state {hands = newHands}
+       in Right state {hands = newHands}
     Discard cards ->
       case trump state of
-        Nothing -> state -- cannot discard if trump not selected!
+        Nothing -> Left "cannot discard if trump not selected!"
         Just t ->
           if foldl (+) 0 (map (cardScore t) cards) > 0
-            then state -- cannot discard trump worth points!
+            then Left "cannot discard trump worth points!"
             else
               let hand = Set.fromList $ getHand player state
                   newHand = Set.toList $ Set.difference hand (Set.fromList cards)
                in if length newHand == 6
                     then
-                      state
-                        { hands = Map.insert player newHand (hands state),
-                          playerInControl = enumNext player,
-                          discarded = discarded state ++ cards
-                        }
-                    else state
-    _ -> state
-  | otherwise = state
+                      Right
+                        state
+                          { hands = Map.insert player newHand (hands state),
+                            playerInControl = enumNext player,
+                            discarded = discarded state ++ cards
+                          }
+                    else Left "You must have at least six cards in your hand."
+    _ -> Right state
+  | otherwise = Right state
 
 -- selectors
 getDealer :: GameState -> Player
