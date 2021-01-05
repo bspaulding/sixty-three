@@ -300,11 +300,16 @@ reducerSafe state (player, action)
                 hands = Map.insert player newHand (hands state)
               }
     PassCards cards ->
-      let partner' = partner player
-          newHand = Map.findWithDefault [] partner' (hands state) ++ cards
-          newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
-          newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
-       in Right state {hands = newHands}
+      case trump state of
+        Just t ->
+          let partner' = partner player
+              newHand = Map.findWithDefault [] partner' (hands state) ++ cards
+              newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
+              newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
+              playerHasAce = Set.member (FaceCard t Ace) (Set.fromList (getHand player state))
+              passingTheJoker = Set.member Joker (Set.fromList cards)
+           in if not playerHasAce && passingTheJoker then Left "You cannot pass the joker if you do not have the ace." else Right state {hands = newHands}
+        Nothing -> Left "You cannot pass cards until trump has been selected."
     Discard cards ->
       case trump state of
         Nothing -> Left "cannot discard if trump not selected!"

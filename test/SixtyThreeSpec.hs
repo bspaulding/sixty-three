@@ -290,10 +290,44 @@ spec = do
       getHand PlayerFour <$> discardedNoPoints `shouldBe` Right (drop 2 hearts)
 
     it "cannot pass the joker if you do not have the ace" $ do
-      pending
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts), (PlayerFour, SixtyThree.Discard [])]
+      let state = playGame actions
+      let playerWithJoker = List.find (\p -> Set.member Joker (Set.fromList (getHand p state))) players
+      playerWithJoker `shouldBe` Just PlayerOne
+      let playerWithAce = List.find (\p -> Set.member (FaceCard Hearts Ace) (Set.fromList (getHand p state))) players
+      playerWithAce `shouldBe` Just PlayerThree
+
+      getCurrentPlayer state `shouldBe` PlayerOne
+
+      let statePassed = reducerSafe state (PlayerOne, PassCards [Joker])
+      statePassed `shouldNotBe` Right state
+      statePassed `shouldBe` Left "You cannot pass the joker if you do not have the ace."
 
     it "can pass the joker if you have the ace" $ do
-      pending
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let diamonds = map (FaceCard Diamonds) faces
+      let clubs = map (FaceCard Clubs) faces
+      let spades = map (FaceCard Spades) faces
+      let hearts = map (FaceCard Hearts) faces
+      let newHands =
+            Map.fromList
+              [ (PlayerOne, drop 1 diamonds),
+                (PlayerTwo, drop 1 clubs),
+                (PlayerThree, drop 1 spades),
+                (PlayerFour, drop 1 hearts ++ [Joker])
+              ]
+      let state = (playGame actions) {hands = newHands, trump = Just Hearts}
+      let playerWithJoker = List.find (\p -> Set.member Joker (Set.fromList (getHand p state))) players
+      playerWithJoker `shouldBe` Just PlayerFour
+      let playerWithAce = List.find (\p -> Set.member (FaceCard Hearts Ace) (Set.fromList (getHand p state))) players
+      playerWithAce `shouldBe` Just PlayerFour
+
+      getCurrentPlayer state `shouldBe` PlayerFour
+
+      let statePassed = reducerSafe state (PlayerFour, PassCards [Joker])
+      statePassed `shouldNotBe` Right state
+      Set.member Joker <$> Set.fromList <$> getHand PlayerTwo <$> statePassed `shouldBe` Right True
+      Set.member Joker <$> Set.fromList <$> getHand PlayerFour <$> statePassed `shouldBe` Right False
 
     it "cannot discard to less than 6 cards" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
