@@ -292,6 +292,9 @@ spec = do
     it "cannot pass the joker if you do not have the ace" $ do
       pending
 
+    it "can pass the joker if you have the ace" $ do
+      pending
+
     it "cannot discard to less than 6 cards" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
