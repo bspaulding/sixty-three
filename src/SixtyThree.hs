@@ -314,7 +314,7 @@ reducerSafe state (player, action)
             else
               let hand = Set.fromList $ getHand player state
                   newHand = Set.toList $ Set.difference hand (Set.fromList cards)
-               in if length newHand == 6
+               in if length newHand >= 6
                     then
                       Right
                         state
@@ -322,7 +322,7 @@ reducerSafe state (player, action)
                             playerInControl = enumNext player,
                             discarded = discarded state ++ cards
                           }
-                    else Left "You must have at least six cards in your hand."
+                    else Left "You must keep at least six cards in your hand."
     _ -> Right state
   | otherwise = Right state
 

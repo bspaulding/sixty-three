@@ -283,14 +283,11 @@ spec = do
       let nineOfHearts = FaceCard Hearts Nine
       List.find (== nineOfHearts) (getHand PlayerFour state) `shouldBe` Just nineOfHearts
 
-      let discardedPoints = reducer state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Nine])
-      discardedPoints `shouldBe` state
+      let discardedPoints = reducerSafe state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Nine])
+      discardedPoints `shouldBe` Left "cannot discard trump worth points!"
 
-      pending
-      let discardedNoPoints = reducer state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Three])
-      cardScore Hearts (FaceCard Hearts Three) `shouldBe` 0
-      foldl (+) 0 (map (cardScore Hearts) [FaceCard Hearts Three]) `shouldBe` 0
-      getHand PlayerFour discardedNoPoints `shouldBe` drop 2 hearts
+      let discardedNoPoints = reducerSafe state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Three])
+      getHand PlayerFour <$> discardedNoPoints `shouldBe` Right (drop 2 hearts)
 
     it "cannot pass the joker if you do not have the ace" $ do
       pending
