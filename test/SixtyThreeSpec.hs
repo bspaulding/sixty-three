@@ -299,10 +299,11 @@ spec = do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
       let player = getCurrentPlayer state
-      let cardsToDiscard = take 7 (getHand player state)
-      let stateDiscarded = reducer state (player, SixtyThree.Discard cardsToDiscard)
+      let hand = getHand player state
+      let cardsToDiscard = filter (\c -> cardScore Hearts c == 0) hand
+      let stateDiscarded = reducerSafe state (player, SixtyThree.Discard cardsToDiscard)
 
-      state `shouldBe` stateDiscarded
+      stateDiscarded `shouldBe` Left "You must keep at least six cards in your hand."
 
     it "can discard to more than 6 cards" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
