@@ -4,13 +4,10 @@
 module Run (run) where
 
 import Import
-import Shuffle (shuffle)
-import SixtyThree
-import System.Random (getStdGen)
+import Network.Wai.Handler.Warp (runEnv)
+import Server
 
 run :: RIO App ()
 run = do
   logInfo "We're inside the application!"
-  gen <- liftIO getStdGen
-  let (shuffled, _) = shuffle deck gen
-  logInfo $ display (Cards shuffled)
+  liftIO $ runEnv 3000 app

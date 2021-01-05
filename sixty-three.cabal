@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dbed2a313e78ccfec13336fc00b3a8d67e8dd2a2f13ddb885749cacaadae7c57
+-- hash: b07da0407fd2eb7937bba66177aec44786a0db6b8344ea35350feb768142fcc5
 
 name:           sixty-three
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       Import
       Run
+      Server
       Shuffle
       SixtyThree
       Types
@@ -41,9 +42,14 @@ library
   build-depends:
       base >=4.11 && <10
     , containers
+    , http-types
     , random >=1.2.0
     , rio >=0.1.12.0
     , text
+    , wai
+    , wai-websockets
+    , warp
+    , websockets
   default-language: Haskell2010
 
 executable sixty-three-exe
@@ -56,11 +62,16 @@ executable sixty-three-exe
   build-depends:
       base >=4.11 && <10
     , containers
+    , http-types
     , optparse-simple
     , random >=1.2.0
     , rio >=0.1.12.0
     , sixty-three
     , text
+    , wai
+    , wai-websockets
+    , warp
+    , websockets
   default-language: Haskell2010
 
 test-suite sixty-three-test
@@ -79,8 +90,13 @@ test-suite sixty-three-test
     , base >=4.11 && <10
     , containers
     , hspec
+    , http-types
     , random >=1.2.0
     , rio >=0.1.12.0
     , sixty-three
     , text
+    , wai
+    , wai-websockets
+    , warp
+    , websockets
   default-language: Haskell2010
