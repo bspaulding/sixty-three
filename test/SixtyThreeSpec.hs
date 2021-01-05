@@ -304,14 +304,15 @@ spec = do
 
       state `shouldBe` stateDiscarded
 
-    it "cannot discard to more than 6 cards" $ do
+    it "can discard to more than 6 cards" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playGame actions
       let player = getCurrentPlayer state
-      let cardsToDiscard = take 5 (getHand player state)
-      let stateDiscarded = reducer state (player, SixtyThree.Discard cardsToDiscard)
+      let hand = getHand player state
+      let cardsToDiscard = take 5 $ filter (\c -> cardScore Hearts c == 0) hand
+      let stateDiscarded = reducerSafe state (player, SixtyThree.Discard cardsToDiscard)
 
-      state `shouldBe` stateDiscarded
+      Set.fromList . getHand player <$> stateDiscarded `shouldBe` Right (Set.difference (Set.fromList hand) (Set.fromList cardsToDiscard))
 
   describe "tricking" $ do
     it "must lead trump on the first round" $ do
