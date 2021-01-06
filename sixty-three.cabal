@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b07da0407fd2eb7937bba66177aec44786a0db6b8344ea35350feb768142fcc5
+-- hash: 3c5a54b5bde12a58df89b9dafa78ded86f14f8421e376201d535444675ad4d94
 
 name:           sixty-three
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Import
       Run
       Server
+      ServerState
       Shuffle
       SixtyThree
       Types

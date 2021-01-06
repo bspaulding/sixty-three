@@ -1,5 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- Server and ServerState should be generic, not tied to this specific game.
+-- Here's the vision:
+-- - You have a ServerState GameState, which holds the lobby/room operations/room state access
+-- - The Server takes a "safe" reducer for GameState, ie GameState -> GameAction -> Either String GameState
+-- - Server forwards all game actions to the reducer, updating the mVar for the room if Right
+
 module Server (app) where
 
 import Data.Text
