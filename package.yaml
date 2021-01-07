@@ -30,6 +30,7 @@ dependencies:
 - websockets
 - http-types
 - warp
+- bytestring
 
 ghc-options:
 - -Wall
