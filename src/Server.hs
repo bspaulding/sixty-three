@@ -8,7 +8,10 @@
 
 module Server (app) where
 
-import Data.Text
+import Control.Exception (finally)
+import Control.Monad (forever)
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.Text as T
 import Network.HTTP.Types
 import Network.Wai
 import Network.Wai.Handler.WebSockets
@@ -19,8 +22,18 @@ app = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
     wsApp pending_conn = do
+      putStrLn "got a pending connection!"
       conn <- acceptRequest pending_conn
-      sendTextData conn ("Hello, client!" :: Text)
+      putStrLn "accepted request, sending hello"
+      sendTextData conn ("Hello, client!" :: T.Text)
+      flip finally disconnect $
+        withPingThread conn 30 (return ()) $
+          forever $ do
+            msg <- receiveData conn
+            BS.putStrLn msg
+
+    disconnect = do
+      putStrLn "Client disconnected."
 
     backupApp :: Application
     backupApp _ respond = respond $ responseLBS status400 [] "Not a WebSocket request"
