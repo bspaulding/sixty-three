@@ -2,15 +2,7 @@ import React, { useMemo, useReducer, useRef } from 'react';
 import useWebSocket from '../useWebSocket.js';
 import reducer, { actions, initialState } from '../reducer.js';
 import styles from './App.module.css';
-
-const mapReverse = f => xs => {
-  const ys = [];
-  for (let i = xs.length - 1; i >= 0; i -= 1) {
-    console.log(i, xs.length - 1 - i);
-    ys[xs.length - 1 - i] = f(xs[i], i);
-  }
-  return ys;
-};
+import mapReverse from '../mapReverse';
 
 const App = () => {
   const { lastEvent } = useWebSocket('ws://localhost:3000');
