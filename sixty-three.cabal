@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dd0d1149db17f1671401f59aa556b34433c98669e3e11ac814ff732e6df04c9f
+-- hash: df8318458090925ffe0c8d94f38c7040a104b5fe8b87930303d2d79ad3eebc78
 
 name:           sixty-three
 version:        0.1.0.0
@@ -49,6 +49,7 @@ library
     , rio >=0.1.12.0
     , text
     , wai
+    , wai-app-static
     , wai-websockets
     , warp
     , websockets
@@ -72,6 +73,7 @@ executable sixty-three-exe
     , sixty-three
     , text
     , wai
+    , wai-app-static
     , wai-websockets
     , warp
     , websockets
@@ -100,6 +102,7 @@ test-suite sixty-three-test
     , sixty-three
     , text
     , wai
+    , wai-app-static
     , wai-websockets
     , warp
     , websockets

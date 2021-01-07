@@ -31,6 +31,7 @@ dependencies:
 - http-types
 - warp
 - bytestring
+- wai-app-static
 
 ghc-options:
 - -Wall
