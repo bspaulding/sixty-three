@@ -3,8 +3,12 @@ export const initialState = {
   roomId: undefined
 };
 
-export const actions = {
+const actionTypes = {
   WS_DEBUG_TOGGLE: 'WS_DEBUG_TOGGLE'
+};
+
+export const actions = {
+  wsDebugToggle: () => ({ type: actionTypes.WS_DEBUG_TOGGLE })
 };
 
 function reducer(state, action) {
@@ -13,7 +17,7 @@ function reducer(state, action) {
   }
 
   switch (action.type) {
-    case actions.WS_DEBUG_TOGGLE:
+    case actionTypes.WS_DEBUG_TOGGLE:
       return { ...state, showWsDebug: !state.showWsDebug };
     default:
       return state;

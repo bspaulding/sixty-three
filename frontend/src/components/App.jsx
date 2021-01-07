@@ -23,7 +23,7 @@ const App = () => {
   return (
     <>
       <h1>Sixty Three in App.jsx!</h1>
-      <button onClick={() => dispatch({ type: actions.WS_DEBUG_TOGGLE })}>Toggle WebSocket Monitor</button>
+      <button onClick={dispatch.bind(null, actions.wsDebugToggle())}>Toggle WebSocket Monitor</button>
       {!!state.showWsDebug && (
         <ul className={styles.wsDebugView}>
           {mapReverse((msg, i) => <li key={i}><pre>[{msg.type}] {JSON.stringify(msg.event.data)}</pre></li>)(events.current)}
