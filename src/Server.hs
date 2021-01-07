@@ -14,8 +14,10 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text as T
 import Network.HTTP.Types
 import Network.Wai
+import Network.Wai.Application.Static
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
+import WaiAppStatic.Types (unsafeToPiece)
 
 app :: Application
 app = websocketsOr defaultConnectionOptions wsApp backupApp
@@ -35,5 +37,7 @@ app = websocketsOr defaultConnectionOptions wsApp backupApp
     disconnect = do
       putStrLn "Client disconnected."
 
+    staticAppSettings = (defaultWebAppSettings "frontend/build") {ssIndices = [unsafeToPiece "index.html"]}
+
     backupApp :: Application
-    backupApp _ respond = respond $ responseLBS status400 [] "Not a WebSocket request"
+    backupApp = staticApp staticAppSettings
