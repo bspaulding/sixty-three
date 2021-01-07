@@ -1,6 +1,6 @@
 import React, { useMemo, useReducer, useRef } from 'react';
 import useWebSocket from '../useWebSocket.js';
-import reducer, { initialState } from '../reducer.js';
+import reducer, { actions, initialState } from '../reducer.js';
 import styles from './App.module.css';
 
 const mapReverse = f => xs => {
@@ -23,6 +23,7 @@ const App = () => {
   return (
     <>
       <h1>Sixty Three in App.jsx!</h1>
+      <button onClick={() => dispatch({ type: actions.WS_DEBUG_TOGGLE })}>Toggle WebSocket Monitor</button>
       {!!state.showWsDebug && (
         <ul className={styles.wsDebugView}>
           {mapReverse((msg, i) => <li key={i}><pre>[{msg.type}] {JSON.stringify(msg.event.data)}</pre></li>)(events.current)}
