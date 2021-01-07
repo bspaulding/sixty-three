@@ -1,43 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-
-const websocketEvents = ['open', 'close', 'error', 'message'];
-const useWebSocket = (url, protocols = []) => {
-  console.log('useWebSocket');
-  const socketRef = useRef(null);
-  const [lastEvent, setLastEvent] = useState(null);
-
-  useEffect(() => {
-    console.log('useEffect');
-    if (!socketRef.current) {
-      console.log('constructing socket');
-      socketRef.current = new WebSocket(url, protocols);
-    }
-
-    const handlers = websocketEvents.reduce((acc, type) => {
-      return ({
-        ...acc,
-        [type]: (event) => {
-          console.log(type, event);
-          setLastEvent({ type, event });
-        }
-      });
-    },
-      {}
-    );
-    Object.entries(handlers).map(entry => {
-      socketRef.current.addEventListener(entry[0], entry[1]);
-    });
-
-    return () => {
-      Object.entries(handlers).map(entry => {
-        socketRef.current.removeEventListener(entry[0], entry[1]);
-      });
-      socketRef.current.close();
-    };
-  }, [url]);
-
-  return { socket: socketRef.current, lastEvent };
-};
+import React, { useMemo, useRef } from 'react';
+import useWebSocket from '../useWebSocket.js';
 
 const App = () => {
   const { socket, lastEvent } = useWebSocket('ws://localhost:3000');
