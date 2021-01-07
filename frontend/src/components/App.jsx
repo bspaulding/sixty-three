@@ -2,8 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import useWebSocket from '../useWebSocket.js';
 
 const App = () => {
-  const { socket, lastEvent } = useWebSocket('ws://localhost:3000');
-  console.log({ lastEvent });
+  const { lastEvent } = useWebSocket('ws://localhost:3000');
 
   const events = useRef([]);
   events.current = useMemo(() => lastEvent ? events.current.concat(lastEvent) : events.current, [lastEvent]);
