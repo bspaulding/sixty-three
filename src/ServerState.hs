@@ -3,6 +3,8 @@ module ServerState where
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Network.WebSockets as WS
+import SocketRequest
+import SocketResponse
 
 type RoomId = String
 
@@ -87,3 +89,6 @@ updatePlayerName (connId, _) name s = s {names = Map.insert connId name (names s
 
 playerName :: Client -> ServerState a -> String
 playerName (connId, _) s = Map.findWithDefault "Unknown" connId (names s)
+
+serverStateReducer :: ServerState a -> SocketRequest -> (a -> action -> Either String a) -> Either String (ServerState a)
+serverStateReducer s r roomReducer = Right s

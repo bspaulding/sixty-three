@@ -8,6 +8,7 @@
 
 module Server (app) where
 
+import Control.Concurrent (MVar, modifyMVar_)
 import Control.Exception (finally)
 import Control.Monad (forever)
 import Data.Aeson
@@ -21,12 +22,13 @@ import Network.Wai
 import Network.Wai.Application.Static
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
+import ServerState
 import SocketRequest
 import SocketResponse
 import WaiAppStatic.Types (unsafeToPiece)
 
-app :: ToJSON s => (s -> a -> Either String s) -> Application
-app reducer = websocketsOr defaultConnectionOptions wsApp backupApp
+app :: Show s => ToJSON s => MVar (ServerState s) -> (s -> a -> Either String s) -> Application
+app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
     wsApp pending_conn = do
@@ -42,13 +44,23 @@ app reducer = websocketsOr defaultConnectionOptions wsApp backupApp
         withPingThread conn 30 (return ()) $
           forever $ do
             msg <- receiveData conn
-            BS.putStrLn msg
             case decode msg :: Maybe SocketRequest of
               Just socketRequest -> do
                 print socketRequest
+                modifyMVar_ stateM $ \state -> do
+                  case serverStateReducer state socketRequest roomStateReducer of
+                    Left err -> do
+                      sendError conn err
+                      return state
+                    Right nextState -> do
+                      print nextState
+                      return nextState
               Nothing -> do
                 putStrLn $ "Failed to parse message: " ++ show msg
-                sendTextData conn (encode (ErrorResponse "Failed to parse message." :: SocketResponse GameState))
+                sendError conn "Failed to parse message."
+
+    sendError conn err =
+      sendTextData conn (encode (ErrorResponse err :: SocketResponse GameState))
 
     disconnect = do
       putStrLn "Client disconnected."
