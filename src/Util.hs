@@ -1,5 +1,6 @@
 module Util where
 
+import Data.List (intercalate)
 import System.Random
 
 safeHead :: [a] -> Maybe a

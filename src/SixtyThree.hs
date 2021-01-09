@@ -3,61 +3,16 @@
 
 module SixtyThree where
 
+import Card
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import qualified Data.Text as T
+import GameState
 import Import
 import Shuffle
 import System.Random
 import Util
 import Prelude (enumFrom, foldl, head, succ, toEnum)
-
-data Suit = Hearts | Diamonds | Clubs | Spades deriving (Enum, Eq, Ord, Show)
-
-data Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace deriving (Enum, Eq, Show)
-
-rank :: Face -> Integer
-rank f = case f of
-  Two -> 2
-  Three -> 3
-  Four -> 4
-  Five -> 5
-  Six -> 6
-  Seven -> 7
-  Eight -> 8
-  Nine -> 9
-  Ten -> 10
-  Jack -> 11
-  Queen -> 12
-  King -> 13
-  Ace -> 14
-
-instance Ord Face where
-  compare a b = compare (rank a) (rank b)
-
-data Card = FaceCard Suit Face | Joker deriving (Eq, Ord, Show)
-
-instance Display Card where
-  textDisplay card =
-    case card of
-      Joker -> "Joker"
-      FaceCard suit face ->
-        let suit' = case suit of
-              Hearts -> "♥️"
-              Diamonds -> "♦️"
-              Clubs -> "♣️"
-              Spades -> "♠️"
-         in T.pack $ suit' ++ "  " ++ show face
-
-newtype Cards = Cards [Card] deriving (Eq, Show)
-
-instance Display Cards where
-  display (Cards xs) = mconcat $ [start] ++ List.intersperse separator (map display xs) ++ [stop]
-    where
-      separator = displayBytesUtf8 ", "
-      start = displayBytesUtf8 "["
-      stop = displayBytesUtf8 "]"
 
 oppositeTrump :: Suit -> Suit
 oppositeTrump s =
@@ -157,27 +112,6 @@ scoreTricks trumpSuit ts = foldl foldScores Map.empty scores
     foldScores :: Map Player Integer -> (Player, Integer) -> Map Player Integer
     foldScores acc (winner, score) =
       Map.insert winner (score + Map.findWithDefault 0 winner acc) acc
-
-type Round = ((Player, Integer), Map Player Integer)
-
--- lists of cards should probably be sets of cards
-data GameState = GameState
-  { dealer :: Player,
-    currentBid :: Maybe (Player, Integer),
-    bidPassed :: Map Player Bool,
-    hands :: Map Player [Card],
-    kitty :: [Card],
-    tricks :: [Map Player Card],
-    playerInControl :: Player,
-    cardsInPlay :: Map Player Card,
-    discarded :: [Card],
-    trump :: Maybe Suit,
-    previousRounds :: [Round],
-    g :: StdGen
-  }
-  deriving (Eq, Show)
-
-data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour deriving (Bounded, Enum, Eq, Ord, Show)
 
 players :: [Player]
 players = generateEnumValues

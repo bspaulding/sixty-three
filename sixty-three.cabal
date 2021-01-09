@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: df8318458090925ffe0c8d94f38c7040a104b5fe8b87930303d2d79ad3eebc78
+-- hash: 54f920ad8c42b110d615dff34cab46115cd33a2f9d19d9965ead1de7c6089a5c
 
 name:           sixty-three
 version:        0.1.0.0
@@ -27,12 +27,16 @@ source-repository head
 
 library
   exposed-modules:
+      Card
+      GameState
       Import
       Run
       Server
       ServerState
       Shuffle
       SixtyThree
+      SocketRequest
+      SocketResponse
       Types
       Util
   other-modules:
@@ -41,13 +45,15 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.11 && <10
+      aeson
+    , base >=4.11 && <10
     , bytestring
     , containers
     , http-types
     , random >=1.2.0
     , rio >=0.1.12.0
     , text
+    , uuid
     , wai
     , wai-app-static
     , wai-websockets
@@ -63,7 +69,8 @@ executable sixty-three-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.11 && <10
+      aeson
+    , base >=4.11 && <10
     , bytestring
     , containers
     , http-types
@@ -72,6 +79,7 @@ executable sixty-three-exe
     , rio >=0.1.12.0
     , sixty-three
     , text
+    , uuid
     , wai
     , wai-app-static
     , wai-websockets
@@ -92,6 +100,7 @@ test-suite sixty-three-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
+    , aeson
     , base >=4.11 && <10
     , bytestring
     , containers
@@ -101,6 +110,7 @@ test-suite sixty-three-test
     , rio >=0.1.12.0
     , sixty-three
     , text
+    , uuid
     , wai
     , wai-app-static
     , wai-websockets

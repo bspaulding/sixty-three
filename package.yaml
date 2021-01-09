@@ -32,6 +32,8 @@ dependencies:
 - warp
 - bytestring
 - wai-app-static
+- uuid
+- aeson
 
 ghc-options:
 - -Wall

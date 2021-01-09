@@ -10,22 +10,32 @@ module Server (app) where
 
 import Control.Exception (finally)
 import Control.Monad (forever)
-import qualified Data.ByteString.Char8 as BS
+import Data.Aeson
+import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text as T
-import Network.HTTP.Types
+import Data.UUID as UUID
+import Data.UUID.V4 as UUID
+import GameState -- TODO: remove
+import Network.HTTP.Types ()
 import Network.Wai
 import Network.Wai.Application.Static
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
+import SocketRequest
+import SocketResponse
 import WaiAppStatic.Types (unsafeToPiece)
 
-app :: Application
-app = websocketsOr defaultConnectionOptions wsApp backupApp
+app :: ToJSON s => (s -> a -> Either String s) -> Application
+app reducer = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
     wsApp pending_conn = do
       putStrLn "got a pending connection!"
       conn <- acceptRequest pending_conn
+      id <- UUID.toString <$> UUID.nextRandom
+      let client = (id, conn)
+      let idMsg = IdentifyConnection id :: SocketResponse GameState
+      sendTextData conn (encode idMsg)
       putStrLn "accepted request, sending hello"
       sendTextData conn ("Hello, client!" :: T.Text)
       flip finally disconnect $
@@ -33,6 +43,12 @@ app = websocketsOr defaultConnectionOptions wsApp backupApp
           forever $ do
             msg <- receiveData conn
             BS.putStrLn msg
+            case decode msg :: Maybe SocketRequest of
+              Just socketRequest -> do
+                print socketRequest
+              Nothing -> do
+                putStrLn $ "Failed to parse message: " ++ show msg
+                sendTextData conn (encode (ErrorResponse "Failed to parse message." :: SocketResponse GameState))
 
     disconnect = do
       putStrLn "Client disconnected."
