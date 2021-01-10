@@ -8,11 +8,10 @@
 
 module Server (app) where
 
-import Control.Concurrent (MVar, modifyMVar_)
+import Control.Concurrent (MVar, modifyMVar_, readMVar)
 import Control.Exception (finally)
-import Control.Monad (forever)
+import Control.Monad (forM_, forever)
 import Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text as T
 import Data.UUID as UUID
 import Data.UUID.V4 as UUID
@@ -25,6 +24,7 @@ import Network.WebSockets
 import ServerState
 import SocketRequest
 import SocketResponse
+import System.Random
 import WaiAppStatic.Types (unsafeToPiece)
 
 app :: Show s => ToJSON s => MVar (ServerState s) -> (s -> a -> Either String s) -> Application
@@ -34,12 +34,12 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
     wsApp pending_conn = do
       putStrLn "got a pending connection!"
       conn <- acceptRequest pending_conn
-      id <- UUID.toString <$> UUID.nextRandom
-      let client = (id, conn)
-      let idMsg = IdentifyConnection id :: SocketResponse GameState
+      connId <- UUID.toString <$> UUID.nextRandom
+      let client = (connId, conn)
+      let idMsg = IdentifyConnection connId :: SocketResponse GameState
+      modifyMVar_ stateM $ \state -> do
+        return $ addClient client (addToLobby client state)
       sendTextData conn (encode idMsg)
-      putStrLn "accepted request, sending hello"
-      sendTextData conn ("Hello, client!" :: T.Text)
       flip finally disconnect $
         withPingThread conn 30 (return ()) $
           forever $ do
@@ -48,19 +48,27 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
               Just socketRequest -> do
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do
-                  case serverStateReducer state socketRequest roomStateReducer of
+                  stdGen <- getStdGen
+                  case serverStateReducer stdGen state client socketRequest roomStateReducer of
                     Left err -> do
                       sendError conn err
                       return state
-                    Right nextState -> do
+                    Right (nextState, responses) -> do
                       print nextState
+                      print responses
+                      forM_ responses sendResponse
                       return nextState
+                state <- readMVar stateM
+                return ()
               Nothing -> do
                 putStrLn $ "Failed to parse message: " ++ show msg
                 sendError conn "Failed to parse message."
 
     sendError conn err =
       sendTextData conn (encode (ErrorResponse err :: SocketResponse GameState))
+
+    sendResponse ((_, conn), response) =
+      sendTextData conn (encode response)
 
     disconnect = do
       putStrLn "Client disconnected."

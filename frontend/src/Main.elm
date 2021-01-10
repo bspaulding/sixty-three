@@ -6,6 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
+import Set
 import WSMessage
 
 
@@ -70,10 +71,13 @@ update msg model =
         WebsocketEventReceived eventDataStr ->
             case D.decodeString WSMessage.socketDecoder eventDataStr of
                 Ok decodedMessage ->
-                    handleWsMessage model decodedMessage
+                    Debug.log "Decoded Websocket event!" <|
+                        handleWsMessage model decodedMessage
 
-                Err _ ->
-                    ( model, Cmd.none )
+                Err err ->
+                    Debug.log
+                        ("Error decoding Websocket event: " ++ D.errorToString err)
+                        ( model, Cmd.none )
 
         CreateRoom ->
             ( model, WSMessage.createRoom )
@@ -98,7 +102,7 @@ handleWsMessage model wsMsg =
             ( { model | playersById = Dict.insert connId (Player connId name) model.playersById }, Cmd.none )
 
         WSMessage.JoinedRoomResponse roomId playerNamesById ->
-            ( { model | roomId = Just roomId, playersById = playerNamesById |> Dict.toList |> List.map (\( connId, name ) -> ( connId, Player connId name )) |> Dict.fromList }, Cmd.none )
+            Debug.log "handled JoinedRoomResponse" ( { model | roomId = Just roomId, playersById = playerNamesById |> Dict.toList |> List.map (\( connId, name ) -> ( connId, Player connId name )) |> Dict.fromList }, Cmd.none )
 
         WSMessage.CreateRoomResponse roomId ->
             ( { model | roomId = Just roomId }, Cmd.none )
@@ -132,7 +136,54 @@ createOrJoinRoomView model =
 
 roomView : WSMessage.RoomId -> Model -> Html Msg
 roomView roomId model =
-    div [] [ text "TODO: roomView" ]
+    div []
+        [ text "TODO: roomView"
+        , text ("Room " ++ roomId)
+        , div [] [ text (roomDescription model) ]
+        ]
+
+
+roomDescription : Model -> String
+roomDescription model =
+    let
+        prefix =
+            "In room " ++ String.toUpper (Maybe.withDefault "unknown" model.roomId)
+
+        namesL =
+            Dict.remove (Maybe.withDefault "" model.connId) model.playersById
+                |> Dict.values
+                |> List.map .name
+                |> List.sort
+
+        lastName =
+            List.reverse namesL |> List.head |> Maybe.withDefault "Oops"
+
+        lenNames =
+            List.length namesL
+
+        names =
+            if lenNames > 1 then
+                String.join ", " (List.take (lenNames - 1) namesL)
+                    ++ (if lenNames == 2 then
+                            ""
+
+                        else
+                            ","
+                       )
+                    ++ " and "
+                    ++ lastName
+
+            else
+                String.join ", " namesL
+
+        suffix =
+            if Dict.size model.playersById == 1 then
+                ", all alone 😿."
+
+            else
+                " with " ++ names
+    in
+    prefix ++ suffix
 
 
 

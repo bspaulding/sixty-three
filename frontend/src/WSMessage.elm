@@ -47,10 +47,10 @@ wsMessageDecoder type_ =
         "CreateRoomResponse" ->
             D.map CreateRoomResponse (D.field "roomId" D.string)
 
-        "JoinedRoom" ->
+        "PlayerJoinedRoom" ->
             D.map2 PlayerJoinedRoom (D.field "connId" D.string) (D.field "name" D.string)
 
-        "JoinRoomResponse" ->
+        "JoinedRoom" ->
             D.map2 JoinedRoomResponse
                 (D.field "roomId" D.string)
                 (D.field "playerNamesById" (D.dict D.string))

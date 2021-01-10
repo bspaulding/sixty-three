@@ -4,7 +4,9 @@ import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Network.WebSockets as WS
 import SocketRequest
-import SocketResponse
+import qualified SocketResponse
+import System.Random
+import Util
 
 type RoomId = String
 
@@ -81,6 +83,10 @@ getRoomClients roomId s = getClients connIds s
   where
     connIds = Map.findWithDefault [] roomId (rooms s)
 
+getRoomPlayerNames :: RoomId -> ServerState a -> Map.Map ConnId String
+getRoomPlayerNames roomId state = Map.fromList $ Prelude.map (\client -> (fst client, playerName client state)) roomClients
+  where roomClients = getRoomClients roomId state
+
 setStateInRoom :: RoomId -> a -> ServerState a -> ServerState a
 setStateInRoom roomId game s = s {stateByRoom = Map.insert roomId game (stateByRoom s)}
 
@@ -90,5 +96,19 @@ updatePlayerName (connId, _) name s = s {names = Map.insert connId name (names s
 playerName :: Client -> ServerState a -> String
 playerName (connId, _) s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: ServerState a -> SocketRequest -> (a -> action -> Either String a) -> Either String (ServerState a)
-serverStateReducer s r roomReducer = Right s
+serverStateReducer :: RandomGen g => g -> ServerState a -> Client -> SocketRequest -> (a -> action -> Either String a) -> Either String ((ServerState a), [(Client, SocketResponse.SocketResponse a) ])
+serverStateReducer g s client r roomReducer =
+  case r of
+    CreateRoom ->
+      let
+        roomId = fst $ makeRoomId g
+        nextState = moveClientToRoom roomId client s
+        msgs = [(client, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
+      in Right (nextState, msgs)
+    JoinRoom roomId ->
+      let
+        nextState = moveClientToRoom roomId client s
+        msg = SocketResponse.PlayerJoinedRoom (fst client) (playerName client nextState)
+        broadcast = map (\c -> (c, msg)) (getRoomClients roomId nextState)
+        msgs = broadcast ++ [(client, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
+      in Right (nextState, msgs)
