@@ -12,5 +12,5 @@ import SixtyThree (reducerSafe)
 run :: RIO App ()
 run = do
   logInfo "Running!"
-  initialState <- newMVar newServerState
+  initialState <- newMVar newServerStateWS
   liftIO $ runEnv 3000 (app initialState reducerSafe)

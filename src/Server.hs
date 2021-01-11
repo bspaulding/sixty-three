@@ -12,6 +12,7 @@ import Control.Concurrent (MVar, modifyMVar_, readMVar)
 import Control.Exception (finally)
 import Control.Monad (forM_, forever)
 import Data.Aeson
+import qualified Data.Map as Map
 import qualified Data.Text as T
 import Data.UUID as UUID
 import Data.UUID.V4 as UUID
@@ -27,7 +28,7 @@ import SocketResponse
 import System.Random
 import WaiAppStatic.Types (unsafeToPiece)
 
-app :: Show s => ToJSON s => MVar (ServerState s) -> (s -> a -> Either String s) -> Application
+app :: Show s => ToJSON s => MVar (ServerStateWS s) -> (s -> a -> Either String s) -> Application
 app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
@@ -49,15 +50,15 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do
                   stdGen <- getStdGen
-                  case serverStateReducer stdGen state client socketRequest roomStateReducer of
+                  case serverStateReducer stdGen (serverState state) connId socketRequest roomStateReducer of
                     Left err -> do
                       sendError conn err
                       return state
                     Right (nextState, responses) -> do
                       print nextState
                       print responses
-                      forM_ responses sendResponse
-                      return nextState
+                      forM_ responses (sendResponse (clientsById state))
+                      return state { serverState = nextState }
                 _ <- readMVar stateM
                 return ()
               Nothing -> do
@@ -67,8 +68,12 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
     sendError conn err =
       sendTextData conn (encode (ErrorResponse err :: SocketResponse GameState))
 
-    sendResponse ((_, conn), response) =
-      sendTextData conn (encode response)
+    sendResponse clientsById (connId, response) =
+      case Map.lookup connId clientsById of
+        Just (_, conn) -> sendTextData conn (encode response)
+        Nothing -> do
+          putStrLn $ "sendResponse called with no connection for id " ++ connId ++ "\n" ++ show clientsById
+          return ()
 
     disconnect = do
       putStrLn "Client disconnected."
