@@ -8,6 +8,7 @@ import GHC.Generics
 data SocketRequest
   = CreateRoom
   | JoinRoom String
+  | SetPlayerName String
   deriving (Generic, Show)
 
 options :: Options

@@ -12,6 +12,7 @@ data SocketResponse a
   | IdentifyConnection String
   | JoinedRoom { roomId :: String, playerNamesById :: Map.Map String String}
   | PlayerJoinedRoom { connId :: String, name :: String }
+  | PlayerNameChanged { connId :: String, name :: String }
   | State a
   deriving (Generic, Show)
 

@@ -1,5 +1,6 @@
 module ServerState where
 
+import Data.Char (toLower)
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Network.WebSockets as WS
@@ -43,6 +44,9 @@ addClient client s = s {clientsById = Map.insert (fst client) client (clientsByI
 
 addToLobby :: Client -> ServerState a -> ServerState a
 addToLobby client s = s {lobby = fst client : lobby s}
+
+connect :: Client -> ServerState a -> ServerState a
+connect client state = addClient client (addToLobby client state)
 
 removeFromLobby :: Client -> ServerState a -> ServerState a
 removeFromLobby client s = s {lobby = Prelude.filter (/= fst client) (lobby s)}
@@ -105,10 +109,23 @@ serverStateReducer g s client r roomReducer =
         nextState = moveClientToRoom roomId client s
         msgs = [(client, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
       in Right (nextState, msgs)
-    JoinRoom roomId ->
+    JoinRoom roomId_ ->
       let
+        roomId = map toLower roomId_
         nextState = moveClientToRoom roomId client s
         msg = SocketResponse.PlayerJoinedRoom (fst client) (playerName client nextState)
-        broadcast = map (\c -> (c, msg)) (getRoomClients roomId nextState)
-        msgs = broadcast ++ [(client, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
+        msgs = broadcast msg roomId nextState ++ [(client, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
       in Right (nextState, msgs)
+    SetPlayerName name ->
+      let
+        connId = fst client
+        nextState = updatePlayerName client name s
+        msg = SocketResponse.PlayerNameChanged connId name
+        msgs = maybe [(client, msg)]
+          (\roomId -> broadcast msg roomId nextState)
+          (getRoomId connId nextState)
+      in Right (nextState, msgs)
+
+broadcast :: SocketResponse.SocketResponse a -> RoomId -> ServerState a -> [(Client, SocketResponse.SocketResponse a)]
+broadcast msg roomId nextState =
+  map (\c -> (c, msg)) (getRoomClients roomId nextState)

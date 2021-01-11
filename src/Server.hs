@@ -38,7 +38,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
       let client = (connId, conn)
       let idMsg = IdentifyConnection connId :: SocketResponse GameState
       modifyMVar_ stateM $ \state -> do
-        return $ addClient client (addToLobby client state)
+        return $ connect client state
       sendTextData conn (encode idMsg)
       flip finally disconnect $
         withPingThread conn 30 (return ()) $
@@ -58,7 +58,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
                       print responses
                       forM_ responses sendResponse
                       return nextState
-                state <- readMVar stateM
+                _ <- readMVar stateM
                 return ()
               Nothing -> do
                 putStrLn $ "Failed to parse message: " ++ show msg

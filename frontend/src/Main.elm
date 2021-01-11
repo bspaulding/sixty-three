@@ -32,6 +32,7 @@ type alias Model =
     , playersById : Dict.Dict WSMessage.ConnId Player
     , roomId : Maybe WSMessage.RoomId
     , tempRoomId : String
+    , tempName : String
     }
 
 
@@ -41,6 +42,7 @@ init =
       , playersById = Dict.empty
       , roomId = Nothing
       , tempRoomId = ""
+      , tempName = ""
       }
     , Cmd.none
     )
@@ -57,6 +59,8 @@ type Msg
     | CreateRoom
     | JoinRoom
     | TempRoomIdChanged String
+    | TempNameChanged String
+    | SubmitName
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,6 +91,12 @@ update msg model =
 
         TempRoomIdChanged roomId ->
             ( { model | tempRoomId = roomId }, Cmd.none )
+
+        TempNameChanged name ->
+            ( { model | tempName = name }, Cmd.none )
+
+        SubmitName ->
+            ( model, WSMessage.setPlayerName model.tempName )
 
 
 handleWsMessage : Model -> WSMessage.WSMessage -> ( Model, Cmd Msg )
@@ -122,7 +132,21 @@ view model =
             roomView roomId model
 
         Nothing ->
-            createOrJoinRoomView model
+            case Dict.get (Maybe.withDefault "" model.connId) model.playersById of
+                Just player ->
+                    createOrJoinRoomView model
+
+                Nothing ->
+                    setNameView model
+
+
+setNameView : Model -> Html Msg
+setNameView model =
+    div []
+        [ text "Enter a name:"
+        , input [ type_ "text", value model.tempName, onInput TempNameChanged ] []
+        , button [ onClick SubmitName ] [ text "Submit" ]
+        ]
 
 
 createOrJoinRoomView : Model -> Html Msg
@@ -137,8 +161,7 @@ createOrJoinRoomView model =
 roomView : WSMessage.RoomId -> Model -> Html Msg
 roomView roomId model =
     div []
-        [ text "TODO: roomView"
-        , text ("Room " ++ roomId)
+        [ div [] [ text ("Room " ++ roomId) ]
         , div [] [ text (roomDescription model) ]
         ]
 

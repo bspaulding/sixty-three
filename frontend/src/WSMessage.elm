@@ -74,3 +74,10 @@ joinRoom roomId =
     E.object [ ( "type", E.string "JoinRoom" ), ( "payload", E.string roomId ) ]
         |> E.encode 0
         |> sendMessage
+
+
+setPlayerName : String -> Cmd msg
+setPlayerName name =
+    E.object [ ( "type", E.string "SetPlayerName" ), ( "payload", E.string name ) ]
+        |> E.encode 0
+        |> sendMessage
