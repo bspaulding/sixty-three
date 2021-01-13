@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 43ad5081a7c3b6776f893b0e93fdac3d9f3270c9d88d394e619c3cfdf8db7338
+-- hash: 8fc2f5f21e60a05181faadbe221d73e08a4a56f824c94e8383c3fd12c6f154df
 
 name:           sixty-three
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Card
+      GameAction
       GameState
       Import
       Run

@@ -7,6 +7,7 @@ import Card
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import GameAction
 import GameState
 import Import
 import Shuffle
@@ -132,16 +133,6 @@ initialGameState =
       previousRounds = [],
       g = mkStdGen 0
     }
-
-data GameAction
-  = Deal
-  | BidPass
-  | Bid Integer
-  | Play Card
-  | PickTrump Suit
-  | Discard [Card]
-  | PassCards [Card]
-  deriving (Eq, Show)
 
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
 enumNext a = if maxBound == a then minBound else succ a

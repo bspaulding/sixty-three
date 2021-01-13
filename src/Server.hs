@@ -16,7 +16,8 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import Data.UUID as UUID
 import Data.UUID.V4 as UUID
-import GameState -- TODO: remove
+import GameAction
+import GameState
 import Network.HTTP.Types ()
 import Network.Wai
 import Network.Wai.Application.Static
@@ -28,7 +29,9 @@ import SocketResponse
 import System.Random
 import WaiAppStatic.Types (unsafeToPiece)
 
-app :: Show s => ToJSON s => MVar (ServerStateWS s) -> (s -> a -> Either String s) -> Application
+-- TODO: why do i have to fix action and state here?!
+-- app :: (ToJSON s, ToJSON a, FromJSON a, Show a, Show s) => MVar (ServerStateWS s) -> (s -> a -> Either String s) -> Application
+app :: MVar (ServerStateWS GameState) -> (GameState -> (Player, GameAction) -> Either String GameState) -> Application
 app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
@@ -37,15 +40,16 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
       conn <- acceptRequest pending_conn
       connId <- UUID.toString <$> UUID.nextRandom
       let client = (connId, conn)
+      -- TODO: why do i have to fix the inner SocketResponse a here?
       let idMsg = IdentifyConnection connId :: SocketResponse GameState
       modifyMVar_ stateM $ \state -> do
         return $ connect client state
-      sendTextData conn (encode idMsg)
+      sendTextData conn (encode idMsg )
       flip finally (disconnect stateM connId) $
         withPingThread conn 30 (return ()) $
           forever $ do
             msg <- receiveData conn
-            case decode msg :: Maybe SocketRequest of
+            case decode msg of
               Just socketRequest -> do
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do

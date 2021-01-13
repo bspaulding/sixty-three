@@ -9,13 +9,13 @@ data Suit = Hearts | Diamonds | Clubs | Spades
   deriving (Enum, Eq, Generic, Ord, Show)
 
 instance ToJSON Suit where
-  toJSON = genericToJSON defaultOptions
+instance FromJSON Suit where
 
 data Face = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
   deriving (Enum, Eq, Generic, Show)
 
 instance ToJSON Face where
-  toJSON = genericToJSON defaultOptions
+instance FromJSON Face where
 
 rank :: Face -> Integer
 rank f = case f of
@@ -40,4 +40,4 @@ data Card = FaceCard Suit Face | Joker
   deriving (Eq, Generic, Ord, Show)
 
 instance ToJSON Card where
-  toJSON = genericToJSON defaultOptions
+instance FromJSON Card where

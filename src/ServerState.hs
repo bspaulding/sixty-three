@@ -107,7 +107,7 @@ updatePlayerName connId name s = s {names = Map.insert connId name (names s)}
 playerName :: ConnId -> ServerState a -> String
 playerName connId s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest -> (a -> action -> Either String a) -> Either String ((ServerState a), [(ConnId, SocketResponse.SocketResponse a) ])
+serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> Either String ((ServerState a), [(ConnId, SocketResponse.SocketResponse a) ])
 serverStateReducer g s connId r roomReducer =
   case r of
     CreateRoom ->
