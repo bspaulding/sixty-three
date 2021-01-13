@@ -41,7 +41,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
       modifyMVar_ stateM $ \state -> do
         return $ connect client state
       sendTextData conn (encode idMsg)
-      flip finally disconnect $
+      flip finally (disconnect stateM connId) $
         withPingThread conn 30 (return ()) $
           forever $ do
             msg <- receiveData conn
@@ -68,15 +68,17 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
     sendError conn err =
       sendTextData conn (encode (ErrorResponse err :: SocketResponse GameState))
 
-    sendResponse clientsById (connId, response) =
-      case Map.lookup connId clientsById of
+    sendResponse clients (connId', response) =
+      case Map.lookup connId' clients of
         Just (_, conn) -> sendTextData conn (encode response)
         Nothing -> do
-          putStrLn $ "sendResponse called with no connection for id " ++ connId ++ "\n" ++ show clientsById
+          putStrLn $ "sendResponse called with no connection for id " ++ connId' ++ "\n" ++ show clients
           return ()
 
-    disconnect = do
-      putStrLn "Client disconnected."
+    disconnect stateM connId = do
+      modifyMVar_ stateM $ \state -> do
+        return $ removeClient connId state
+      putStrLn $ "Client " ++ connId ++ "disconnected."
 
     staticAppSettings = (defaultWebAppSettings "frontend/build") {ssIndices = [unsafeToPiece "index.html"]}
 
