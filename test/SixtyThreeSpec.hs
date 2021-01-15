@@ -7,6 +7,7 @@ import Card
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import GameAction
 import GameState
 import Import
 import Shuffle
@@ -76,7 +77,7 @@ instance Arbitrary GameAction where
         Play <$> arbitrary,
         PickTrump <$> arbitrary,
         -- TODO: state prop here, can't discard cards you don't have!
-        SixtyThree.Discard <$> arbitrary,
+        GameAction.Discard <$> arbitrary,
         -- TODO: state prop here, can't pass cards you don't have!
         PassCards <$> arbitrary
       ]
@@ -96,7 +97,7 @@ classifyAction a =
     Bid _ -> "Bid"
     Play _ -> "Play"
     PickTrump _ -> "PickTrump"
-    SixtyThree.Discard _ -> "Discard"
+    GameAction.Discard _ -> "Discard"
     PassCards _ -> "PassCards"
 
 prop_game_over :: Player -> GameAction -> Property
@@ -285,14 +286,14 @@ spec = do
       let nineOfHearts = FaceCard Hearts Nine
       List.find (== nineOfHearts) (getHand PlayerFour state) `shouldBe` Just nineOfHearts
 
-      let discardedPoints = reducerSafe state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Nine])
+      let discardedPoints = reducerSafe state (PlayerFour, GameAction.Discard [FaceCard Hearts Nine])
       discardedPoints `shouldBe` Left "cannot discard trump worth points!"
 
-      let discardedNoPoints = reducerSafe state (PlayerFour, SixtyThree.Discard [FaceCard Hearts Three])
+      let discardedNoPoints = reducerSafe state (PlayerFour, GameAction.Discard [FaceCard Hearts Three])
       getHand PlayerFour <$> discardedNoPoints `shouldBe` Right (drop 2 hearts)
 
     it "cannot pass the joker if you do not have the ace" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts), (PlayerFour, SixtyThree.Discard [])]
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts), (PlayerFour, GameAction.Discard [])]
       let state = playGame actions
       let playerWithJoker = List.find (\p -> Set.member Joker (Set.fromList (getHand p state))) players
       playerWithJoker `shouldBe` Just PlayerOne
@@ -337,7 +338,7 @@ spec = do
       let player = getCurrentPlayer state
       let hand = getHand player state
       let cardsToDiscard = filter (\c -> cardScore Hearts c == 0) hand
-      let stateDiscarded = reducerSafe state (player, SixtyThree.Discard cardsToDiscard)
+      let stateDiscarded = reducerSafe state (player, GameAction.Discard cardsToDiscard)
 
       stateDiscarded `shouldBe` Left "You must keep at least six cards in your hand."
 
@@ -347,7 +348,7 @@ spec = do
       let player = getCurrentPlayer state
       let hand = getHand player state
       let cardsToDiscard = take 5 $ filter (\c -> cardScore Hearts c == 0) hand
-      let stateDiscarded = reducerSafe state (player, SixtyThree.Discard cardsToDiscard)
+      let stateDiscarded = reducerSafe state (player, GameAction.Discard cardsToDiscard)
 
       Set.fromList . getHand player <$> stateDiscarded `shouldBe` Right (Set.difference (Set.fromList hand) (Set.fromList cardsToDiscard))
 
@@ -569,7 +570,7 @@ playDiscard state =
   case getTrump state of
     Nothing -> state -- no trump wtf are we doing?
     Just t ->
-      reducer state (player, SixtyThree.Discard discardedCards)
+      reducer state (player, GameAction.Discard discardedCards)
       where
         -- TODO: there's a bug here i think if you don't have enough non trump cards need to pass
         discardedCards = take (length hand - 6) nonTrumpCards
