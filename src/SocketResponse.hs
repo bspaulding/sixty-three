@@ -3,18 +3,18 @@
 
 module SocketResponse where
 
-import qualified Data.Map as Map
 import Data.Aeson
+import qualified Data.Map as Map
 import GHC.Generics
 
 data SocketResponse a
   = ErrorResponse String
   | IdentifyConnection String
-  | JoinedRoom { roomId :: String, playerNamesById :: Map.Map String String}
-  | PlayerJoinedRoom { connId :: String, name :: String }
-  | PlayerNameChanged { connId :: String, name :: String }
+  | JoinedRoom {roomId :: String, playerNamesById :: Map.Map String String}
+  | PlayerJoinedRoom {connId :: String, name :: String}
+  | PlayerNameChanged {connId :: String, name :: String}
   | State a
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 
 socketResponseToJSONOptions :: Options
 socketResponseToJSONOptions =

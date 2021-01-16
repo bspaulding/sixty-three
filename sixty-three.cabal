@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b26d26eab1be37f59ff469f88ce86e3e797f3274ec96418183bdfb6178fe6b23
+-- hash: 8fc2f5f21e60a05181faadbe221d73e08a4a56f824c94e8383c3fd12c6f154df
 
 name:           sixty-three
 version:        0.1.0.0
@@ -92,6 +92,7 @@ test-suite sixty-three-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ServerStateSpec
       ShuffleSpec
       SixtyThreeSpec
       UtilSpec

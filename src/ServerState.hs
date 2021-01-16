@@ -22,11 +22,11 @@ data ServerState a = ServerState
     names :: Map.Map ConnId String,
     stateByRoom :: Map.Map RoomId a
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
 data ServerStateWS a = ServerStateWS
-  { clientsById :: Map.Map ConnId Client
-  , serverState :: ServerState a
+  { clientsById :: Map.Map ConnId Client,
+    serverState :: ServerState a
   }
 
 instance Show WS.Connection where
@@ -56,8 +56,12 @@ addToLobby :: ConnId -> ServerState a -> ServerState a
 addToLobby connId s = s {lobby = connId : lobby s}
 
 connect :: Client -> ServerStateWS a -> ServerStateWS a
-connect client state = addClient client state
-  { serverState = addToLobby (fst client) (serverState state)}
+connect client state =
+  addClient
+    client
+    state
+      { serverState = addToLobby (fst client) (serverState state)
+      }
 
 removeFromLobby :: ConnId -> ServerState a -> ServerState a
 removeFromLobby connId s = s {lobby = Prelude.filter (/= connId) (lobby s)}
@@ -70,10 +74,11 @@ removeFromRooms connId s =
     }
 
 removeClient :: ConnId -> ServerStateWS a -> ServerStateWS a
-removeClient connId s = s
-  { clientsById = Map.delete connId (clientsById s)
-  , serverState = removeFromLobby connId (removeFromRooms connId (serverState s))
-  }
+removeClient connId s =
+  s
+    { clientsById = Map.delete connId (clientsById s),
+      serverState = removeFromLobby connId (removeFromRooms connId (serverState s))
+    }
 
 addToRoom :: RoomId -> ConnId -> ServerState a -> ServerState a
 addToRoom roomId connId s =
@@ -96,7 +101,8 @@ getRoomConnIds roomId s = Map.findWithDefault [] roomId (rooms s)
 
 getRoomPlayerNames :: RoomId -> ServerState a -> Map.Map ConnId String
 getRoomPlayerNames roomId state = Map.fromList $ Prelude.map (\connId -> (connId, playerName connId state)) roomConnIds
-  where roomConnIds = getRoomConnIds roomId state
+  where
+    roomConnIds = getRoomConnIds roomId state
 
 setStateInRoom :: RoomId -> a -> ServerState a -> ServerState a
 setStateInRoom roomId game s = s {stateByRoom = Map.insert roomId game (stateByRoom s)}
@@ -107,30 +113,29 @@ updatePlayerName connId name s = s {names = Map.insert connId name (names s)}
 playerName :: ConnId -> ServerState a -> String
 playerName connId s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> Either String ((ServerState a), [(ConnId, SocketResponse.SocketResponse a) ])
+serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> Either String ((ServerState a), [(ConnId, SocketResponse.SocketResponse a)])
 serverStateReducer g s connId r roomReducer =
   case r of
     CreateRoom ->
-      let
-        roomId = fst $ makeRoomId g
-        nextState = moveClientToRoom roomId connId s
-        msgs = [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
-      in Right (nextState, msgs)
+      let roomId = fst $ makeRoomId g
+          nextState = moveClientToRoom roomId connId s
+          msgs = [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
+       in Right (nextState, msgs)
     JoinRoom roomId_ ->
-      let
-        roomId = map toLower roomId_
-        nextState = moveClientToRoom roomId connId s
-        msg = SocketResponse.PlayerJoinedRoom connId (playerName connId nextState)
-        msgs = broadcast msg roomId nextState ++ [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
-      in Right (nextState, msgs)
+      let roomId = map toLower roomId_
+          nextState = moveClientToRoom roomId connId s
+          msg = SocketResponse.PlayerJoinedRoom connId (playerName connId nextState)
+          msgs = broadcast msg roomId nextState ++ [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
+       in Right (nextState, msgs)
     SetPlayerName name ->
-      let
-        nextState = updatePlayerName connId name s
-        msg = SocketResponse.PlayerNameChanged connId name
-        msgs = maybe [(connId, msg)]
-          (\roomId -> broadcast msg roomId nextState)
-          (getRoomId connId nextState)
-      in Right (nextState, msgs)
+      let nextState = updatePlayerName connId name s
+          msg = SocketResponse.PlayerNameChanged connId name
+          msgs =
+            maybe
+              [(connId, msg)]
+              (\roomId -> broadcast msg roomId nextState)
+              (getRoomId connId nextState)
+       in Right (nextState, msgs)
 
 broadcast :: SocketResponse.SocketResponse a -> RoomId -> ServerState a -> [(ConnId, SocketResponse.SocketResponse a)]
 broadcast msg roomId nextState =
