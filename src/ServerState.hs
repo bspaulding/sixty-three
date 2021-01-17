@@ -132,7 +132,7 @@ serverStateReducer g s connId r roomReducer roomInitialState =
                   msg = SocketResponse.PlayerJoinedRoom connId (playerName connId nextState)
                   msgs = broadcast msg roomId nextState ++ [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
                in Right (nextState, msgs)
-            else (Left $ "No room with id '" ++ roomId ++ "' exists.")
+            else Left $ "No room with id '" ++ roomId ++ "' exists."
     SetPlayerName name ->
       let nextState = updatePlayerName connId name s
           msg = SocketResponse.PlayerNameChanged connId name
