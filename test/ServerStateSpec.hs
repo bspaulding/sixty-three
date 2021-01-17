@@ -1,5 +1,6 @@
 module ServerStateSpec (spec) where
 
+import qualified Data.Map as Map
 import ServerState
 import SixtyThree (reducerSafe)
 import SocketRequest
@@ -14,6 +15,19 @@ spec = do
     let initialState = newServerState
     let connId = "abcdefg"
     let roomId = "abcd"
+
+    describe "CreateRoom" $ do
+      it "creates a room with a random id" $ do
+        let result = serverStateReducer g newServerState connId SocketRequest.CreateRoom reducerSafe
+        let state = fst <$> result
+        getRoomId connId <$> state `shouldBe` Right (Just "lcbg")
+
+        let msgs = snd <$> result
+        msgs `shouldBe` Right [(connId, SocketResponse.JoinedRoom "lcbg" (Map.fromList [(connId, "Unknown")]))]
+
+    describe "JoinRoom" $ do
+      it "lower cases all room ids" $ do
+        pending
 
     describe "SetPlayerName" $ do
       let request = SetPlayerName "Bradley"
@@ -33,7 +47,3 @@ spec = do
         playerName connId <$> state `shouldBe` Right "Bradley"
         let expectedMsg = SocketResponse.PlayerNameChanged connId "Bradley"
         msgs `shouldBe` Right [(connId, expectedMsg), ("123", expectedMsg)]
-
-    describe "JoinRoom" $ do
-      it "lower cases all room ids" $ do
-        pending
