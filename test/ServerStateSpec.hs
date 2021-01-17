@@ -12,7 +12,6 @@ spec :: Spec
 spec = do
   describe "serverStateReducer" $ do
     let g = mkStdGen 1
-    let initialState = newServerState
     let connId = "abcdefg"
     let roomId = "abcd"
 
@@ -26,14 +25,22 @@ spec = do
         msgs `shouldBe` Right [(connId, SocketResponse.JoinedRoom "lcbg" (Map.fromList [(connId, "Unknown")]))]
 
     describe "JoinRoom" $ do
+      let request = SocketRequest.JoinRoom "LCBG"
+
       it "lower cases all room ids" $ do
+        let initialState = moveClientToRoom roomId connId newServerState
+        let result = serverStateReducer g initialState connId request reducerSafe
+        let state = fst <$> result
+        getRoomId connId <$> state `shouldBe` Right (Just "lcbg")
+
+      it "returns error if room does not exist" $ do
         pending
 
     describe "SetPlayerName" $ do
       let request = SetPlayerName "Bradley"
 
       it "sets player name sends echo back if no room yet" $ do
-        let result = serverStateReducer g initialState connId request reducerSafe
+        let result = serverStateReducer g newServerState connId request reducerSafe
         let state = fst <$> result
         let msgs = snd <$> result
         playerName connId <$> state `shouldBe` Right "Bradley"
