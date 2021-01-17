@@ -2,7 +2,6 @@ module ServerStateSpec (spec) where
 
 import qualified Data.Map as Map
 import ServerState
-import SixtyThree (reducerSafe)
 import SocketRequest
 import SocketResponse
 import System.Random
