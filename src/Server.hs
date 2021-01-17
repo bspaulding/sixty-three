@@ -44,7 +44,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
       let idMsg = IdentifyConnection connId :: SocketResponse GameState
       modifyMVar_ stateM $ \state -> do
         return $ connect client state
-      sendTextData conn (encode idMsg )
+      sendTextData conn (encode idMsg)
       flip finally (disconnect stateM connId) $
         withPingThread conn 30 (return ()) $
           forever $ do
@@ -54,7 +54,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do
                   stdGen <- getStdGen
-                  case serverStateReducer stdGen (serverState state) connId socketRequest roomStateReducer of
+                  case serverStateReducer stdGen (serverState state) connId socketRequest roomStateReducer initialGameState of
                     Left err -> do
                       sendError conn err
                       return state
@@ -62,7 +62,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
                       print nextState
                       print responses
                       forM_ responses (sendResponse (clientsById state))
-                      return state { serverState = nextState }
+                      return state {serverState = nextState}
                 _ <- readMVar stateM
                 return ()
               Nothing -> do

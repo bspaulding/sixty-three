@@ -117,23 +117,6 @@ scoreTricks trumpSuit ts = foldl foldScores Map.empty scores
 players :: [Player]
 players = generateEnumValues
 
-initialGameState :: GameState
-initialGameState =
-  GameState
-    { dealer = PlayerFour,
-      currentBid = Nothing,
-      bidPassed = Map.empty,
-      hands = Map.empty,
-      kitty = [],
-      tricks = [],
-      playerInControl = PlayerOne,
-      cardsInPlay = Map.empty,
-      discarded = [],
-      trump = Nothing,
-      previousRounds = [],
-      g = mkStdGen 0
-    }
-
 enumNext :: (Eq a, Bounded a, Enum a) => a -> a
 enumNext a = if maxBound == a then minBound else succ a
 

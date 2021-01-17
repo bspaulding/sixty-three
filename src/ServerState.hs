@@ -107,14 +107,17 @@ getRoomPlayerNames roomId state = Map.fromList $ Prelude.map (\connId -> (connId
 setStateInRoom :: RoomId -> a -> ServerState a -> ServerState a
 setStateInRoom roomId game s = s {stateByRoom = Map.insert roomId game (stateByRoom s)}
 
+getStateInRoom :: RoomId -> ServerState a -> Maybe a
+getStateInRoom roomId s = Map.lookup roomId (stateByRoom s)
+
 updatePlayerName :: ConnId -> String -> ServerState a -> ServerState a
 updatePlayerName connId name s = s {names = Map.insert connId name (names s)}
 
 playerName :: ConnId -> ServerState a -> String
 playerName connId s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
-serverStateReducer g s connId r roomReducer =
+serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> a -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
+serverStateReducer g s connId r roomReducer roomInitialState =
   case r of
     CreateRoom ->
       let roomId = fst $ makeRoomId g
@@ -139,6 +142,14 @@ serverStateReducer g s connId r roomReducer =
               (\roomId -> broadcast msg roomId nextState)
               (getRoomId connId nextState)
        in Right (nextState, msgs)
+    GameAction a ->
+      case getRoomId connId s of
+        Nothing -> Left "You are not in a room!"
+        Just roomId ->
+          let roomState = Maybe.fromMaybe roomInitialState (getStateInRoom roomId s)
+           in case roomReducer roomState a of
+                Right nextState -> Right (setStateInRoom roomId nextState s, [])
+                Left err -> Left err
 
 broadcast :: SocketResponse.SocketResponse a -> RoomId -> ServerState a -> [(ConnId, SocketResponse.SocketResponse a)]
 broadcast msg roomId nextState =
