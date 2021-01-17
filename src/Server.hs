@@ -54,7 +54,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do
                   stdGen <- getStdGen
-                  case serverStateReducer stdGen (serverState state) connId socketRequest roomStateReducer initialGameState of
+                  case serverStateReducer roomStateReducer initialGameState stdGen (serverState state) connId socketRequest of
                     Left err -> do
                       sendError conn err
                       return state
