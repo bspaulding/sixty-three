@@ -28,13 +28,14 @@ spec = do
       let request = SocketRequest.JoinRoom "LCBG"
 
       it "lower cases all room ids" $ do
-        let initialState = moveClientToRoom roomId connId newServerState
+        let initialState = moveClientToRoom "lcbg" "creator" newServerState
         let result = serverStateReducer g initialState connId request reducerSafe
         let state = fst <$> result
         getRoomId connId <$> state `shouldBe` Right (Just "lcbg")
 
       it "returns error if room does not exist" $ do
-        pending
+        let result = serverStateReducer g newServerState connId request reducerSafe
+        result `shouldBe` Left "No room with id 'lcbg' exists."
 
     describe "SetPlayerName" $ do
       let request = SetPlayerName "Bradley"

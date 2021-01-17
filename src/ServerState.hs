@@ -113,7 +113,7 @@ updatePlayerName connId name s = s {names = Map.insert connId name (names s)}
 playerName :: ConnId -> ServerState a -> String
 playerName connId s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> Either String ((ServerState a), [(ConnId, SocketResponse.SocketResponse a)])
+serverStateReducer :: RandomGen g => g -> ServerState a -> ConnId -> SocketRequest action -> (a -> action -> Either String a) -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
 serverStateReducer g s connId r roomReducer =
   case r of
     CreateRoom ->
@@ -123,10 +123,13 @@ serverStateReducer g s connId r roomReducer =
        in Right (nextState, msgs)
     JoinRoom roomId_ ->
       let roomId = map toLower roomId_
-          nextState = moveClientToRoom roomId connId s
-          msg = SocketResponse.PlayerJoinedRoom connId (playerName connId nextState)
-          msgs = broadcast msg roomId nextState ++ [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
-       in Right (nextState, msgs)
+       in if Map.member roomId (rooms s)
+            then
+              let nextState = moveClientToRoom roomId connId s
+                  msg = SocketResponse.PlayerJoinedRoom connId (playerName connId nextState)
+                  msgs = broadcast msg roomId nextState ++ [(connId, SocketResponse.JoinedRoom roomId (getRoomPlayerNames roomId nextState))]
+               in Right (nextState, msgs)
+            else (Left $ "No room with id '" ++ roomId ++ "' exists.")
     SetPlayerName name ->
       let nextState = updatePlayerName connId name s
           msg = SocketResponse.PlayerNameChanged connId name
