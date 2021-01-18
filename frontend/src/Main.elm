@@ -36,6 +36,7 @@ type alias Model =
     , tempRoomId : String
     , tempName : String
     , gameState : Maybe GameState.GameState
+    , lastErrorMsg : Maybe String
     }
 
 
@@ -47,6 +48,7 @@ init =
       , tempRoomId = ""
       , tempName = ""
       , gameState = Nothing
+      , lastErrorMsg = Nothing
       }
     , Cmd.none
     )
@@ -134,7 +136,7 @@ handleWsMessage model wsMsg =
             ( { model | gameState = Just gameState }, Cmd.none )
 
         WSMessage.ErrorResponse err ->
-            Debug.log err ( model, Cmd.none )
+            Debug.log err ( { model | lastErrorMsg = Just err }, Cmd.none )
 
 
 
@@ -143,17 +145,25 @@ handleWsMessage model wsMsg =
 
 view : Model -> Html Msg
 view model =
-    case model.roomId of
-        Just roomId ->
-            roomView roomId model
+    div []
+        [ case model.lastErrorMsg of
+            Nothing ->
+                div [] []
 
-        Nothing ->
-            case Dict.get (Maybe.withDefault "" model.connId) model.playersById of
-                Just player ->
-                    createOrJoinRoomView model
+            Just err ->
+                div [ class "error" ] [ text err ]
+        , case model.roomId of
+            Just roomId ->
+                roomView roomId model
 
-                Nothing ->
-                    setNameView model
+            Nothing ->
+                case Dict.get (Maybe.withDefault "" model.connId) model.playersById of
+                    Just player ->
+                        createOrJoinRoomView model
+
+                    Nothing ->
+                        setNameView model
+        ]
 
 
 setNameView : Model -> Html Msg

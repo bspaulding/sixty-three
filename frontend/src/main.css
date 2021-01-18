@@ -24,3 +24,9 @@ img {
   margin: 20px 0;
   max-width: 200px;
 }
+
+.error {
+  border: 1px solid red;
+  border-radius: 8px 4px;
+  color: red;
+}
