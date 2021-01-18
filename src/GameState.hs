@@ -6,6 +6,7 @@ import Card
 import Data.Aeson
 import qualified Data.Map as Map
 import GHC.Generics
+import ServerState (ConnId)
 import System.Random
 
 -- lists of cards should probably be sets of cards
@@ -58,3 +59,6 @@ initialGameState =
       previousRounds = [],
       g = mkStdGen 0
     }
+
+initializer :: [ConnId] -> GameState
+initializer _ = initialGameState

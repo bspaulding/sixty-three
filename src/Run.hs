@@ -3,6 +3,7 @@
 
 module Run (run) where
 
+import GameState (initializer)
 import Import
 import Network.Wai.Handler.Warp (runEnv)
 import Server
@@ -13,4 +14,4 @@ run :: RIO App ()
 run = do
   logInfo "Running!"
   initialState <- newMVar newServerStateWS
-  liftIO $ runEnv 3000 (app initialState reducerSafe)
+  liftIO $ runEnv 3000 (app initialState reducerSafe initializer)

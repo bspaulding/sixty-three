@@ -9,19 +9,23 @@ import Test.Hspec
 
 data TestAction = Update | MakeError
 
-initialTestState = "initial"
+data TestState = TestState {s :: String, connIds :: [ConnId]}
+  deriving (Eq, Show)
 
-testReducer :: String -> TestAction -> Either String String
+testInitializer :: [ConnId] -> TestState
+testInitializer connIds = TestState {s = "initial", connIds = connIds}
+
+testReducer :: TestState -> TestAction -> Either String TestState
 testReducer s a =
   case a of
-    Update -> Right "updated"
+    Update -> Right s {s = "updated"}
     MakeError -> Left "oops"
 
 spec :: Spec
 spec = do
   describe "serverStateReducer" $ do
     let g = mkStdGen 1
-    let reducer = serverStateReducer testReducer initialTestState g
+    let reducer = serverStateReducer testReducer testInitializer g
     let connId = "abcdefg"
     let roomId = "abcd"
 
@@ -73,9 +77,10 @@ spec = do
       it "updates room state with room reducer" $ do
         let result = reducer initialState connId (GameAction Update)
         let state = fst <$> result
-        getStateInRoom roomId <$> state `shouldBe` Right (Just "updated")
+        let expectedState = TestState {s = "updated", connIds = [connId]}
+        getStateInRoom roomId <$> state `shouldBe` Right (Just expectedState)
         let msgs = snd <$> result
-        msgs `shouldBe` Right [(connId, SocketResponse.State "updated")]
+        msgs `shouldBe` Right [(connId, SocketResponse.State expectedState)]
 
       it "returns any left from room reducer" $ do
         let result = reducer initialState connId (GameAction MakeError)

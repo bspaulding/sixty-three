@@ -30,9 +30,9 @@ import System.Random
 import WaiAppStatic.Types (unsafeToPiece)
 
 -- TODO: why do i have to fix action and state here?!
--- app :: (ToJSON s, ToJSON a, FromJSON a, Show a, Show s) => MVar (ServerStateWS s) -> (s -> a -> Either String s) -> Application
-app :: MVar (ServerStateWS GameState) -> (GameState -> (Player, GameAction) -> Either String GameState) -> Application
-app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backupApp
+-- app :: (ToJSON s, ToJSON a, FromJSON a, Show a, Show s) => MVar (ServerStateWS s) -> (s -> a -> Either String s) -> ([ConnId] -> s) -> Application
+app :: MVar (ServerStateWS GameState) -> (GameState -> (Player, GameAction) -> Either String GameState) -> ([ConnId] -> GameState) -> Application
+app stateM roomStateReducer roomStateInitializer = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
     wsApp pending_conn = do
@@ -54,7 +54,7 @@ app stateM roomStateReducer = websocketsOr defaultConnectionOptions wsApp backup
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do
                   stdGen <- getStdGen
-                  case serverStateReducer roomStateReducer initialGameState stdGen (serverState state) connId socketRequest of
+                  case serverStateReducer roomStateReducer roomStateInitializer stdGen (serverState state) connId socketRequest of
                     Left err -> do
                       sendError conn err
                       return state

@@ -116,8 +116,8 @@ updatePlayerName connId name s = s {names = Map.insert connId name (names s)}
 playerName :: ConnId -> ServerState a -> String
 playerName connId s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: RandomGen g => (a -> action -> Either String a) -> a -> g -> ServerState a -> ConnId -> SocketRequest action -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
-serverStateReducer roomReducer roomInitialState g s connId r =
+serverStateReducer :: RandomGen g => (a -> action -> Either String a) -> ([ConnId] -> a) -> g -> ServerState a -> ConnId -> SocketRequest action -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
+serverStateReducer roomReducer roomStateInitializer g s connId r =
   case r of
     CreateRoom ->
       let roomId = fst $ makeRoomId g
@@ -146,7 +146,8 @@ serverStateReducer roomReducer roomInitialState g s connId r =
       case getRoomId connId s of
         Nothing -> Left "You are not in a room!"
         Just roomId ->
-          let roomState = Maybe.fromMaybe roomInitialState (getStateInRoom roomId s)
+          let initialState = roomStateInitializer (getRoomConnIds roomId s)
+              roomState = Maybe.fromMaybe initialState (getStateInRoom roomId s)
            in case roomReducer roomState a of
                 Right nextState ->
                   let nextServerState = setStateInRoom roomId nextState s
