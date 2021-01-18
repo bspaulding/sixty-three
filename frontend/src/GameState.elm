@@ -27,16 +27,16 @@ type alias GameState =
 gameStateDecoder : D.Decoder GameState
 gameStateDecoder =
     D.map6 GameState
-        (D.field "dealer" player)
-        (D.field "playerInControl" player)
+        (D.field "dealer" gamePlayerDecoder)
+        (D.field "playerInControl" gamePlayerDecoder)
         (D.field "hands" (haskellMap D.string (D.list Card.cardDecoder)))
         (D.field "cardsInPlay" (haskellMap D.string Card.cardDecoder))
         (D.field "trump" (D.maybe Card.suitDecoder))
-        (D.field "currentBid" (D.maybe (D.map2 Tuple.pair player D.int)))
+        (D.field "currentBid" (D.maybe (D.map2 Tuple.pair gamePlayerDecoder D.int)))
 
 
-player : D.Decoder GamePlayer
-player =
+gamePlayerDecoder : D.Decoder GamePlayer
+gamePlayerDecoder =
     D.string
         |> D.andThen
             (\playerString ->
