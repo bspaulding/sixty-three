@@ -1,7 +1,9 @@
 module Tests exposing (..)
 
 import Card exposing (..)
+import Dict
 import Expect
+import HaskellMapDecoder exposing (haskellMap)
 import Json.Decode as D
 import Test exposing (..)
 
@@ -23,4 +25,14 @@ all =
                 Expect.equal
                     (D.decodeString cardDecoder "{\"tag\":\"Joker\"}")
                     (Ok Joker)
+        , test "haskell map as list" <|
+            \_ ->
+                Expect.equal
+                    (D.decodeString (haskellMap D.string D.int) "[[\"foo\", 0],[\"bar\",1]]")
+                    (Ok (Dict.fromList [ ( "foo", 0 ), ( "bar", 1 ) ]))
+        , test "haskell map of cards" <|
+            \_ ->
+                Expect.equal
+                    (D.decodeString (haskellMap D.string (D.list cardDecoder)) "[[\"PlayerOne\",[{\"tag\":\"Joker\"}]]]")
+                    (Ok (Dict.fromList [ ( "PlayerOne", [ Joker ] ) ]))
         ]
