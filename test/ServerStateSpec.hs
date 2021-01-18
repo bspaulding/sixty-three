@@ -85,3 +85,11 @@ spec = do
       it "returns any left from room reducer" $ do
         let result = reducer initialState connId (GameAction MakeError)
         result `shouldBe` Left "oops"
+
+    describe "InitRoom" $ do
+      it "runs the initializer and updates the room state" $ do
+        let initialState = moveClientToRoom roomId connId newServerState
+        let result = reducer initialState connId (InitRoom roomId)
+        let expectedState = testInitializer [connId]
+        (getStateInRoom roomId . fst <$> result) `shouldBe` Right (Just expectedState)
+        snd <$> result `shouldBe` Right [(connId, SocketResponse.State expectedState)]

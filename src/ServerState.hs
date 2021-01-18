@@ -142,6 +142,10 @@ serverStateReducer roomReducer roomStateInitializer g s connId r =
               (\roomId -> broadcast msg roomId nextState)
               (getRoomId connId nextState)
        in Right (nextState, msgs)
+    InitRoom roomId ->
+      let roomState = roomStateInitializer (getRoomConnIds roomId s)
+          nextServerState = setStateInRoom roomId roomState s
+       in Right (nextServerState, broadcast (SocketResponse.State roomState) roomId nextServerState)
     GameAction a ->
       case getRoomId connId s of
         Nothing -> Left "You are not in a room!"

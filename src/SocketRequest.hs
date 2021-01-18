@@ -9,6 +9,7 @@ data SocketRequest a
   = CreateRoom
   | JoinRoom String
   | SetPlayerName String
+  | InitRoom String
   | GameAction a
   deriving (Generic, Show)
 
