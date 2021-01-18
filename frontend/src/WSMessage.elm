@@ -1,6 +1,7 @@
 port module WSMessage exposing (..)
 
 import Dict
+import GameState
 import Json.Decode as D
 import Json.Encode as E
 
@@ -23,6 +24,7 @@ type WSMessage
     | PlayerJoinedRoom ConnId String
     | JoinedRoomResponse RoomId (Dict.Dict ConnId String)
     | PlayerNameChanged ConnId String
+    | State GameState.GameState
 
 
 
@@ -58,6 +60,9 @@ wsMessageDecoder type_ =
         "PlayerNameChanged" ->
             D.map2 PlayerNameChanged (D.field "connId" D.string) (D.field "name" D.string)
 
+        "State" ->
+            D.map State (D.field "payload" GameState.gameStateDecoder)
+
         _ ->
             D.fail <| "Unknown message type '" ++ type_ ++ "'"
 
@@ -79,5 +84,12 @@ joinRoom roomId =
 setPlayerName : String -> Cmd msg
 setPlayerName name =
     E.object [ ( "type", E.string "SetPlayerName" ), ( "payload", E.string name ) ]
+        |> E.encode 0
+        |> sendMessage
+
+
+initRoom : RoomId -> Cmd msg
+initRoom roomId =
+    E.object [ ( "type", E.string "InitRoom" ), ( "payload", E.string roomId ) ]
         |> E.encode 0
         |> sendMessage

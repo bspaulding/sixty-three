@@ -1,7 +1,9 @@
 port module Main exposing (..)
 
 import Browser
+import Card
 import Dict exposing (Dict)
+import GameState
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -33,6 +35,7 @@ type alias Model =
     , roomId : Maybe WSMessage.RoomId
     , tempRoomId : String
     , tempName : String
+    , gameState : Maybe GameState.GameState
     }
 
 
@@ -43,6 +46,7 @@ init =
       , roomId = Nothing
       , tempRoomId = ""
       , tempName = ""
+      , gameState = Nothing
       }
     , Cmd.none
     )
@@ -61,6 +65,7 @@ type Msg
     | TempRoomIdChanged String
     | TempNameChanged String
     | SubmitName
+    | StartGame
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -98,6 +103,14 @@ update msg model =
         SubmitName ->
             ( model, WSMessage.setPlayerName model.tempName )
 
+        StartGame ->
+            case model.roomId of
+                Just roomId ->
+                    ( model, WSMessage.initRoom roomId )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
 
 handleWsMessage : Model -> WSMessage.WSMessage -> ( Model, Cmd Msg )
 handleWsMessage model wsMsg =
@@ -116,6 +129,9 @@ handleWsMessage model wsMsg =
 
         WSMessage.CreateRoomResponse roomId ->
             ( { model | roomId = Just roomId }, Cmd.none )
+
+        WSMessage.State gameState ->
+            ( { model | gameState = Just gameState }, Cmd.none )
 
         WSMessage.ErrorResponse err ->
             Debug.log err ( model, Cmd.none )
@@ -158,11 +174,22 @@ createOrJoinRoomView model =
         ]
 
 
+gameView : GameState.GameState -> Html Msg
+gameView state =
+    div [] [ text "TODO" ]
+
+
 roomView : WSMessage.RoomId -> Model -> Html Msg
 roomView roomId model =
     div []
         [ div [] [ text ("Room " ++ roomId) ]
         , div [] [ text (roomDescription model) ]
+        , case model.gameState of
+            Nothing ->
+                div [] [ button [ onClick StartGame ] [ text "Start Game" ] ]
+
+            Just state ->
+                gameView state
         ]
 
 
