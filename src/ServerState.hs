@@ -148,7 +148,10 @@ serverStateReducer roomReducer roomInitialState g s connId r =
         Just roomId ->
           let roomState = Maybe.fromMaybe roomInitialState (getStateInRoom roomId s)
            in case roomReducer roomState a of
-                Right nextState -> Right (setStateInRoom roomId nextState s, [])
+                Right nextState ->
+                  let nextServerState = setStateInRoom roomId nextState s
+                      msgs = broadcast (SocketResponse.State nextState) roomId nextServerState
+                   in Right (nextServerState, msgs)
                 Left err -> Left err
 
 broadcast :: SocketResponse.SocketResponse a -> RoomId -> ServerState a -> [(ConnId, SocketResponse.SocketResponse a)]

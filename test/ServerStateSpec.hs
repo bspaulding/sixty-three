@@ -74,6 +74,8 @@ spec = do
         let result = reducer initialState connId (GameAction Update)
         let state = fst <$> result
         getStateInRoom roomId <$> state `shouldBe` Right (Just "updated")
+        let msgs = snd <$> result
+        msgs `shouldBe` Right [(connId, SocketResponse.State "updated")]
 
       it "returns any left from room reducer" $ do
         let result = reducer initialState connId (GameAction MakeError)
