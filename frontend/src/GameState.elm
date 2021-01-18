@@ -1,7 +1,9 @@
 module GameState exposing (..)
 
 import Card
+import Dict
 import Json.Decode as D
+import List
 
 
 type GamePlayer
@@ -13,8 +15,9 @@ type GamePlayer
 
 type alias GameState =
     { dealer : GamePlayer
+    , playerInControl : GamePlayer
+    , hands : Dict.Dict String (List Card.Card)
 
-    -- , hand : Set.Set Card.Card
     -- , cardsInPlay : Set.Set Card.Card
     , trump : Maybe Card.Suit
 
@@ -24,9 +27,11 @@ type alias GameState =
 
 gameStateDecoder : D.Decoder GameState
 gameStateDecoder =
-    D.map2 GameState
+    D.map4 GameState
         (D.field "dealer" (D.string |> D.andThen player))
-        (D.field "trump" (D.maybe (D.string |> D.andThen Card.suitDecoder)))
+        (D.field "playerInControl" (D.string |> D.andThen player))
+        (D.field "hands" (D.dict (D.list Card.cardDecoder)))
+        (D.field "trump" (D.maybe Card.suitDecoder))
 
 
 player : String -> D.Decoder GamePlayer

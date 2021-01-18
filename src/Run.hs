@@ -3,12 +3,11 @@
 
 module Run (run) where
 
-import GameState (initializer)
 import Import
 import Network.Wai.Handler.Warp (runEnv)
 import Server
 import ServerState
-import SixtyThree (reducerSafe)
+import SixtyThree (initializer, reducerSafe)
 
 run :: RIO App ()
 run = do

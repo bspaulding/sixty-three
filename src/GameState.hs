@@ -6,7 +6,6 @@ import Card
 import Data.Aeson
 import qualified Data.Map as Map
 import GHC.Generics
-import ServerState (ConnId)
 import System.Random
 
 -- lists of cards should probably be sets of cards
@@ -29,8 +28,7 @@ data GameState = GameState
 instance ToJSON StdGen where
   toJSON _ = object []
 
-instance ToJSON GameState where
-  toJSON = genericToJSON defaultOptions
+instance ToJSON GameState
 
 data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour
   deriving (Bounded, Enum, Eq, Generic, Ord, Show)
@@ -59,6 +57,3 @@ initialGameState =
       previousRounds = [],
       g = mkStdGen 0
     }
-
-initializer :: [ConnId] -> GameState
-initializer _ = initialGameState

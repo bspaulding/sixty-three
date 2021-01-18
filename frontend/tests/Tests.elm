@@ -1,7 +1,10 @@
 module Tests exposing (..)
 
-import Test exposing (..)
+import Card exposing (..)
 import Expect
+import Json.Decode as D
+import Test exposing (..)
+
 
 
 -- Check out https://package.elm-lang.org/packages/elm-explorations/test/latest to learn more about testing in Elm!
@@ -9,14 +12,15 @@ import Expect
 
 all : Test
 all =
-    describe "A Test Suite"
-        [ test "Addition" <|
+    describe "card decoders"
+        [ test "face card" <|
             \_ ->
-                Expect.equal 10 (3 + 7)
-        , test "String.left" <|
+                Expect.equal
+                    (D.decodeString cardDecoder "{\"tag\":\"FaceCard\",\"contents\":[\"Diamonds\",\"Seven\"]}")
+                    (Ok (FaceCard Diamonds Seven))
+        , test "joker" <|
             \_ ->
-                Expect.equal "a" (String.left 1 "abcdefg")
-        , test "This test should fail" <|
-            \_ ->
-                Expect.fail "failed as expected!"
+                Expect.equal
+                    (D.decodeString cardDecoder "{\"tag\":\"Joker\"}")
+                    (Ok Joker)
         ]
