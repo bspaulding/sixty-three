@@ -147,8 +147,8 @@ maybeFinishRound state =
   where
     allHands = concatMap (`getHand` state) players
 
-initializer :: [String] -> GameState
-initializer _ = reducer initialGameState (dealer initialGameState, Deal)
+initializer :: [String] -> Either String GameState
+initializer _ = Right $ reducer initialGameState (dealer initialGameState, Deal)
 
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state action = case reducerSafe state action of

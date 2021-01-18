@@ -12,8 +12,14 @@ data TestAction = Update | MakeError
 data TestState = TestState {s :: String, connIds :: [ConnId]}
   deriving (Eq, Show)
 
-testInitializer :: [ConnId] -> TestState
-testInitializer connIds = TestState {s = "initial", connIds = connIds}
+testInitializer :: [ConnId] -> Either String TestState
+testInitializer connIds =
+  if null connIds
+    then Left "nobody in the room yet!"
+    else Right $ initialRoomState connIds
+
+initialRoomState :: [ConnId] -> TestState
+initialRoomState connIds = TestState {s = "initial", connIds = connIds}
 
 testReducer :: TestState -> TestAction -> Either String TestState
 testReducer s a =
@@ -72,7 +78,7 @@ spec = do
 
     describe "GameAction" $ do
       let roomState = "hello"
-      let initialState = moveClientToRoom roomId connId newServerState
+      let initialState = setStateInRoom roomId (initialRoomState [connId]) $ moveClientToRoom roomId connId newServerState
 
       it "updates room state with room reducer" $ do
         let result = reducer initialState connId (GameAction Update)
@@ -91,5 +97,9 @@ spec = do
         let initialState = moveClientToRoom roomId connId newServerState
         let result = reducer initialState connId (InitRoom roomId)
         let expectedState = testInitializer [connId]
-        (getStateInRoom roomId . fst <$> result) `shouldBe` Right (Just expectedState)
-        snd <$> result `shouldBe` Right [(connId, SocketResponse.State expectedState)]
+        (getStateInRoom roomId . fst <$> result) `shouldBe` Just <$> expectedState
+        snd <$> result `shouldBe` (\s -> [(connId, SocketResponse.State s)]) <$> expectedState
+
+      it "forwards initializer error" $ do
+        let result = reducer newServerState connId (InitRoom roomId)
+        result `shouldBe` Left "nobody in the room yet!"

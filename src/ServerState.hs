@@ -116,7 +116,7 @@ updatePlayerName connId name s = s {names = Map.insert connId name (names s)}
 playerName :: ConnId -> ServerState a -> String
 playerName connId s = Map.findWithDefault "Unknown" connId (names s)
 
-serverStateReducer :: RandomGen g => (a -> action -> Either String a) -> ([ConnId] -> a) -> g -> ServerState a -> ConnId -> SocketRequest action -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
+serverStateReducer :: RandomGen g => (a -> action -> Either String a) -> ([ConnId] -> Either String a) -> g -> ServerState a -> ConnId -> SocketRequest action -> Either String (ServerState a, [(ConnId, SocketResponse.SocketResponse a)])
 serverStateReducer roomReducer roomStateInitializer g s connId r =
   case r of
     CreateRoom ->
@@ -143,16 +143,19 @@ serverStateReducer roomReducer roomStateInitializer g s connId r =
               (getRoomId connId nextState)
        in Right (nextState, msgs)
     InitRoom roomId ->
-      let roomState = roomStateInitializer (getRoomConnIds roomId s)
-          nextServerState = setStateInRoom roomId roomState s
-       in Right (nextServerState, broadcast (SocketResponse.State roomState) roomId nextServerState)
+      case roomStateInitializer (getRoomConnIds roomId s) of
+        Left e -> Left e
+        Right roomState ->
+          let nextServerState = setStateInRoom roomId roomState s
+           in Right (nextServerState, broadcast (SocketResponse.State roomState) roomId nextServerState)
     GameAction a ->
       case getRoomId connId s of
         Nothing -> Left "You are not in a room!"
         Just roomId ->
-          let initialState = roomStateInitializer (getRoomConnIds roomId s)
-              roomState = Maybe.fromMaybe initialState (getStateInRoom roomId s)
-           in case roomReducer roomState a of
+          case getStateInRoom roomId s of
+            Nothing -> Left "Room not initialized!"
+            Just roomState ->
+              case roomReducer roomState a of
                 Right nextState ->
                   let nextServerState = setStateInRoom roomId nextState s
                       msgs = broadcast (SocketResponse.State nextState) roomId nextServerState
