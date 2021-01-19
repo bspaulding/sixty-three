@@ -29,4 +29,7 @@ img {
   border: 1px solid red;
   border-radius: 8px 4px;
   color: red;
+  background-color: #efefef;
+  padding: 8px 4px;
+  margin: 8px;
 }
