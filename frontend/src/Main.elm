@@ -170,7 +170,7 @@ setNameView : Model -> Html Msg
 setNameView model =
     div []
         [ text "Enter a name:"
-        , input [ type_ "text", value model.tempName, onInput TempNameChanged ] []
+        , input [ type_ "text", name "name", value model.tempName, onInput TempNameChanged ] []
         , button [ onClick SubmitName ] [ text "Submit" ]
         ]
 
@@ -178,9 +178,9 @@ setNameView model =
 createOrJoinRoomView : Model -> Html Msg
 createOrJoinRoomView model =
     div []
-        [ button [ onClick CreateRoom ] [ text "Create A Room" ]
-        , input [ type_ "text", placeholder "Enter a Room ID", value model.tempRoomId, onInput TempRoomIdChanged ] []
-        , button [ onClick JoinRoom ] [ text "Join Room" ]
+        [ button [ id "create-room", onClick CreateRoom ] [ text "Create A Room" ]
+        , input [ type_ "text", name "room-id", placeholder "Enter a Room ID", value model.tempRoomId, onInput TempRoomIdChanged ] []
+        , button [ id "join-room", onClick JoinRoom ] [ text "Join Room" ]
         ]
 
 
@@ -192,22 +192,21 @@ gameView state =
 roomView : WSMessage.RoomId -> Model -> Html Msg
 roomView roomId model =
     div []
-        [ div [] [ text ("Room " ++ roomId) ]
-        , div [] [ text (roomDescription model) ]
+        [ div [] [ roomDescription roomId model ]
         , case model.gameState of
             Nothing ->
-                div [] [ button [ onClick StartGame ] [ text "Start Game" ] ]
+                div [] [ button [ id "start-game", onClick StartGame ] [ text "Start Game" ] ]
 
             Just state ->
                 gameView state
         ]
 
 
-roomDescription : Model -> String
-roomDescription model =
+roomDescription : String -> Model -> Html msg
+roomDescription roomId model =
     let
         prefix =
-            "In room " ++ String.toUpper (Maybe.withDefault "unknown" model.roomId)
+            [ text "In room ", span [ id "room-id" ] [ text <| String.toUpper roomId ] ]
 
         namesL =
             Dict.remove (Maybe.withDefault "" model.connId) model.playersById
@@ -243,7 +242,7 @@ roomDescription model =
             else
                 " with " ++ names
     in
-    prefix ++ suffix
+    span [] (prefix ++ [ text suffix ])
 
 
 
