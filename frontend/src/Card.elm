@@ -133,72 +133,149 @@ faceCardDecoder =
 
 
 unicardBack : String
-unicardBack = String.fromChar <| Char.fromCode 0x1F0A0
+unicardBack =
+    String.fromChar <| Char.fromCode 0x0001F0A0
+
 
 unicard : Card -> String
 unicard card =
-    String.fromChar <| Char.fromCode <|
-        case card of
-            Joker ->
-                0x1F0DF 
+    String.fromChar <|
+        Char.fromCode <|
+            case card of
+                Joker ->
+                    0x0001F0DF
 
-            FaceCard suit face ->
-                0x1F0A1 + (suitInc suit) + (faceInc face)
+                FaceCard suit face ->
+                    0x0001F0A1 + suitInc suit + faceInc face
+
 
 suitInc : Suit -> Int
-suitInc suit = 
-    let 
-        m = case suit of
-            Spades -> 0
-            Hearts -> 1
-            Diamonds -> 2
-            Clubs -> 3
-    in m * 0x10
+suitInc suit =
+    let
+        m =
+            case suit of
+                Spades ->
+                    0
+
+                Hearts ->
+                    1
+
+                Diamonds ->
+                    2
+
+                Clubs ->
+                    3
+    in
+    m * 0x10
+
 
 faceInc : Face -> Int
-faceInc face = 
+faceInc face =
     case face of
-        Two -> 0x1
-        Three -> 0x2
-        Four -> 0x3
-        Five -> 0x4
-        Six -> 0x5
-        Seven -> 0x6
-        Eight -> 0x7
-        Nine -> 0x8
-        Ten -> 0x9
-        Jack -> 0xa
-        Queen -> 0xc
-        King -> 0xd
-        Ace -> 0x0
+        Two ->
+            0x01
+
+        Three ->
+            0x02
+
+        Four ->
+            0x03
+
+        Five ->
+            0x04
+
+        Six ->
+            0x05
+
+        Seven ->
+            0x06
+
+        Eight ->
+            0x07
+
+        Nine ->
+            0x08
+
+        Ten ->
+            0x09
+
+        Jack ->
+            0x0A
+
+        Queen ->
+            0x0C
+
+        King ->
+            0x0D
+
+        Ace ->
+            0x00
+
 
 cardDescription : Card -> String
 cardDescription card =
     case card of
-        Joker -> "Joker"
-        FaceCard suit face -> faceDescription face ++ " of " ++ suitDescription suit 
+        Joker ->
+            "Joker"
+
+        FaceCard suit face ->
+            faceDescription face ++ " of " ++ suitDescription suit
+
 
 suitDescription : Suit -> String
-suitDescription suit = 
+suitDescription suit =
     case suit of
-        Spades -> "Spades"
-        Hearts -> "Hearts"
-        Diamonds -> "Diamonds"
-        Clubs -> "Clubs"
+        Spades ->
+            "Spades"
+
+        Hearts ->
+            "Hearts"
+
+        Diamonds ->
+            "Diamonds"
+
+        Clubs ->
+            "Clubs"
+
 
 faceDescription : Face -> String
 faceDescription face =
     case face of
-        Two -> "Two"
-        Three -> "Three"
-        Four -> "Four"
-        Five -> "Five"
-        Six -> "Six"
-        Seven -> "Seven"
-        Eight -> "Eight"
-        Nine -> "Nine"
-        Ten -> "Ten"
-        Jack -> "Jack"
-        Queen -> "Queen"
-        King -> "King"
-        Ace -> "Ace"
+        Two ->
+            "Two"
+
+        Three ->
+            "Three"
+
+        Four ->
+            "Four"
+
+        Five ->
+            "Five"
+
+        Six ->
+            "Six"
+
+        Seven ->
+            "Seven"
+
+        Eight ->
+            "Eight"
+
+        Nine ->
+            "Nine"
+
+        Ten ->
+            "Ten"
+
+        Jack ->
+            "Jack"
+
+        Queen ->
+            "Queen"
+
+        King ->
+            "King"
+
+        Ace ->
+            "Ace"

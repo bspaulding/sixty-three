@@ -1,7 +1,7 @@
 port module Main exposing (..)
 
 import Browser
-import Card exposing (Card(..), Suit(..), unicard, cardDescription)
+import Card exposing (Card(..), Suit(..), cardDescription, unicard)
 import Dict exposing (Dict)
 import GameState
 import Html exposing (..)
@@ -190,20 +190,34 @@ gameView state =
 
 playerHandView : ( String, List Card ) -> Html Msg
 playerHandView ( p, cards ) =
-    div [] [ text p,
-    ul [] (List.map cardView cards)]
+    div []
+        [ text p
+        , ul [] (List.map cardView cards)
+        ]
+
 
 cardView : Card -> Html Msg
 cardView card =
-    let 
-        suitClass = case card of
-                        Joker -> "joker"
-                        FaceCard Spades _ -> "spades"
-                        FaceCard Clubs _ -> "clubs"
-                        FaceCard Hearts _ -> "hearts"
-                        FaceCard Diamonds _ -> "diamonds"
+    let
+        suitClass =
+            case card of
+                Joker ->
+                    "joker"
+
+                FaceCard Spades _ ->
+                    "spades"
+
+                FaceCard Clubs _ ->
+                    "clubs"
+
+                FaceCard Hearts _ ->
+                    "hearts"
+
+                FaceCard Diamonds _ ->
+                    "diamonds"
     in
-        div [class "card", class suitClass] [text (unicard card), span [style "font-size" "12px"] [text (cardDescription card)]]
+    div [ class "card", class suitClass ] [ text (unicard card) ]
+
 
 roomView : WSMessage.RoomId -> Model -> Html Msg
 roomView roomId model =
