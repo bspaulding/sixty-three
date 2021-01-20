@@ -25,6 +25,8 @@ options = defaultOptions
         }
   }
 
-instance ToJSON GameAction
+instance ToJSON GameAction where
+  toJSON = genericToJSON options
+
 instance FromJSON GameAction where
   parseJSON = genericParseJSON options

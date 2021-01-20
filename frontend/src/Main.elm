@@ -9,6 +9,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
+import Maybe
 import Suit exposing (Suit(..))
 import WSMessage
 
@@ -38,6 +39,7 @@ type alias Model =
     , tempName : String
     , gameState : Maybe GameState.GameState
     , lastErrorMsg : Maybe String
+    , tempBid : Int
     }
 
 
@@ -50,6 +52,7 @@ init =
       , tempName = ""
       , gameState = Nothing
       , lastErrorMsg = Nothing
+      , tempBid = 0
       }
     , Cmd.none
     )
@@ -69,6 +72,7 @@ type Msg
     | TempNameChanged String
     | SubmitName
     | StartGame
+    | BidChanged String
     | TakeGameAction GameAction
 
 
@@ -114,6 +118,9 @@ update msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        BidChanged bid ->
+            ( { model | tempBid = Maybe.withDefault model.tempBid (String.toInt bid) }, Cmd.none )
 
         TakeGameAction gameAction ->
             ( model, WSMessage.sendGameAction gameAction )
@@ -189,9 +196,16 @@ createOrJoinRoomView model =
         ]
 
 
-gameView : GameState.GameState -> Html Msg
-gameView state =
-    div [] <| List.map playerHandView (Dict.toList state.hands)
+gameView : Model -> GameState.GameState -> Html Msg
+gameView model state =
+    div []
+        [ div []
+            [ span [] [ text "Enter Bid: " ]
+            , input [ type_ "number", onInput BidChanged ] []
+            , button [ onClick (TakeGameAction (GameAction.Bid model.tempBid)) ] [ text "SubmitBid" ]
+            ]
+        , div [] <| List.map playerHandView (Dict.toList state.hands)
+        ]
 
 
 playerHandView : ( String, List Card ) -> Html Msg
@@ -234,7 +248,7 @@ roomView roomId model =
                 div [] [ button [ id "start-game", onClick StartGame ] [ text "Start Game" ] ]
 
             Just state ->
-                gameView state
+                gameView model state
         ]
 
 

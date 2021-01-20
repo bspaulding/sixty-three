@@ -11,7 +11,7 @@ data SocketRequest a
   | SetPlayerName String
   | InitRoom String
   | GameAction a
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Show)
 
 options :: Options
 options =
@@ -22,6 +22,9 @@ options =
             contentsFieldName = "payload"
           }
     }
+
+instance ToJSON a => ToJSON (SocketRequest a) where
+  toJSON = genericToJSON options
 
 instance FromJSON a => FromJSON (SocketRequest a) where
   parseJSON = genericParseJSON options

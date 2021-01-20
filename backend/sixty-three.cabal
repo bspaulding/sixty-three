@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8fc2f5f21e60a05181faadbe221d73e08a4a56f824c94e8383c3fd12c6f154df
+-- hash: 11aed316558dff7bc22497577db5d444dbe8657e8af2f86e17ec47146fd3939c
 
 name:           sixty-three
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       GameAction
       GameState
       Import
+      Player
       Run
       Server
       ServerState
@@ -95,6 +96,7 @@ test-suite sixty-three-test
       ServerStateSpec
       ShuffleSpec
       SixtyThreeSpec
+      SocketRequestSpec
       UtilSpec
       Paths_sixty_three
   hs-source-dirs:

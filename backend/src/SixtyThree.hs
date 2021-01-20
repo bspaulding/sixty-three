@@ -10,6 +10,7 @@ import qualified Data.Set as Set
 import GameAction
 import GameState
 import Import
+import Player
 import Shuffle
 import System.Random
 import Util

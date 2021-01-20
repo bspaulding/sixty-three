@@ -6,6 +6,7 @@ import Card
 import Data.Aeson
 import qualified Data.Map as Map
 import GHC.Generics
+import Player
 import System.Random
 
 -- lists of cards should probably be sets of cards
@@ -29,15 +30,6 @@ instance ToJSON StdGen where
   toJSON _ = object []
 
 instance ToJSON GameState
-
-data Player = PlayerOne | PlayerTwo | PlayerThree | PlayerFour
-  deriving (Bounded, Enum, Eq, Generic, Ord, Show)
-
-instance ToJSON Player
-
-instance ToJSONKey Player
-
-instance FromJSON Player
 
 type Round = ((Player, Integer), Map.Map Player Integer)
 

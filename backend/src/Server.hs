@@ -23,6 +23,7 @@ import Network.Wai
 import Network.Wai.Application.Static
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
+import Player
 import ServerState
 import SocketRequest
 import SocketResponse
@@ -49,7 +50,7 @@ app stateM roomStateReducer roomStateInitializer = websocketsOr defaultConnectio
         withPingThread conn 30 (return ()) $
           forever $ do
             msg <- receiveData conn
-            case decode msg of
+            case (decode msg :: Maybe (SocketRequest (Player, GameAction))) of
               Just socketRequest -> do
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do
