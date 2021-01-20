@@ -196,25 +196,70 @@ createOrJoinRoomView model =
         ]
 
 
-gameView : Model -> String -> GameState.GameState -> Html Msg
-gameView model connId state =
+gameView : Model -> GameState.GamePlayer -> GameState.GameState -> Html Msg
+gameView model player state =
     div []
-        [ div []
-            [ span [] [ text "Enter Bid: " ]
-            , input [ type_ "number", onInput BidChanged ] []
-            , button [ onClick (TakeGameAction (GameAction.Bid model.tempBid)) ] [ text "SubmitBid" ]
-            ]
-        , case Dict.get connId state.playersByConnId of
+        [ case state.currentBid of
+            Nothing ->
+                div [] [ text "No one has bid yet." ]
+
+            Just ( bidPlayer, bid ) ->
+                div [] [ text <| "The bid belongs to " ++ playerName model bidPlayer ++ " at " ++ String.fromInt bid ]
+        , if GameState.biddingOver state then
+            case state.trump of
+                Nothing ->
+                    if state.playerInControl == player then
+                        selectTrumpForm
+
+                    else
+                        div [] [ text "ok, bidding is over! waiting on trump to be selected" ]
+
+                Just suit ->
+                    div [] [ text <| "trump is " ++ Debug.toString suit ]
+
+          else if state.playerInControl == player then
+            bidFormView model.tempBid
+
+          else
+            div [] [ text <| "Waiting for " ++ playerName model state.playerInControl ]
+        , case Dict.get (Debug.toString player) state.hands of
             Nothing ->
                 div [] []
 
-            Just player ->
-                case Dict.get (Debug.toString player) state.hands of
-                    Nothing ->
-                        div [] []
+            Just hand ->
+                div [] [ playerHandView ( Debug.toString player, hand ) ]
+        ]
 
-                    Just hand ->
-                        div [] [ playerHandView ( Debug.toString player, hand ) ]
+
+selectTrumpForm =
+    div []
+        [ text "Congrats, you won the bid!"
+        , div []
+            [ text "Please select a trump suit:"
+            , button [ onClick (TakeGameAction (PickTrump Hearts)) ] [ text "Hearts" ]
+            , button [ onClick (TakeGameAction (PickTrump Diamonds)) ] [ text "Diamonds" ]
+            , button [ onClick (TakeGameAction (PickTrump Clubs)) ] [ text "Clubs" ]
+            , button [ onClick (TakeGameAction (PickTrump Spades)) ] [ text "Spades" ]
+            ]
+        ]
+
+
+
+-- TODO: playerName should look up connId for player and name for connId
+
+
+playerName : Model -> GameState.GamePlayer -> String
+playerName model player =
+    Debug.toString player
+
+
+bidFormView : Int -> Html Msg
+bidFormView tempBid =
+    div []
+        [ span [] [ text "Enter Bid: " ]
+        , input [ type_ "number", onInput BidChanged ] []
+        , button [ onClick (TakeGameAction (GameAction.Bid tempBid)) ] [ text "Submit Bid" ]
+        , button [ onClick (TakeGameAction GameAction.BidPass) ] [ text "Pass" ]
         ]
 
 
@@ -255,7 +300,12 @@ roomView roomId model =
         [ div [] [ roomDescription roomId model ]
         , case ( model.connId, model.gameState ) of
             ( Just connId, Just state ) ->
-                gameView model connId state
+                case Dict.get connId state.playersByConnId of
+                    Just player ->
+                        gameView model player state
+
+                    Nothing ->
+                        div [] [ text "Oops, you are not a player in the game! TODO: Build an observer view?" ]
 
             _ ->
                 div [] [ button [ id "start-game", onClick StartGame ] [ text "Start Game" ] ]
