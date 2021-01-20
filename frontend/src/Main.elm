@@ -196,15 +196,25 @@ createOrJoinRoomView model =
         ]
 
 
-gameView : Model -> GameState.GameState -> Html Msg
-gameView model state =
+gameView : Model -> String -> GameState.GameState -> Html Msg
+gameView model connId state =
     div []
         [ div []
             [ span [] [ text "Enter Bid: " ]
             , input [ type_ "number", onInput BidChanged ] []
             , button [ onClick (TakeGameAction (GameAction.Bid model.tempBid)) ] [ text "SubmitBid" ]
             ]
-        , div [] <| List.map playerHandView (Dict.toList state.hands)
+        , case Dict.get connId state.playersByConnId of
+            Nothing ->
+                div [] []
+
+            Just player ->
+                case Dict.get (Debug.toString player) state.hands of
+                    Nothing ->
+                        div [] []
+
+                    Just hand ->
+                        div [] [ playerHandView ( Debug.toString player, hand ) ]
         ]
 
 
@@ -243,12 +253,12 @@ roomView : WSMessage.RoomId -> Model -> Html Msg
 roomView roomId model =
     div []
         [ div [] [ roomDescription roomId model ]
-        , case model.gameState of
-            Nothing ->
-                div [] [ button [ id "start-game", onClick StartGame ] [ text "Start Game" ] ]
+        , case ( model.connId, model.gameState ) of
+            ( Just connId, Just state ) ->
+                gameView model connId state
 
-            Just state ->
-                gameView model state
+            _ ->
+                div [] [ button [ id "start-game", onClick StartGame ] [ text "Start Game" ] ]
         ]
 
 

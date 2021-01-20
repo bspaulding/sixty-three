@@ -34,7 +34,7 @@ gameStateDecoder =
         (D.field "cardsInPlay" (haskellMap D.string Card.cardDecoder))
         (D.field "trump" (D.maybe Suit.decode))
         (D.field "currentBid" (D.maybe (D.map2 Tuple.pair gamePlayerDecoder D.int)))
-        (D.field "playersByConnId" (haskellMap D.string gamePlayerDecoder))
+        (D.field "playersByConnId" (D.dict gamePlayerDecoder))
 
 
 gamePlayerDecoder : D.Decoder GamePlayer
