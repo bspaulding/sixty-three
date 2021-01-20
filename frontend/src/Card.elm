@@ -130,3 +130,75 @@ faceCardDecoder =
             D.map2 FaceCard (D.index 0 suitDecoder) (D.index 1 faceDecoder)
     in
     D.field "contents" faceCardContents
+
+
+unicardBack : String
+unicardBack = String.fromChar <| Char.fromCode 0x1F0A0
+
+unicard : Card -> String
+unicard card =
+    String.fromChar <| Char.fromCode <|
+        case card of
+            Joker ->
+                0x1F0DF 
+
+            FaceCard suit face ->
+                0x1F0A1 + (suitInc suit) + (faceInc face)
+
+suitInc : Suit -> Int
+suitInc suit = 
+    let 
+        m = case suit of
+            Spades -> 0
+            Hearts -> 1
+            Diamonds -> 2
+            Clubs -> 3
+    in m * 0x10
+
+faceInc : Face -> Int
+faceInc face = 
+    case face of
+        Two -> 0x1
+        Three -> 0x2
+        Four -> 0x3
+        Five -> 0x4
+        Six -> 0x5
+        Seven -> 0x6
+        Eight -> 0x7
+        Nine -> 0x8
+        Ten -> 0x9
+        Jack -> 0xa
+        Queen -> 0xc
+        King -> 0xd
+        Ace -> 0x0
+
+cardDescription : Card -> String
+cardDescription card =
+    case card of
+        Joker -> "Joker"
+        FaceCard suit face -> faceDescription face ++ " of " ++ suitDescription suit 
+
+suitDescription : Suit -> String
+suitDescription suit = 
+    case suit of
+        Spades -> "Spades"
+        Hearts -> "Hearts"
+        Diamonds -> "Diamonds"
+        Clubs -> "Clubs"
+
+faceDescription : Face -> String
+faceDescription face =
+    case face of
+        Two -> "Two"
+        Three -> "Three"
+        Four -> "Four"
+        Five -> "Five"
+        Six -> "Six"
+        Seven -> "Seven"
+        Eight -> "Eight"
+        Nine -> "Nine"
+        Ten -> "Ten"
+        Jack -> "Jack"
+        Queen -> "Queen"
+        King -> "King"
+        Ace -> "Ace"

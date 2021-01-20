@@ -33,3 +33,19 @@ img {
   padding: 8px 4px;
   margin: 8px;
 }
+
+.card {
+  font-size: 140px;
+  display: inline-block;
+}
+
+.card.diamonds,
+.card.hearts {
+  color: red;
+}
+
+.card.joker,
+.card.spades,
+.card.clubs {
+  color: black;
+}
