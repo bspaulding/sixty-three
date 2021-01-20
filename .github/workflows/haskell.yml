@@ -36,6 +36,6 @@ jobs:
           touch ~/.stack/config.yaml
           echo 'allow-newer: true' > ~/.stack/config.yaml
     - name: Build
-      run: stack build
+      run: cd backend && stack build
     - name: Run tests
-      run: stack test
+      run: cd backend && stack test
