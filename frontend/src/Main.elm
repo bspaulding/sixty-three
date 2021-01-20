@@ -1,13 +1,15 @@
 port module Main exposing (..)
 
 import Browser
-import Card exposing (Card(..), Suit(..), cardDescription, unicard)
-import Dict exposing (Dict)
+import Card exposing (Card(..), cardDescription, unicard)
+import Dict
+import GameAction exposing (GameAction(..))
 import GameState
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
+import Suit exposing (Suit(..))
 import WSMessage
 
 
@@ -67,6 +69,7 @@ type Msg
     | TempNameChanged String
     | SubmitName
     | StartGame
+    | TakeGameAction GameAction
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -111,6 +114,9 @@ update msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        TakeGameAction gameAction ->
+            ( model, WSMessage.sendGameAction gameAction )
 
 
 handleWsMessage : Model -> WSMessage.WSMessage -> ( Model, Cmd Msg )

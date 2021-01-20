@@ -4,7 +4,7 @@ import Card
 import Dict
 import HaskellMapDecoder exposing (haskellMap)
 import Json.Decode as D
-import List
+import Suit exposing (Suit)
 
 
 type GamePlayer
@@ -19,7 +19,7 @@ type alias GameState =
     , playerInControl : GamePlayer
     , hands : Dict.Dict String (List Card.Card)
     , cardsInPlay : Dict.Dict String Card.Card
-    , trump : Maybe Card.Suit
+    , trump : Maybe Suit
     , currentBid : Maybe ( GamePlayer, Int )
     }
 
@@ -31,7 +31,7 @@ gameStateDecoder =
         (D.field "playerInControl" gamePlayerDecoder)
         (D.field "hands" (haskellMap D.string (D.list Card.cardDecoder)))
         (D.field "cardsInPlay" (haskellMap D.string Card.cardDecoder))
-        (D.field "trump" (D.maybe Card.suitDecoder))
+        (D.field "trump" (D.maybe Suit.decode))
         (D.field "currentBid" (D.maybe (D.map2 Tuple.pair gamePlayerDecoder D.int)))
 
 

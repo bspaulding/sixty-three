@@ -3,8 +3,10 @@ module Tests exposing (..)
 import Card exposing (..)
 import Dict
 import Expect
+import Face exposing (Face(..))
 import HaskellMapDecoder exposing (haskellMap)
 import Json.Decode as D
+import Suit exposing (..)
 import Test exposing (..)
 
 

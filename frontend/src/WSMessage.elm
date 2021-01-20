@@ -1,6 +1,7 @@
 port module WSMessage exposing (..)
 
 import Dict
+import GameAction exposing (GameAction)
 import GameState
 import Json.Decode as D
 import Json.Encode as E
@@ -91,5 +92,12 @@ setPlayerName name =
 initRoom : RoomId -> Cmd msg
 initRoom roomId =
     E.object [ ( "type", E.string "InitRoom" ), ( "payload", E.string roomId ) ]
+        |> E.encode 0
+        |> sendMessage
+
+
+sendGameAction : GameAction -> Cmd msg
+sendGameAction action =
+    E.object [ ( "type", E.string "GameAction" ), ( "payload", GameAction.encode action ) ]
         |> E.encode 0
         |> sendMessage

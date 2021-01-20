@@ -16,5 +16,15 @@ data GameAction
   | PassCards [Card]
   deriving (Eq, Generic, Show)
 
+options :: Options
+options = defaultOptions
+  { sumEncoding =
+      TaggedObject
+        { tagFieldName = "type",
+          contentsFieldName = "payload"
+        }
+  }
+
 instance ToJSON GameAction
-instance FromJSON GameAction
+instance FromJSON GameAction where
+  parseJSON = genericParseJSON options

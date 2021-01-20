@@ -19,6 +19,13 @@
       "command": "stack run",
       "problemMatcher": [],
       "group": "none"
+    },
+    {
+      "label": "open game in browsers",
+      "type": "shell",
+      "command": "cd browser-automation && node index.js",
+      "problemMatcher": [],
+      "group": "none"
     }
   ]
 }

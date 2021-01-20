@@ -1,29 +1,9 @@
 module Card exposing (..)
 
+import Face exposing (Face(..))
 import Json.Decode as D
-
-
-type Suit
-    = Hearts
-    | Diamonds
-    | Clubs
-    | Spades
-
-
-type Face
-    = Two
-    | Three
-    | Four
-    | Five
-    | Six
-    | Seven
-    | Eight
-    | Nine
-    | Ten
-    | Jack
-    | Queen
-    | King
-    | Ace
+import Json.Encode as E
+import Suit exposing (Suit(..))
 
 
 type Card
@@ -31,82 +11,38 @@ type Card
     | Joker
 
 
-suitDecoder : D.Decoder Suit
-suitDecoder =
-    D.string
-        |> D.andThen
-            (\s ->
-                case s of
-                    "Hearts" ->
-                        D.succeed Hearts
+encode : Card -> E.Value
+encode card =
+    let
+        variant =
+            case card of
+                Joker ->
+                    "Joker"
 
-                    "Diamonds" ->
-                        D.succeed Diamonds
+                FaceCard _ _ ->
+                    "FaceCard"
 
-                    "Clubs" ->
-                        D.succeed Clubs
+        contents =
+            case card of
+                Joker ->
+                    E.null
 
-                    "Spades" ->
-                        D.succeed Spades
-
-                    _ ->
-                        D.fail ("Could not decode a Suit from '" ++ s ++ "'")
-            )
-
-
-faceDecoder : D.Decoder Face
-faceDecoder =
-    D.string
-        |> D.andThen
-            (\s ->
-                case s of
-                    "Two" ->
-                        D.succeed Two
-
-                    "Three" ->
-                        D.succeed Three
-
-                    "Four" ->
-                        D.succeed Four
-
-                    "Five" ->
-                        D.succeed Five
-
-                    "Six" ->
-                        D.succeed Six
-
-                    "Seven" ->
-                        D.succeed Seven
-
-                    "Eight" ->
-                        D.succeed Eight
-
-                    "Nine" ->
-                        D.succeed Nine
-
-                    "Ten" ->
-                        D.succeed Ten
-
-                    "Jack" ->
-                        D.succeed Jack
-
-                    "Queen" ->
-                        D.succeed Queen
-
-                    "King" ->
-                        D.succeed King
-
-                    "Ace" ->
-                        D.succeed Ace
-
-                    _ ->
-                        D.fail ("Could not decode a Face from '" ++ s ++ "'")
-            )
+                FaceCard suit face ->
+                    E.list identity [ Suit.encode suit, Face.encode face ]
+    in
+    E.object
+        [ ( "tag", E.string variant )
+        , ( "contents", contents )
+        ]
 
 
 cardDecoder : D.Decoder Card
 cardDecoder =
     D.oneOf [ jokerDecoder, faceCardDecoder ]
+
+
+decode =
+    cardDecoder
 
 
 jokerDecoder : D.Decoder Card
@@ -127,7 +63,7 @@ faceCardDecoder : D.Decoder Card
 faceCardDecoder =
     let
         faceCardContents =
-            D.map2 FaceCard (D.index 0 suitDecoder) (D.index 1 faceDecoder)
+            D.map2 FaceCard (D.index 0 Suit.decode) (D.index 1 Face.decode)
     in
     D.field "contents" faceCardContents
 
