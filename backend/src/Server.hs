@@ -32,7 +32,7 @@ import WaiAppStatic.Types (unsafeToPiece)
 
 -- TODO: why do i have to fix action and state here?!
 -- app :: (ToJSON s, ToJSON a, FromJSON a, Show a, Show s) => MVar (ServerStateWS s) -> (s -> a -> Either String s) -> ([ConnId] -> s) -> Application
-app :: MVar (ServerStateWS GameState) -> (GameState -> (Player, GameAction) -> Either String GameState) -> ([ConnId] -> Either String GameState) -> Application
+app :: MVar (ServerStateWS GameState) -> (GameState -> ConnId -> GameAction -> Either String GameState) -> ([ConnId] -> Either String GameState) -> Application
 app stateM roomStateReducer roomStateInitializer = websocketsOr defaultConnectionOptions wsApp backupApp
   where
     wsApp :: ServerApp
@@ -50,7 +50,7 @@ app stateM roomStateReducer roomStateInitializer = websocketsOr defaultConnectio
         withPingThread conn 30 (return ()) $
           forever $ do
             msg <- receiveData conn
-            case (decode msg :: Maybe (SocketRequest (Player, GameAction))) of
+            case (decode msg :: Maybe (SocketRequest GameAction)) of
               Just socketRequest -> do
                 print socketRequest
                 modifyMVar_ stateM $ \state -> do

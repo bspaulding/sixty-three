@@ -21,8 +21,8 @@ testInitializer connIds =
 initialRoomState :: [ConnId] -> TestState
 initialRoomState connIds = TestState {s = "initial", connIds = connIds}
 
-testReducer :: TestState -> TestAction -> Either String TestState
-testReducer s a =
+testReducer :: TestState -> ConnId -> TestAction -> Either String TestState
+testReducer s connId a =
   case a of
     Update -> Right s {s = "updated"}
     MakeError -> Left "oops"

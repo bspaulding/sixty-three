@@ -159,6 +159,12 @@ reducer state action = case reducerSafe state action of
   Left err -> state -- TODO: later maybe throw: error err
   Right newState -> newState
 
+reducerSafeConns :: GameState -> String -> GameAction -> Either String GameState
+reducerSafeConns state connId action = 
+  case getPlayer state connId of
+    Just player -> reducerSafe state (player, action)
+    Nothing -> Left "You are not a player in the game!"
+
 reducerSafe :: GameState -> (Player, GameAction) -> Either String GameState
 reducerSafe state (player, action)
   | getGameOver state = Right state
@@ -245,68 +251,3 @@ reducerSafe state (player, action)
                     else Left "You must keep at least six cards in your hand."
     _ -> Right state
   | otherwise = Right state
-
--- selectors
-getDealer :: GameState -> Player
-getDealer = dealer
-
-getBid :: GameState -> Maybe (Player, Integer)
-getBid = currentBid
-
-getCurrentPlayer :: GameState -> Player
-getCurrentPlayer = playerInControl
-
-getBiddingComplete :: GameState -> Bool
-getBiddingComplete state =
-  Just 126 == fmap snd (getBid state)
-    || 3 == length (filter id $ Map.elems (bidPassed state))
-
-getKitty :: GameState -> [Card]
-getKitty = kitty
-
-getHand :: Player -> GameState -> [Card]
-getHand player state =
-  Map.findWithDefault [] player (hands state)
-
-getCardInPlay :: Player -> GameState -> Maybe Card
-getCardInPlay player state = Map.lookup player (cardsInPlay state)
-
-getTricks :: GameState -> [Map Player Card]
-getTricks = tricks
-
-getTrump :: GameState -> Maybe Suit
-getTrump = trump
-
-getAllPlayersDiscarded :: GameState -> Bool
-getAllPlayersDiscarded state =
-  all (<= 6) $ Map.elems $ Map.map length (hands state)
-
-getLastRound :: GameState -> Maybe Round
-getLastRound = safeHead . previousRounds
-
-getTotalScore :: GameState -> (Integer, Integer)
-getTotalScore state = calcTotalScore (previousRounds state)
-
-calcTotalScore :: [Round] -> (Integer, Integer)
-calcTotalScore rounds = (teamOdd, teamEven)
-  where
-    roundScores = map calcRoundScore rounds
-    addTuples (a1, b1) (a2, b2) = (a1 + a2, b1 + b2)
-    (teamOdd, teamEven) = foldl addTuples (0, 0) roundScores
-
-calcRoundScore :: Round -> (Integer, Integer)
-calcRoundScore ((bidder, bid), scores) = (teamOdd, teamEven)
-  where
-    playerOne = Map.findWithDefault 0 PlayerOne scores
-    playerTwo = Map.findWithDefault 0 PlayerTwo scores
-    playerThree = Map.findWithDefault 0 PlayerThree scores
-    playerFour = Map.findWithDefault 0 PlayerFour scores
-    teamOdd' = playerOne + playerThree
-    teamOdd = if (bidder == PlayerOne || bidder == PlayerThree) && teamOdd' < bid then - bid else teamOdd'
-    teamEven' = playerTwo + playerFour
-    teamEven = if (bidder == PlayerTwo || bidder == PlayerFour) && teamEven' < bid then - bid else teamEven'
-
-getGameOver :: GameState -> Bool
-getGameOver state = teamOddScore >= 200 || teamEvenScore >= 200
-  where
-    (teamOddScore, teamEvenScore) = getTotalScore state
