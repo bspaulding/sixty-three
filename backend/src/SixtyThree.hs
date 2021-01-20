@@ -149,10 +149,9 @@ maybeFinishRound state =
     allHands = concatMap (`getHand` state) players
 
 initializer :: [String] -> Either String GameState
-initializer connIds =
-  if length connIds < 4
-    then Left "Need at least four people to start a game!"
-    else Right $ reducer initialGameState (dealer initialGameState, Deal)
+initializer connIds
+  | length connIds < 4 = Left "Need at least four people to start a game!"
+  | otherwise = Right $ reducer (initialGameState { playersByConnId = Map.fromList (zip connIds players)}) (dealer initialGameState, Deal)
 
 reducer :: GameState -> (Player, GameAction) -> GameState
 reducer state action = case reducerSafe state action of

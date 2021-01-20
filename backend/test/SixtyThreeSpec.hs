@@ -108,6 +108,27 @@ prop_game_over player action =
 
 spec :: Spec
 spec = do
+  describe "initializer" $ do
+    let connIds = ["abcd", "efgh", "ijkl", "mnop"] 
+    let expectedPlayerMap = 
+          Map.fromList [ ("abcd", PlayerOne)
+                       , ("efgh", PlayerTwo)
+                       , ("ijkl", PlayerThree)
+                       , ("mnop", PlayerFour)
+                       ]
+
+    it "should fail if less than four conns" $ do
+      initializer (take 3 connIds) `shouldBe` Left "Need at least four people to start a game!"
+
+    it "should map players if four conns" $ do
+      playersByConnId <$> initializer connIds `shouldBe` Right expectedPlayerMap
+
+    it "should map first four players if more than four conns" $ do
+      playersByConnId <$> initializer (connIds ++ ["qrst"]) `shouldBe` Right expectedPlayerMap
+
+    it "should ensure connIds are unique" $ do
+      pending
+
   describe "partner" $ do
     it "should always be your partners' partner" $
       property $
