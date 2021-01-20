@@ -15,7 +15,6 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
     - name: Install create-elm-app
-      run: npm i -g create-elm-app
+      run: npm i create-elm-app
     - name: Run tests
-      run: cd frontend && elm-app test
-
+      run: cd frontend && ./node_modules/.bin/elm-app test
