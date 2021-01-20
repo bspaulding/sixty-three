@@ -60,8 +60,6 @@ app stateM roomStateReducer roomStateInitializer = websocketsOr defaultConnectio
                       sendError conn err
                       return state
                     Right (nextState, responses) -> do
-                      print nextState
-                      print responses
                       forM_ responses (sendResponse (clientsById state))
                       return state {serverState = nextState}
                 _ <- readMVar stateM
@@ -83,6 +81,7 @@ app stateM roomStateReducer roomStateInitializer = websocketsOr defaultConnectio
     disconnect stateM connId = do
       modifyMVar_ stateM $ \state -> do
         return $ removeClient connId state
+      _ <- readMVar stateM
       putStrLn $ "Client " ++ connId ++ "disconnected."
 
     staticAppSettings = (defaultWebAppSettings "frontend/build") {ssIndices = [unsafeToPiece "index.html"]}
