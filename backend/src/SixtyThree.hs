@@ -140,6 +140,7 @@ maybeFinishRound state =
             -- TODO: maybe a resetRound function here
             dealer = enumNext (dealer state),
             playerInControl = enumNext (enumNext (dealer state)),
+            playersByConnId = playersByConnId state,
             g = g state
           }
       -- TODO this should really be an error or something
