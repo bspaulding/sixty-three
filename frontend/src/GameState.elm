@@ -15,7 +15,7 @@ type GamePlayer
 
 
 type alias GameState =
-    { dealer : GamePlayer
+    { tricks : List (Dict.Dict String Card.Card)
     , playerInControl : GamePlayer
     , hands : Dict.Dict String (List Card.Card)
     , cardsInPlay : Dict.Dict String Card.Card
@@ -29,7 +29,7 @@ type alias GameState =
 gameStateDecoder : D.Decoder GameState
 gameStateDecoder =
     D.map8 GameState
-        (D.field "dealer" gamePlayerDecoder)
+        (D.field "tricks" (D.list (haskellMap D.string Card.cardDecoder)))
         (D.field "playerInControl" gamePlayerDecoder)
         (D.field "hands" (haskellMap D.string (D.list Card.cardDecoder)))
         (D.field "cardsInPlay" (haskellMap D.string Card.cardDecoder))
