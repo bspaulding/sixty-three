@@ -10,6 +10,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
 import Maybe
+import String
 import Suit exposing (Suit(..))
 import WSMessage
 
@@ -127,7 +128,21 @@ update msg model =
             ( model, WSMessage.sendGameAction gameAction )
 
         CardSelected card ->
-            ( model, WSMessage.sendGameAction (Discard [ card ]) )
+            ( model, cardAction model.gameState card )
+
+
+cardAction : Maybe GameState.GameState -> Card -> Cmd msg
+cardAction gameState card =
+    case gameState of
+        Nothing ->
+            Cmd.none
+
+        Just game ->
+            if GameState.allPlayersDiscarded game then
+                WSMessage.sendGameAction (Play card)
+
+            else
+                WSMessage.sendGameAction (Discard [ card ])
 
 
 handleWsMessage : Model -> WSMessage.WSMessage -> ( Model, Cmd Msg )
@@ -219,7 +234,25 @@ gameView model player state =
                         div [] [ text "ok, bidding is over! waiting on trump to be selected" ]
 
                 Just suit ->
-                    div [] [ text <| "trump is " ++ Debug.toString suit ]
+                    div []
+                        [ text <| "trump is " ++ Debug.toString suit
+                        , if List.length (Maybe.withDefault [] (Dict.get (Debug.toString player) state.hands)) <= 6 then
+                            if GameState.allPlayersDiscarded state then
+                                div []
+                                    [ if state.playerInControl == player then
+                                        div [] [ text "click a card to play it" ]
+
+                                      else
+                                        div [] [ text ("waiting for " ++ playerName model state.playerInControl ++ " to play a card.") ]
+                                    , cardsInPlayView state.cardsInPlay
+                                    ]
+
+                            else
+                                div [] [ text "you have discarded! waiting for everyone else..." ]
+
+                          else
+                            div [] [ text "click on cards to discard them" ]
+                        ]
 
           else if state.playerInControl == player then
             bidFormView model.tempBid
@@ -233,6 +266,12 @@ gameView model player state =
             Just hand ->
                 div [] [ playerHandView ( Debug.toString player, hand ) ]
         ]
+
+
+cardsInPlayView : Dict.Dict String Card.Card -> Html Msg
+cardsInPlayView cardByPlayer =
+    div [] <|
+        List.map (\( p, card ) -> div [ style "display" "inline-block" ] [ cardView card, div [] [ text p ] ]) (Dict.toList cardByPlayer)
 
 
 selectTrumpForm : Html Msg
@@ -272,7 +311,7 @@ playerHandView : ( String, List Card ) -> Html Msg
 playerHandView ( p, cards ) =
     div []
         [ text p
-        , ul [] (List.map cardView cards)
+        , div [] (List.map cardView cards)
         ]
 
 
@@ -284,19 +323,15 @@ cardView card =
                 Joker ->
                     "joker"
 
-                FaceCard Spades _ ->
-                    "spades"
+                FaceCard suit _ ->
+                    String.toLower <| Debug.toString suit
 
-                FaceCard Clubs _ ->
-                    "clubs"
-
-                FaceCard Hearts _ ->
-                    "hearts"
-
-                FaceCard Diamonds _ ->
-                    "diamonds"
+        cardId =
+            Debug.toString card
+                |> String.toLower
+                |> String.replace " " "-"
     in
-    div [ class "card", class suitClass, onClick (CardSelected card) ] [ text (unicard card) ]
+    div [ id cardId, class "card", class suitClass, onClick (CardSelected card) ] [ text (unicard card) ]
 
 
 roomView : WSMessage.RoomId -> Model -> Html Msg
