@@ -175,6 +175,25 @@ reducerSafe state (player, action)
               kitty = kitty',
               g = g'
             }
+  | isDiscard action = case action of
+    Discard cards ->
+      case trump state of
+        Nothing -> Left "cannot discard if trump not selected!"
+        Just t ->
+          if foldl (+) 0 (map (cardScore t) cards) > 0
+            then Left "cannot discard trump worth points!"
+            else
+              let hand = Set.fromList $ getHand player state
+                  newHand = Set.toList $ Set.difference hand (Set.fromList cards)
+               in if length newHand >= 6
+                    then
+                      Right
+                        state
+                          { hands = Map.insert player newHand (hands state),
+                            playerInControl = enumNext player,
+                            discarded = discarded state ++ cards
+                          }
+                    else Left "You must keep at least six cards in your hand."
   | playerInControl state == player = case action of
     Bid amount ->
       if amount /= 126 && (amount > 63 || amount < 25)
@@ -230,23 +249,5 @@ reducerSafe state (player, action)
               passingTheJoker = Set.member Joker (Set.fromList cards)
            in if not playerHasAce && passingTheJoker then Left "You cannot pass the joker if you do not have the ace." else Right state {hands = newHands}
         Nothing -> Left "You cannot pass cards until trump has been selected."
-    Discard cards ->
-      case trump state of
-        Nothing -> Left "cannot discard if trump not selected!"
-        Just t ->
-          if foldl (+) 0 (map (cardScore t) cards) > 0
-            then Left "cannot discard trump worth points!"
-            else
-              let hand = Set.fromList $ getHand player state
-                  newHand = Set.toList $ Set.difference hand (Set.fromList cards)
-               in if length newHand >= 6
-                    then
-                      Right
-                        state
-                          { hands = Map.insert player newHand (hands state),
-                            playerInControl = enumNext player,
-                            discarded = discarded state ++ cards
-                          }
-                    else Left "You must keep at least six cards in your hand."
     _ -> Right state
   | otherwise = Right state

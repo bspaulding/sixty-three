@@ -74,6 +74,7 @@ type Msg
     | StartGame
     | BidChanged String
     | TakeGameAction GameAction
+    | CardSelected Card
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -124,6 +125,9 @@ update msg model =
 
         TakeGameAction gameAction ->
             ( model, WSMessage.sendGameAction gameAction )
+
+        CardSelected card ->
+            ( model, WSMessage.sendGameAction (Discard [ card ]) )
 
 
 handleWsMessage : Model -> WSMessage.WSMessage -> ( Model, Cmd Msg )
@@ -231,6 +235,7 @@ gameView model player state =
         ]
 
 
+selectTrumpForm : Html Msg
 selectTrumpForm =
     div []
         [ text "Congrats, you won the bid!"
@@ -291,7 +296,7 @@ cardView card =
                 FaceCard Diamonds _ ->
                     "diamonds"
     in
-    div [ class "card", class suitClass ] [ text (unicard card) ]
+    div [ class "card", class suitClass, onClick (CardSelected card) ] [ text (unicard card) ]
 
 
 roomView : WSMessage.RoomId -> Model -> Html Msg

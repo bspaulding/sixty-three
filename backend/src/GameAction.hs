@@ -30,3 +30,7 @@ instance ToJSON GameAction where
 
 instance FromJSON GameAction where
   parseJSON = genericParseJSON options
+
+isDiscard :: GameAction -> Bool
+isDiscard (Discard _) = True
+isDiscard _ = False
