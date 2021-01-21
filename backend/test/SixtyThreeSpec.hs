@@ -116,15 +116,16 @@ spec = do
                        , ("ijkl", PlayerThree)
                        , ("mnop", PlayerFour)
                        ]
+    let g = mkStdGen 0
 
     it "should fail if less than four conns" $ do
-      initializer (take 3 connIds) `shouldBe` Left "Need at least four people to start a game!"
+      initializer g (take 3 connIds) `shouldBe` Left "Need at least four people to start a game!"
 
     it "should map players if four conns" $ do
-      playersByConnId <$> initializer connIds `shouldBe` Right expectedPlayerMap
+      playersByConnId <$> initializer g connIds `shouldBe` Right expectedPlayerMap
 
     it "should map first four players if more than four conns" $ do
-      playersByConnId <$> initializer (connIds ++ ["qrst"]) `shouldBe` Right expectedPlayerMap
+      playersByConnId <$> initializer g (connIds ++ ["qrst"]) `shouldBe` Right expectedPlayerMap
 
     it "should ensure connIds are unique" $ do
       pending

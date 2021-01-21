@@ -8,9 +8,11 @@ import Network.Wai.Handler.Warp (runEnv)
 import Server
 import ServerState
 import SixtyThree (initializer, reducerSafeConns)
+import System.Random (getStdGen)
 
 run :: RIO App ()
 run = do
   logInfo "Running!"
   initialState <- newMVar newServerStateWS
-  liftIO $ runEnv 3000 (app initialState reducerSafeConns initializer)
+  g <- getStdGen
+  liftIO $ runEnv 3000 (app initialState reducerSafeConns (initializer g))
