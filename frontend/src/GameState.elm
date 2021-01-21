@@ -67,3 +67,11 @@ biddingOver game =
     Dict.filter (\_ v -> v) game.bidPassed
         |> Dict.size
         |> (\x -> x == 3)
+
+
+allPlayersDiscarded : GameState -> Bool
+allPlayersDiscarded game =
+    game.hands
+        |> Dict.values
+        |> List.map List.length
+        |> List.all (\x -> x <= 6)
