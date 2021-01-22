@@ -25,17 +25,19 @@ async function signInOnNewPage(context, name, roomId) {
 }
 
 (async () => {
-  const browserType = 'webkit';
+  const browserType = 'chromium';
   const browser = await playwright[browserType].launch({
     headless: false
   });
   const context = await browser.newContext();
 
-  const { page: pageOne, roomId } = await signInOnNewPage(context, 'one');
-  const results = await Promise.all(['two', 'three', 'four'].map(name =>
-    signInOnNewPage(context, name, roomId)
-  ));
-  const pages = [pageOne, results.map(r => r.page)];
+  const { page: pageOne, roomId } = await signInOnNewPage(context, 'four');
+  const { page: pageTwo } = await signInOnNewPage(context, 'one', roomId)
+  const { page: pageThree } = await signInOnNewPage(context, 'three', roomId)
+  const { page: pageFour } = await signInOnNewPage(context, 'two', roomId)
+  const pages = [pageOne, pageTwo, pageThree, pageFour];
 
   await pages[0].click('#start-game');
+
+  // pass
 })();
