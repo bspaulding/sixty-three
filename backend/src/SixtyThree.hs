@@ -135,14 +135,16 @@ maybeFinishRound state =
     then -- TODO: move bid and tricks to previousRounds, reset game for next round
     case (currentBid state, trump state) of
       (Just bid, Just t) ->
-        initialGameState
-          { previousRounds = (bid, scoreTricks t (tricks state)) : previousRounds state,
-            -- TODO: maybe a resetRound function here
-            dealer = enumNext (dealer state),
-            playerInControl = enumNext (enumNext (dealer state)),
-            playersByConnId = playersByConnId state,
-            g = g state
-          }
+        let 
+          resetState = initialGameState
+            { previousRounds = (bid, scoreTricks t (tricks state)) : previousRounds state,
+              -- TODO: maybe a resetRound function here
+              dealer = enumNext (dealer state),
+              playerInControl = enumNext (enumNext (dealer state)),
+              playersByConnId = playersByConnId state,
+              g = g state
+            }
+        in reducer resetState (getDealer resetState, Deal)
       -- TODO this should really be an error or something
       _ -> state
     else state

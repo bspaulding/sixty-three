@@ -438,7 +438,8 @@ spec = do
       pending
 
     it "happy path game" $ do
-      state1 <- playHappyPathRound initialGameState
+      let dealt = reducer initialGameState (getDealer initialGameState, Deal)
+      state1 <- playHappyPathRound dealt
       getTotalScore state1 `shouldBe` (47, -25)
       getGameOver state1 `shouldBe` False
 
@@ -462,6 +463,7 @@ spec = do
       getTotalScore state6 `shouldBe` (134, 164)
       getGameOver state6 `shouldBe` False
 
+      -- TODO: Maybe auto-play the last round? This might be weird for users.
       state7 <- playHappyPathRound state6
       getTotalScore state7 `shouldBe` (186, 139)
       getGameOver state7 `shouldBe` False
@@ -525,7 +527,7 @@ spec = do
 playHappyPathRound initialState = do
   getBiddingComplete initialState `shouldBe` False
   let theDealer = dealer initialState
-  let actions = [(theDealer, Deal), (enumNext theDealer, BidPass), ((enumNext . enumNext) theDealer, BidPass), ((enumNext . enumNext . enumNext) theDealer, BidPass), (theDealer, PickTrump Hearts)]
+  let actions = [(enumNext theDealer, BidPass), ((enumNext . enumNext) theDealer, BidPass), ((enumNext . enumNext . enumNext) theDealer, BidPass), (theDealer, PickTrump Hearts)]
   let state = playGameFrom initialState actions
   getBiddingComplete state `shouldBe` True
   getCurrentPlayer state `shouldBe` theDealer
@@ -565,10 +567,6 @@ playHappyPathRound initialState = do
   -- assert round was reset and ready for next
   getDealer state5 `shouldBe` enumNext (dealer initialState)
   getCurrentPlayer state5 `shouldBe` enumNext (enumNext (dealer initialState))
-  getHand PlayerOne state5 `shouldBe` []
-  getHand PlayerTwo state5 `shouldBe` []
-  getHand PlayerThree state5 `shouldBe` []
-  getHand PlayerFour state5 `shouldBe` []
   getCardInPlay PlayerOne state5 `shouldBe` Nothing
 
   return state5
