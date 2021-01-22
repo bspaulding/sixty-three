@@ -144,7 +144,9 @@ maybeFinishRound state =
               playersByConnId = playersByConnId state,
               g = g state
             }
-        in reducer resetState (getDealer resetState, Deal)
+        in if getGameOver resetState 
+            then resetState
+            else reducer resetState (getDealer resetState, Deal)
       -- TODO this should really be an error or something
       _ -> state
     else state
