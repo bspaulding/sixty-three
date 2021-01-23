@@ -12,6 +12,7 @@ import Json.Decode as D
 import Maybe
 import String
 import Suit exposing (Suit(..))
+import Tuple
 import WSMessage
 
 
@@ -264,7 +265,7 @@ gameView model player state =
                 div [] []
 
             Just hand ->
-                div [] [ playerHandView ( Debug.toString player, hand ) ]
+                div [] [ playerHandView ( playerName model player, hand ) ]
         ]
 
 
@@ -294,7 +295,43 @@ selectTrumpForm =
 
 playerName : Model -> GameState.GamePlayer -> String
 playerName model player =
-    Debug.toString player
+    case model.gameState of
+        Nothing ->
+            "Unknown"
+
+        Just state ->
+            playerName_ model.playersById state.playersByConnId player
+
+
+tupleFlip t =
+    ( Tuple.second t, Tuple.first t )
+
+
+dictFlip d =
+    Dict.toList d
+        |> List.map tupleFlip
+        |> Dict.fromList
+
+
+toStringValue k v =
+    Debug.toString v
+
+
+playerName_ playersByConnId gamePlayersByConnId player =
+    let
+        connIdsByGamePlayer =
+            dictFlip <| Dict.map toStringValue gamePlayersByConnId
+
+        connId =
+            Maybe.withDefault "" <|
+                Dict.get (Debug.toString player) connIdsByGamePlayer
+    in
+    case Dict.get connId playersByConnId of
+        Nothing ->
+            "Unknown"
+
+        Just p ->
+            p.name
 
 
 bidFormView : Int -> Html Msg
