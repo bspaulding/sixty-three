@@ -377,13 +377,17 @@ spec = do
 
   describe "tricking" $ do
     it "must lead trump on the first round" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
-      let state = playGame actions
-      getCurrentPlayer state `shouldBe` PlayerFour
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let state = playAllDiscards $ playGame actions
+      let hand = getHand PlayerFour state
 
+      let notTrump = head $ filter (not . (isTrump Hearts)) hand
+      let playedNotTrump = reducerSafe state (PlayerFour, Play notTrump)
+      playedNotTrump `shouldBe` Left "You must lead with trump, if you have any."
 
-
-      pending
+      let trump = head $ filter (isTrump Hearts) hand
+      let playedTrump = reducerSafe state (PlayerFour, Play trump)
+      playedTrump `shouldSatisfy` isRight
 
     it "can't play a card until trump is declared and all players have discarded" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
@@ -465,24 +469,24 @@ spec = do
       getGameOver state3 `shouldBe` False
 
       state4 <- playHappyPathRound state3
-      getTotalScore state4 `shouldBe` (65, 107)
+      getTotalScore state4 `shouldBe` (60, 112)
       getGameOver state4 `shouldBe` False
 
       state5 <- playHappyPathRound state4
-      getTotalScore state5 `shouldBe` (86, 149)
+      getTotalScore state5 `shouldBe` (66, 169)
       getGameOver state5 `shouldBe` False
 
       state6 <- playHappyPathRound state5
-      getTotalScore state6 `shouldBe` (134, 164)
+      getTotalScore state6 `shouldBe` (129, 169)
       getGameOver state6 `shouldBe` False
 
       -- TODO: Maybe auto-play the last round? This might be weird for users.
       state7 <- playHappyPathRound state6
-      getTotalScore state7 `shouldBe` (186, 139)
+      getTotalScore state7 `shouldBe` (166, 195)
       getGameOver state7 `shouldBe` False
 
       state8 <- playHappyPathRound state7
-      getTotalScore state8 `shouldBe` (247, 141)
+      getTotalScore state8 `shouldBe` (227, 197)
       getGameOver state8 `shouldBe` True
 
     it "disallows any actions if the game is over" $ property prop_game_over
@@ -568,7 +572,14 @@ playHappyPathRound initialState = do
   length (getHand PlayerTwo state4) `shouldBe` 5
   length (getHand PlayerThree state4) `shouldBe` 5
   length (getHand PlayerFour state4) `shouldBe` 5
-  getTricks state4 `shouldBe` [Map.fromList [(PlayerOne, Prelude.head $ getHand PlayerOne stateDiscarded), (PlayerTwo, Prelude.head $ getHand PlayerTwo stateDiscarded), (PlayerThree, Prelude.head $ getHand PlayerThree stateDiscarded), (PlayerFour, Prelude.head $ getHand PlayerFour stateDiscarded)]]
+  let expectedTrick = 
+        Map.fromList 
+          [ (PlayerOne, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerOne stateDiscarded)
+          , (PlayerTwo, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerTwo stateDiscarded)
+          , (PlayerThree, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerThree stateDiscarded)
+          , (PlayerFour, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerFour stateDiscarded)
+          ]
+  getTricks state4 `shouldBe` [expectedTrick]
 
   -- ok let's start from zero and play all the tricks
   let state5 = playAllTricks stateDiscarded
@@ -585,11 +596,18 @@ playHappyPathRound initialState = do
   return state5
 
 -- play a trick turn, the current player simply plays the first card in their hand
+getNextCardToPlay :: Maybe Suit -> [Card] -> Card
+getNextCardToPlay maybeTrump hand = Prelude.head $ trumpCards ++ notTrumpCards
+  where
+    trumpCards = filter (isTrumpMaybe maybeTrump) hand
+    notTrumpCards = filter (not . (isTrumpMaybe maybeTrump)) hand
+
 playTurn :: GameState -> GameState
 playTurn state = reducer state (player, Play card)
   where
     player = getCurrentPlayer state
-    card = Prelude.head $ getHand player state
+    hand = getHand player state
+    card = getNextCardToPlay (trump state) hand
 
 -- play a one trick round
 playTrickRound :: GameState -> GameState

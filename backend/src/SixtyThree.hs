@@ -78,6 +78,10 @@ hasAceOrFace cards = not $ null acesAndFaces
     isAceOrFace (FaceCard _ Jack) = True
     isAceOrFace _ = False
 
+isTrumpMaybe :: Maybe Suit -> Card -> Bool
+isTrumpMaybe Nothing c = False
+isTrumpMaybe (Just t) c = isTrump t c
+
 isTrump :: Suit -> Card -> Bool
 isTrump t (FaceCard suit Five) = suit == t || suit == oppositeTrump t
 isTrump t (FaceCard suit _) = suit == t
@@ -215,32 +219,38 @@ reducerSafe state (player, action)
             then Right state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
             else Right state {bidPassed = newBidPassed, playerInControl = enumNext player}
     Play card ->
-      if getAllPlayersDiscarded state && trump state /= Nothing && any (card ==) (Map.findWithDefault [] player (hands state))
+      let 
+        hand = Map.findWithDefault [] player (hands state)
+      in 
+      if getAllPlayersDiscarded state && trump state /= Nothing && any (card ==) hand
         then
-          let newHand = filter (card /=) $ Map.findWithDefault [] player (hands state)
-              newCardsInPlay = Map.insert player card (cardsInPlay state)
-              roundIsOver = Map.size newCardsInPlay == 4
-           in Right $
-                maybeFinishRound $
-                  state
-                    { hands = Map.insert player newHand (hands state),
-                      cardsInPlay =
-                        if roundIsOver
-                          then Map.empty
-                          else newCardsInPlay,
-                      tricks =
-                        if roundIsOver
-                          then newCardsInPlay : tricks state
-                          else tricks state,
-                      playerInControl = enumNext player
-                    }
-        else if trump state == Nothing
-          then Left "You cannot play a card until trump is selected."
-          else if not (getAllPlayersDiscarded state) 
-            then Left "You cannot play a card until everyone has discarded."
-            else if not (any (card ==) (Map.findWithDefault [] player (hands state)))
-              then Left "You cannot play a card that is not in your hand."
-              else Left "You cannot play a card right now!"
+          if null (cardsInPlay state) && not (isTrumpMaybe (trump state) card) && (not . null) (filter (isTrumpMaybe (trump state)) hand)
+            then Left "You must lead with trump, if you have any."
+            else
+              let newHand = filter (card /=) $ hand
+                  newCardsInPlay = Map.insert player card (cardsInPlay state)
+                  roundIsOver = Map.size newCardsInPlay == 4
+              in Right $
+                    maybeFinishRound $
+                      state
+                        { hands = Map.insert player newHand (hands state),
+                          cardsInPlay =
+                            if roundIsOver
+                              then Map.empty
+                              else newCardsInPlay,
+                          tricks =
+                            if roundIsOver
+                              then newCardsInPlay : tricks state
+                              else tricks state,
+                          playerInControl = enumNext player
+                        }
+            else if trump state == Nothing
+              then Left "You cannot play a card until trump is selected."
+              else if not (getAllPlayersDiscarded state) 
+                then Left "You cannot play a card until everyone has discarded."
+                else if not (any (card ==) (Map.findWithDefault [] player (hands state)))
+                  then Left "You cannot play a card that is not in your hand."
+                  else Left "You cannot play a card right now!"
     PickTrump suit ->
       let newHand = kitty state ++ Map.findWithDefault [] player (hands state)
        in Right
