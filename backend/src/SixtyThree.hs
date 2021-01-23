@@ -234,7 +234,13 @@ reducerSafe state (player, action)
                           else tricks state,
                       playerInControl = enumNext player
                     }
-        else Left "You cannot play a card right now!"
+        else if trump state == Nothing
+          then Left "You cannot play a card until trump is selected."
+          else if not (getAllPlayersDiscarded state) 
+            then Left "You cannot play a card until everyone has discarded."
+            else if not (any (card ==) (Map.findWithDefault [] player (hands state)))
+              then Left "You cannot play a card that is not in your hand."
+              else Left "You cannot play a card right now!"
     PickTrump suit ->
       let newHand = kitty state ++ Map.findWithDefault [] player (hands state)
        in Right

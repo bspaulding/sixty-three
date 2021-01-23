@@ -377,17 +377,30 @@ spec = do
 
   describe "tricking" $ do
     it "must lead trump on the first round" $ do
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
+      let state = playGame actions
+      getCurrentPlayer state `shouldBe` PlayerFour
+
+
+
       pending
 
-    it "can't play a card until trump is declared" $ do
+    it "can't play a card until trump is declared and all players have discarded" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
       let state = playGame actions
       let card = Prelude.head $ getHand PlayerFour state
-      -- nothing should change, action should be ignored
-      reducer state (PlayerFour, Play card) `shouldBe` state
+      reducerSafe state (PlayerFour, Play card) `shouldBe` Left "You cannot play a card until trump is selected."
 
       let stateTrump = reducer state (PlayerFour, PickTrump Hearts)
       getTrump stateTrump `shouldBe` Just Hearts
+
+      let stateNotDoneDiscarding = reducerSafe stateTrump (PlayerFour, Play card) 
+      stateNotDoneDiscarding `shouldBe` Left "You cannot play a card until everyone has discarded."
+
+      let stateDiscarded = playAllDiscards stateTrump
+      let card' = Prelude.head $ getHand PlayerFour stateDiscarded
+      let statePlayed = reducerSafe stateDiscarded (PlayerFour, Play card') 
+      getCardInPlay PlayerFour <$> statePlayed `shouldBe` Right (Just card')
 
     it "disallows playing a card not in the player's hand" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
