@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 11aed316558dff7bc22497577db5d444dbe8657e8af2f86e17ec47146fd3939c
+-- hash: e0e278eb67baafaf8b234325129c6bd8c374589e064c50d41a48e62201933064
 
 name:           sixty-three
 version:        0.1.0.0
@@ -54,6 +54,7 @@ library
     , http-types
     , random >=1.2.0
     , rio >=0.1.12.0
+    , splitmix >=0.1.0.3
     , text
     , uuid
     , wai
@@ -80,6 +81,7 @@ executable sixty-three-exe
     , random >=1.2.0
     , rio >=0.1.12.0
     , sixty-three
+    , splitmix >=0.1.0.3
     , text
     , uuid
     , wai
@@ -113,6 +115,7 @@ test-suite sixty-three-test
     , random >=1.2.0
     , rio >=0.1.12.0
     , sixty-three
+    , splitmix >=0.1.0.3
     , text
     , uuid
     , wai
