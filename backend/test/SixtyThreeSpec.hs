@@ -109,8 +109,8 @@ prop_game_over player action =
 spec :: Spec
 spec = do
   describe "initializer" $ do
-    let connIds = ["abcd", "efgh", "ijkl", "mnop"] 
-    let expectedPlayerMap = 
+    let connIds = ["abcd", "efgh", "ijkl", "mnop"]
+    let expectedPlayerMap =
           Map.fromList [ ("abcd", PlayerOne)
                        , ("efgh", PlayerTwo)
                        , ("ijkl", PlayerThree)
@@ -398,12 +398,12 @@ spec = do
       let stateTrump = reducer state (PlayerFour, PickTrump Hearts)
       getTrump stateTrump `shouldBe` Just Hearts
 
-      let stateNotDoneDiscarding = reducerSafe stateTrump (PlayerFour, Play card) 
+      let stateNotDoneDiscarding = reducerSafe stateTrump (PlayerFour, Play card)
       stateNotDoneDiscarding `shouldBe` Left "You cannot play a card until everyone has discarded."
 
       let stateDiscarded = playAllDiscards stateTrump
       let card' = Prelude.head $ getHand PlayerFour stateDiscarded
-      let statePlayed = reducerSafe stateDiscarded (PlayerFour, Play card') 
+      let statePlayed = reducerSafe stateDiscarded (PlayerFour, Play card')
       getCardInPlay PlayerFour <$> statePlayed `shouldBe` Right (Just card')
 
     it "disallows playing a card not in the player's hand" $ do
@@ -444,15 +444,40 @@ spec = do
       getCurrentPlayer state1 `shouldSatisfy` not . (PlayerFour ==)
       length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
 
+    let getNotTrump = \state player -> Prelude.head $ filter (not . (isTrump Hearts)) (getHand player state)
+    let getTrump = \state player -> Prelude.head $ filter (isTrump Hearts) (getHand player state)
+
     it "can play off trump if lead with off trump" $ do
-      pending
+      let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+
+      let cardOne = getNotTrump state PlayerFour
+      let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
+
+      let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
+      let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
+
+      let cardThree = getNotTrump cardTwoPlayed PlayerTwo
+      let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
+      cardThreePlayed `shouldSatisfy` isRight
 
     it "cannot play off trump if lead with trump" $ do
-      pending
+      let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+
+      let cardOne = getTrump state PlayerFour
+      let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
+      firstCardPlayed cardOnePlayed `shouldBe` Just cardOne
+
+      let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
+      let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
+      firstCardPlayed cardTwoPlayed `shouldBe` Just cardOne
+
+      let cardThree = getNotTrump cardTwoPlayed PlayerTwo
+      let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
+      cardThreePlayed `shouldBe` Left "You cannot play off trump if trump was lead."
 
     it "have no trump left but lead with trump" $ do
       -- TODO: irl you would just discard and not play any further, this reveals to all that you have no trump
-      pending
+      pendingWith "this appears to be covered by chance in the happy path game"
 
     it "happy path game" $ do
       let dealt = reducer initialGameState (getDealer initialGameState, Deal)
@@ -572,8 +597,8 @@ playHappyPathRound initialState = do
   length (getHand PlayerTwo state4) `shouldBe` 5
   length (getHand PlayerThree state4) `shouldBe` 5
   length (getHand PlayerFour state4) `shouldBe` 5
-  let expectedTrick = 
-        Map.fromList 
+  let expectedTrick =
+        Map.fromList
           [ (PlayerOne, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerOne stateDiscarded)
           , (PlayerTwo, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerTwo stateDiscarded)
           , (PlayerThree, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerThree stateDiscarded)

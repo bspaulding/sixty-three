@@ -19,6 +19,7 @@ data GameState = GameState
     kitty :: [Card],
     tricks :: [Map.Map Player Card],
     playerInControl :: Player,
+    firstCardPlayed :: Maybe Card,
     cardsInPlay :: Map.Map Player Card,
     discarded :: [Card],
     trump :: Maybe Suit,
@@ -45,6 +46,7 @@ initialGameState =
       kitty = [],
       tricks = [],
       playerInControl = PlayerOne,
+      firstCardPlayed = Nothing,
       cardsInPlay = Map.empty,
       discarded = [],
       trump = Nothing,
@@ -55,7 +57,7 @@ initialGameState =
 
 -- selectors
 
-getPlayer :: GameState -> String -> Maybe Player 
+getPlayer :: GameState -> String -> Maybe Player
 getPlayer state connId = Map.lookup connId (playersByConnId state)
 
 getDealer :: GameState -> Player

@@ -139,7 +139,7 @@ maybeFinishRound state =
     then -- TODO: move bid and tricks to previousRounds, reset game for next round
     case (currentBid state, trump state) of
       (Just bid, Just t) ->
-        let 
+        let
           resetState = initialGameState
             { previousRounds = (bid, scoreTricks t (tricks state)) : previousRounds state,
               -- TODO: maybe a resetRound function here
@@ -148,7 +148,7 @@ maybeFinishRound state =
               playersByConnId = playersByConnId state,
               g = g state
             }
-        in if getGameOver resetState 
+        in if getGameOver resetState
             then resetState
             else reducer resetState (getDealer resetState, Deal)
       -- TODO this should really be an error or something
@@ -168,7 +168,7 @@ reducer state action = case reducerSafe state action of
   Right newState -> newState
 
 reducerSafeConns :: GameState -> String -> GameAction -> Either String GameState
-reducerSafeConns state connId action = 
+reducerSafeConns state connId action =
   case getPlayer state connId of
     Just player -> reducerSafe state (player, action)
     Nothing -> Left "You are not a player in the game!"
@@ -219,13 +219,16 @@ reducerSafe state (player, action)
             then Right state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
             else Right state {bidPassed = newBidPassed, playerInControl = enumNext player}
     Play card ->
-      let 
+      let
         hand = Map.findWithDefault [] player (hands state)
-      in 
+        playerHasTrump = (not . null) (filter (isTrumpMaybe (trump state)) hand)
+      in
       if getAllPlayersDiscarded state && trump state /= Nothing && any (card ==) hand
         then
-          if null (cardsInPlay state) && not (isTrumpMaybe (trump state) card) && (not . null) (filter (isTrumpMaybe (trump state)) hand)
+          if null (cardsInPlay state) && not (isTrumpMaybe (trump state) card) && playerHasTrump
             then Left "You must lead with trump, if you have any."
+            else if playerHasTrump && (not (isTrumpMaybe (trump state) card)) && ((isTrumpMaybe (trump state)) <$> (firstCardPlayed state)) == Just True
+            then Left "You cannot play off trump if trump was lead."
             else
               let newHand = filter (card /=) $ hand
                   newCardsInPlay = Map.insert player card (cardsInPlay state)
@@ -234,6 +237,9 @@ reducerSafe state (player, action)
                     maybeFinishRound $
                       state
                         { hands = Map.insert player newHand (hands state),
+                          firstCardPlayed = case firstCardPlayed state of
+                                              Nothing -> Just card
+                                              a -> a,
                           cardsInPlay =
                             if roundIsOver
                               then Map.empty
@@ -246,7 +252,7 @@ reducerSafe state (player, action)
                         }
             else if trump state == Nothing
               then Left "You cannot play a card until trump is selected."
-              else if not (getAllPlayersDiscarded state) 
+              else if not (getAllPlayersDiscarded state)
                 then Left "You cannot play a card until everyone has discarded."
                 else if not (any (card ==) (Map.findWithDefault [] player (hands state)))
                   then Left "You cannot play a card that is not in your hand."
