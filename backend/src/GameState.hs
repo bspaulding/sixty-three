@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module GameState where
 
@@ -8,6 +9,8 @@ import qualified Data.Map as Map
 import GHC.Generics
 import Player
 import System.Random
+import System.Random.Internal
+import qualified System.Random.SplitMix as SM
 import Util (safeHead)
 
 -- lists of cards should probably be sets of cards
@@ -30,7 +33,8 @@ data GameState = GameState
   deriving (Eq, Generic, Show)
 
 instance ToJSON StdGen where
-  toJSON _ = object []
+  toJSON stdGen = case SM.unseedSMGen (unStdGen stdGen) of
+                    (seed, gamma)  -> object ["type" .= ("SMGen":: String), "payload" .= object ["seed" .= seed, "gamma" .= gamma]]
 
 instance ToJSON GameState
 
