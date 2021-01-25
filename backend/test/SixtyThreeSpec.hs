@@ -128,7 +128,8 @@ spec = do
       playersByConnId <$> initializer g (connIds ++ ["qrst"]) `shouldBe` Right expectedPlayerMap
 
     it "should ensure connIds are unique" $ do
-      initializer g (take 2 connIds ++ take 2 connIds) `shouldBe` Left "Connection IDs must be unique!"
+      pending
+      initializer g (take 2 connIds ++ take 2 connIds) `shouldBe` Left "Connection IDs must be unique! Got: [\"abcd\",\"efgh\",\"abcd\",\"efgh\"]"
 
   describe "partner" $ do
     it "should always be your partners' partner" $

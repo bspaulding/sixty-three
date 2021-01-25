@@ -12,8 +12,8 @@ data TestAction = Update | MakeError
 data TestState = TestState {s :: String, connIds :: [ConnId]}
   deriving (Eq, Show)
 
-testInitializer :: [ConnId] -> Either String TestState
-testInitializer connIds =
+testInitializer :: StdGen -> [ConnId] -> Either String TestState
+testInitializer g connIds =
   if null connIds
     then Left "nobody in the room yet!"
     else Right $ initialRoomState connIds
@@ -31,7 +31,7 @@ spec :: Spec
 spec = do
   describe "serverStateReducer" $ do
     let g = mkStdGen 1
-    let reducer = serverStateReducer testReducer testInitializer g
+    let reducer = serverStateReducer testReducer (testInitializer) g
     let connId = "abcdefg"
     let roomId = "abcd"
 
@@ -96,7 +96,7 @@ spec = do
       it "runs the initializer and updates the room state" $ do
         let initialState = moveClientToRoom roomId connId newServerState
         let result = reducer initialState connId (InitRoom roomId)
-        let expectedState = testInitializer [connId]
+        let expectedState = testInitializer g [connId]
         (getStateInRoom roomId . fst <$> result) `shouldBe` Just <$> expectedState
         snd <$> result `shouldBe` (\s -> [(connId, SocketResponse.State s)]) <$> expectedState
 

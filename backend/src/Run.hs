@@ -14,5 +14,4 @@ run :: RIO App ()
 run = do
   logInfo "Running!"
   initialState <- newMVar newServerStateWS
-  g <- getStdGen
-  liftIO $ runEnv 3000 (app initialState reducerSafeConns (initializer g))
+  liftIO $ runEnv 3000 (app initialState reducerSafeConns initializer)
