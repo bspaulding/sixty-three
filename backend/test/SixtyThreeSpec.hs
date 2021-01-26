@@ -273,7 +273,7 @@ spec = do
       getBid double `shouldBe` Just (PlayerOne, 126)
 
     it "bid is won when three players pass" $ do
-      let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass), (PlayerOne, BidPass)]
+      let actions = [(PlayerOne, BidPass), (PlayerTwo, Bid 30), (PlayerThree, BidPass), (PlayerFour, BidPass)]
       let state = foldl reducer initialGameState actions
       getBid state `shouldBe` Just (PlayerTwo, 30)
       getBiddingComplete state `shouldBe` True
@@ -284,6 +284,7 @@ spec = do
       let state = foldl reducer initialGameState actions
       getDealer state `shouldBe` PlayerFour
       getBid state `shouldBe` Just (PlayerFour, 25)
+      getCurrentPlayer state `shouldBe` PlayerFour
 
     it "bid is won when double 63 is bid" $ do
       let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 126)]
@@ -293,7 +294,13 @@ spec = do
       getCurrentPlayer state `shouldBe` PlayerTwo
 
     it "cannot pick trump if you did not win the bid" $ do
-      pending
+      let actions = [(PlayerOne, Bid 25), (PlayerTwo, Bid 126)]
+      let state = foldl reducer initialGameState actions
+      getBid state `shouldBe` Just (PlayerTwo, 126)
+      getBiddingComplete state `shouldBe` True
+      getCurrentPlayer state `shouldBe` PlayerTwo
+
+      reducerSafe state (PlayerThree, PickTrump Spades) `shouldBe` Left "It is not your turn!"
 
   describe "discarding" $ do
     it "cannot discard a trump worth points, if you must discard trump" $ do
@@ -388,7 +395,7 @@ spec = do
 
       let notTrump = head $ filter (not . (isTrump Hearts)) hand
       let playedNotTrump = reducerSafe state (PlayerFour, Play notTrump)
-      playedNotTrump `shouldBe` Left "You must lead with trump, if you have any."
+      playedNotTrump `shouldBe` Left "You must lead with trump on the first round."
 
       let trump = head $ filter (isTrump Hearts) hand
       let playedTrump = reducerSafe state (PlayerFour, Play trump)
@@ -453,17 +460,23 @@ spec = do
     let getTrump = \state player -> Prelude.head $ filter (isTrump Hearts) (getHand player state)
 
     it "can play off trump if lead with off trump" $ do
-      let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let state = playTrickRound $ playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
 
+      getCurrentPlayer state `shouldBe` PlayerFour
       let cardOne = getNotTrump state PlayerFour
       let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
+      Map.lookup PlayerFour (cardsInPlay cardOnePlayed) `shouldBe` Just cardOne
 
+      getCurrentPlayer cardOnePlayed `shouldBe` PlayerOne
       let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
       let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
 
+      getCurrentPlayer cardTwoPlayed `shouldBe` PlayerTwo
       let cardThree = getNotTrump cardTwoPlayed PlayerTwo
       let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
+      getCurrentPlayer <$> cardThreePlayed `shouldBe` Right PlayerThree
       cardThreePlayed `shouldSatisfy` isRight
+      (\s -> Map.lookup PlayerTwo (cardsInPlay s)) <$> cardThreePlayed `shouldBe` Right (Just cardThree)
 
     it "cannot play off trump if lead with trump" $ do
       let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]

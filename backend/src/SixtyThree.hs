@@ -216,19 +216,22 @@ reducerSafe state (player, action)
           Nothing -> Right state {currentBid = Just (player, amount), playerInControl = enumNext player}
     BidPass ->
       let newBidPassed = Map.insert player True (bidPassed state)
-       in if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
-            then Right state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed, playerInControl = enumNext player}
-            else Right state {bidPassed = newBidPassed, playerInControl = enumNext player}
+          newState = if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
+            then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed}
+            else state {bidPassed = newBidPassed}
+          winner = maybe player id $ fst <$> currentBid newState
+      in Right newState { playerInControl = if getBiddingComplete newState then winner else enumNext player}
     Play card ->
       let
         hand = Map.findWithDefault [] player (hands state)
         playerHasTrump = (not . null) (filter (isTrumpMaybe (trump state)) hand)
+        leadTrump = maybe False (isTrumpMaybe (trump state)) (firstCardPlayed state)
       in
       if getAllPlayersDiscarded state && trump state /= Nothing && any (card ==) hand
         then
-          if null (cardsInPlay state) && not (isTrumpMaybe (trump state) card) && playerHasTrump
-            then Left "You must lead with trump, if you have any."
-            else if playerHasTrump && (not (isTrumpMaybe (trump state) card)) && ((isTrumpMaybe (trump state)) <$> (firstCardPlayed state)) == Just True
+          if null (cardsInPlay state) && null (tricks state) && not (isTrumpMaybe (trump state) card) && playerHasTrump
+            then Left "You must lead with trump on the first round."
+            else if leadTrump && playerHasTrump && (not (isTrumpMaybe (trump state) card)) && ((isTrumpMaybe (trump state)) <$> (firstCardPlayed state)) == Just True
             then Left "You cannot play off trump if trump was lead."
             else
               let newHand = filter (card /=) $ hand
@@ -238,9 +241,11 @@ reducerSafe state (player, action)
                     maybeFinishRound $
                       state
                         { hands = Map.insert player newHand (hands state),
-                          firstCardPlayed = case firstCardPlayed state of
-                                              Nothing -> Just card
-                                              a -> a,
+                          firstCardPlayed = if roundIsOver
+                                               then Nothing
+                                               else case firstCardPlayed state of
+                                                      Nothing -> Just card
+                                                      a -> a,
                           cardsInPlay =
                             if roundIsOver
                               then Map.empty
@@ -278,4 +283,5 @@ reducerSafe state (player, action)
            in if not playerHasAce && passingTheJoker then Left "You cannot pass the joker if you do not have the ace." else Right state {hands = newHands}
         Nothing -> Left "You cannot pass cards until trump has been selected."
     _ -> Right state
+  | playerInControl state /= player = Left "It is not your turn!"
   | otherwise = Right state
