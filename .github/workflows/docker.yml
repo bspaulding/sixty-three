@@ -13,6 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Set user level stack config
+      run: |
+          mkdir -p ~/.stack
+          touch ~/.stack/config.yaml
+          echo 'allow-newer: true' > ~/.stack/config.yaml
     - uses: docker/build-push-action@v1
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
