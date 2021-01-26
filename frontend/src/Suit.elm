@@ -11,9 +11,25 @@ type Suit
     | Spades
 
 
+toString : Suit -> String
+toString suit =
+    case suit of
+        Hearts ->
+            "Hearts"
+
+        Diamonds ->
+            "Diamonds"
+
+        Clubs ->
+            "Clubs"
+
+        Spades ->
+            "Spades"
+
+
 encode : Suit -> E.Value
 encode suit =
-    E.string (Debug.toString suit)
+    E.string (toString suit)
 
 
 decode : D.Decoder Suit

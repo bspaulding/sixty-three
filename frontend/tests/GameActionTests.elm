@@ -19,7 +19,7 @@ testActionSerde : GameAction -> Test
 testActionSerde action =
     test
         ("decode (encode action) == action where action = "
-            ++ Debug.toString action
+            ++ GameAction.toString action
         )
     <|
         \_ ->

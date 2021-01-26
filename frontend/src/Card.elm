@@ -11,6 +11,16 @@ type Card
     | Joker
 
 
+toString : Card -> String
+toString card =
+    case card of
+        Joker ->
+            "Joker"
+
+        FaceCard suit face ->
+            "FaceCard " ++ Suit.toString suit ++ " " ++ Face.toString face
+
+
 encode : Card -> E.Value
 encode card =
     let

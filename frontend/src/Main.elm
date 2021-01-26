@@ -4,6 +4,7 @@ import Browser
 import Card exposing (Card(..), cardDescription, unicard)
 import Dict
 import GameAction exposing (GameAction(..))
+import GamePlayer exposing (GamePlayer)
 import GameState
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -91,13 +92,10 @@ update msg model =
         WebsocketEventReceived eventDataStr ->
             case D.decodeString WSMessage.socketDecoder eventDataStr of
                 Ok decodedMessage ->
-                    Debug.log "Decoded Websocket event!" <|
-                        handleWsMessage model decodedMessage
+                    handleWsMessage model decodedMessage
 
-                Err err ->
-                    Debug.log
-                        ("Error decoding Websocket event: " ++ D.errorToString err)
-                        ( model, Cmd.none )
+                Err _ ->
+                    ( model, Cmd.none )
 
         CreateRoom ->
             ( model, WSMessage.createRoom )
@@ -159,7 +157,7 @@ handleWsMessage model wsMsg =
             ( { model | playersById = Dict.insert connId (Player connId name) model.playersById }, Cmd.none )
 
         WSMessage.JoinedRoomResponse roomId playerNamesById ->
-            Debug.log "handled JoinedRoomResponse" ( { model | roomId = Just roomId, playersById = playerNamesById |> Dict.toList |> List.map (\( connId, name ) -> ( connId, Player connId name )) |> Dict.fromList }, Cmd.none )
+            ( { model | roomId = Just roomId, playersById = playerNamesById |> Dict.toList |> List.map (\( connId, name ) -> ( connId, Player connId name )) |> Dict.fromList }, Cmd.none )
 
         WSMessage.CreateRoomResponse roomId ->
             ( { model | roomId = Just roomId }, Cmd.none )
@@ -168,7 +166,7 @@ handleWsMessage model wsMsg =
             ( { model | gameState = Just gameState }, Cmd.none )
 
         WSMessage.ErrorResponse err ->
-            Debug.log err ( { model | lastErrorMsg = Just err }, Cmd.none )
+            ( { model | lastErrorMsg = Just err }, Cmd.none )
 
 
 
@@ -216,7 +214,7 @@ createOrJoinRoomView model =
         ]
 
 
-gameView : Model -> GameState.GamePlayer -> GameState.GameState -> Html Msg
+gameView : Model -> GamePlayer -> GameState.GameState -> Html Msg
 gameView model player state =
     div []
         [ case state.currentBid of
@@ -236,8 +234,8 @@ gameView model player state =
 
                 Just suit ->
                     div []
-                        [ text <| "trump is " ++ Debug.toString suit
-                        , if List.length (Maybe.withDefault [] (Dict.get (Debug.toString player) state.hands)) <= 6 then
+                        [ text <| "trump is " ++ Suit.toString suit
+                        , if List.length (Maybe.withDefault [] (Dict.get (GamePlayer.toString player) state.hands)) <= 6 then
                             if GameState.allPlayersDiscarded state then
                                 div []
                                     [ if state.playerInControl == player then
@@ -260,7 +258,7 @@ gameView model player state =
 
           else
             div [] [ text <| "Waiting for " ++ playerName model state.playerInControl ]
-        , case Dict.get (Debug.toString player) state.hands of
+        , case Dict.get (GamePlayer.toString player) state.hands of
             Nothing ->
                 div [] []
 
@@ -293,7 +291,7 @@ selectTrumpForm =
 -- TODO: playerName should look up connId for player and name for connId
 
 
-playerName : Model -> GameState.GamePlayer -> String
+playerName : Model -> GamePlayer -> String
 playerName model player =
     case model.gameState of
         Nothing ->
@@ -313,18 +311,14 @@ dictFlip d =
         |> Dict.fromList
 
 
-toStringValue k v =
-    Debug.toString v
-
-
 playerName_ playersByConnId gamePlayersByConnId player =
     let
         connIdsByGamePlayer =
-            dictFlip <| Dict.map toStringValue gamePlayersByConnId
+            dictFlip <| Dict.map (\k v -> GamePlayer.toString v) gamePlayersByConnId
 
         connId =
             Maybe.withDefault "" <|
-                Dict.get (Debug.toString player) connIdsByGamePlayer
+                Dict.get (GamePlayer.toString player) connIdsByGamePlayer
     in
     case Dict.get connId playersByConnId of
         Nothing ->
@@ -361,10 +355,10 @@ cardView card =
                     "joker"
 
                 FaceCard suit _ ->
-                    String.toLower <| Debug.toString suit
+                    String.toLower <| Suit.toString suit
 
         cardId =
-            Debug.toString card
+            Card.toString card
                 |> String.toLower
                 |> String.replace " " "-"
     in

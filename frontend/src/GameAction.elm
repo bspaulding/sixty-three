@@ -16,6 +16,31 @@ type GameAction
     | PassCards (List Card)
 
 
+toString : GameAction -> String
+toString action =
+    case action of
+        Deal ->
+            "Deal"
+
+        BidPass ->
+            "BidPass"
+
+        Bid i ->
+            "Bid " ++ String.fromInt i
+
+        Play card ->
+            "Play " ++ Card.toString card
+
+        PickTrump suit ->
+            "PickTrump " ++ Suit.toString suit
+
+        Discard cards ->
+            "Discard [" ++ String.join ", " (List.map Card.toString cards) ++ "]"
+
+        PassCards cards ->
+            "PassCard [" ++ String.join ", " (List.map Card.toString cards) ++ "]"
+
+
 encode : GameAction -> E.Value
 encode action =
     let

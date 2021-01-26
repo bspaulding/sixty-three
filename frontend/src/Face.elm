@@ -20,9 +20,52 @@ type Face
     | Ace
 
 
+toString : Face -> String
+toString face =
+    case face of
+        Two ->
+            "Two"
+
+        Three ->
+            "Three"
+
+        Four ->
+            "Four"
+
+        Five ->
+            "Five"
+
+        Six ->
+            "Six"
+
+        Seven ->
+            "Seven"
+
+        Eight ->
+            "Eight"
+
+        Nine ->
+            "Nine"
+
+        Ten ->
+            "Ten"
+
+        Jack ->
+            "Jack"
+
+        Queen ->
+            "Queen"
+
+        King ->
+            "King"
+
+        Ace ->
+            "Ace"
+
+
 encode : Face -> E.Value
 encode face =
-    E.string (Debug.toString face)
+    E.string (toString face)
 
 
 decode : D.Decoder Face

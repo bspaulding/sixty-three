@@ -2,16 +2,10 @@ module GameState exposing (..)
 
 import Card
 import Dict
+import GamePlayer exposing (GamePlayer(..))
 import HaskellMapDecoder exposing (haskellMap)
 import Json.Decode as D
 import Suit exposing (Suit)
-
-
-type GamePlayer
-    = PlayerOne
-    | PlayerTwo
-    | PlayerThree
-    | PlayerFour
 
 
 type alias GameState =
