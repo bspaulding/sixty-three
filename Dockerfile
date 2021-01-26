@@ -2,6 +2,9 @@
 FROM fpco/stack-build:lts-16.20 as build-hs
 RUN mkdir /opt/build
 COPY backend /opt/build
+RUN mkdir -p ~/.stack
+RUN touch ~/.stack/config.yaml
+RUN echo 'allow-newer: true' > ~/.stack/config.yaml
 RUN cd /opt/build && stack install --system-ghc
 
 # Build frontend
