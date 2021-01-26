@@ -22,7 +22,6 @@ RUN mkdir -p /opt/app
 WORKDIR /opt/app
 RUN apt-get update && apt-get install -y ca-certificates libgmp-dev
 COPY --from=build-hs /root/.local/bin .
-COPY words-*.txt ./
 COPY --from=build-elm /app/build ./frontend/build
 CMD ["/opt/app/sixty-three-exe"]
 
