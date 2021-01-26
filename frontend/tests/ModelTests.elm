@@ -2,7 +2,7 @@ module ModelTests exposing (..)
 
 import Dict
 import Expect
-import GameState exposing (GamePlayer(..))
+import GamePlayer exposing (GamePlayer(..))
 import Main exposing (Model, playerName_)
 import Test exposing (..)
 
