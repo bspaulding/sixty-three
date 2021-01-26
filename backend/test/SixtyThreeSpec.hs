@@ -122,13 +122,12 @@ spec = do
       initializer g (take 3 connIds) `shouldBe` Left "Need at least four people to start a game!"
 
     it "should map players if four conns" $ do
-      playersByConnId <$> initializer g connIds `shouldBe` Right expectedPlayerMap
+      playersByConnId <$> initializer g (reverse connIds) `shouldBe` Right (Map.fromList (zip (reverse connIds) players))
 
     it "should map first four players if more than four conns" $ do
       playersByConnId <$> initializer g (connIds ++ ["qrst"]) `shouldBe` Right expectedPlayerMap
 
     it "should ensure connIds are unique" $ do
-      pending
       initializer g (take 2 connIds ++ take 2 connIds) `shouldBe` Left "Connection IDs must be unique! Got: [\"abcd\",\"efgh\",\"abcd\",\"efgh\"]"
 
   describe "partner" $ do

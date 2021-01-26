@@ -160,6 +160,7 @@ maybeFinishRound state =
 initializer :: StdGen -> [String] -> Either String GameState
 initializer gen connIds
   | length connIds < 4 = Left "Need at least four people to start a game!"
+  | (Set.toList . Set.fromList) connIds /= List.sort connIds = Left "Connection IDs must be unique! Got: [\"abcd\",\"efgh\",\"abcd\",\"efgh\"]"
   | otherwise = Right $ reducer (initialGameState { g = gen, playersByConnId = Map.fromList (zip connIds players)}) (dealer initialGameState, Deal)
 
 reducer :: GameState -> (Player, GameAction) -> GameState
