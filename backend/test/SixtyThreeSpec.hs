@@ -277,6 +277,7 @@ spec = do
       let state = foldl reducer initialGameState actions
       getBid state `shouldBe` Just (PlayerTwo, 30)
       getBiddingComplete state `shouldBe` True
+      getCurrentPlayer state `shouldBe` PlayerTwo
 
     it "bid is defaulted to the dealer at 25 if the others pass and no bid" $ do
       let actions = [(PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
@@ -289,6 +290,10 @@ spec = do
       let state = foldl reducer initialGameState actions
       getBid state `shouldBe` Just (PlayerTwo, 126)
       getBiddingComplete state `shouldBe` True
+      getCurrentPlayer state `shouldBe` PlayerTwo
+
+    it "cannot pick trump if you did not win the bid" $ do
+      pending
 
   describe "discarding" $ do
     it "cannot discard a trump worth points, if you must discard trump" $ do

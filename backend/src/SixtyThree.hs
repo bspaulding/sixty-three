@@ -211,7 +211,7 @@ reducerSafe state (player, action)
         else case currentBid state of
           Just currentBid_ ->
             if amount > snd currentBid_
-              then Right state {currentBid = Just (player, amount), playerInControl = enumNext player}
+               then Right state {currentBid = Just (player, amount), playerInControl = if amount == 126 then player else enumNext player}
               else Left $ "You cannot bid less than the current bid of " ++ show (snd currentBid_)
           Nothing -> Right state {currentBid = Just (player, amount), playerInControl = enumNext player}
     BidPass ->
