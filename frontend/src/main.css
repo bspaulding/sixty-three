@@ -61,3 +61,42 @@ img {
   display: flex;
   justify-content: center;
 }
+
+.cards-in-play {
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+
+.cards-in-play.PlayerOne {
+  transform: rotate(180deg);
+}
+
+.cards-in-play.PlayerTwo {
+  transform: rotate(90deg);
+}
+
+.cards-in-play.PlayerThree {
+  /* transform: rotate(90deg); */
+}
+
+.cards-in-play.PlayerFour {
+  transform: rotate(-90deg);
+}
+
+.cards-in-play > div:first-child {
+  grid-column: 1 / span 2;
+  transform: rotate(180deg);
+}
+.cards-in-play > div:nth-child(2) {
+  grid-column: 2 / span 1;
+  transform: rotate(-90deg);
+}
+.cards-in-play > div:nth-child(3) {
+  grid-column: 1 / span 2;
+}
+.cards-in-play > div:nth-child(4) {
+  grid-column: 1 / span 1;
+  grid-row: 2;
+  transform: rotate(90deg);
+}

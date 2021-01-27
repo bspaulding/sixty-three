@@ -3,8 +3,9 @@ port module Main exposing (..)
 import Browser
 import Card exposing (Card(..), unicard)
 import Dict
+import Face exposing (Face(..))
 import GameAction exposing (GameAction(..))
-import GamePlayer exposing (GamePlayer)
+import GamePlayer exposing (GamePlayer(..))
 import GameState
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -134,21 +135,25 @@ update msg model =
             ( model, WSMessage.sendGameAction gameAction )
 
         CardSelected card ->
-            ( { model
-                | selectedCards =
-                    let
-                        cardKey =
-                            Card.toString card
-                    in
-                    if Set.member cardKey model.selectedCards then
-                        Set.remove cardKey model.selectedCards
+            if weAreTricking model then
+                ( model, WSMessage.sendGameAction (Play card) )
 
-                    else
-                        Set.insert cardKey model.selectedCards
-              }
-            , Cmd.none
-              -- cardAction model.gameState card
-            )
+            else
+                ( { model
+                    | selectedCards =
+                        let
+                            cardKey =
+                                Card.toString card
+                        in
+                        if Set.member cardKey model.selectedCards then
+                            Set.remove cardKey model.selectedCards
+
+                        else
+                            Set.insert cardKey model.selectedCards
+                  }
+                , Cmd.none
+                  -- cardAction model.gameState card
+                )
 
         DiscardSelected ->
             ( { model | selectedCards = Set.empty }
@@ -159,6 +164,16 @@ update msg model =
             ( { model | selectedCards = Set.empty }
             , WSMessage.sendGameAction (PassCards (getSelectedCards model))
             )
+
+
+weAreTricking : Model -> Bool
+weAreTricking model =
+    case model.gameState of
+        Nothing ->
+            False
+
+        Just state ->
+            GameState.trumpSelected state && GameState.biddingOver state && GameState.allPlayersDiscarded state
 
 
 getSelectedCards : Model -> List Card
@@ -320,7 +335,7 @@ gameView model player state =
 
                                       else
                                         div [] [ text ("waiting for " ++ playerName model state.playerInControl ++ " to play a card.") ]
-                                    , cardsInPlayView state.cardsInPlay
+                                    , cardsInPlayView player state.cardsInPlay
                                     ]
 
                             else
@@ -359,10 +374,45 @@ cardIsSelected model card =
     Set.member (Card.toString card) model.selectedCards
 
 
-cardsInPlayView : Dict.Dict String Card.Card -> Html Msg
-cardsInPlayView cardByPlayer =
-    div [] <|
-        List.map (\( p, card ) -> div [ style "display" "inline-block" ] [ cardView (\_ -> False) card, div [] [ text p ] ]) (Dict.toList cardByPlayer)
+sortCardsByPlayer : ( String, Card ) -> Int
+sortCardsByPlayer ( playerStr, _ ) =
+    case playerStr of
+        "PlayerOne" ->
+            1
+
+        "PlayerTwo" ->
+            2
+
+        "PlayerThree" ->
+            3
+
+        "PlayerFour" ->
+            4
+
+        _ ->
+            -1
+
+
+gamePlayers =
+    [ PlayerOne, PlayerTwo, PlayerThree, PlayerFour ]
+
+
+cardsInPlayView : GamePlayer -> Dict.Dict String Card.Card -> Html Msg
+cardsInPlayView povPlayer cardByPlayer =
+    div [ class "cards-in-play", class (GamePlayer.toString povPlayer) ] <|
+        List.indexedMap
+            (\i p ->
+                div []
+                    [ case Dict.get (GamePlayer.toString p) cardByPlayer of
+                        Just card ->
+                            cardView (\_ -> False) card
+
+                        Nothing ->
+                            cardBackView
+                    , div [] [ text (GamePlayer.toString p) ]
+                    ]
+            )
+            gamePlayers
 
 
 selectTrumpForm : Html Msg
@@ -436,6 +486,10 @@ playerHandView p cards isSelected =
         [ text p
         , div [] (List.map (cardView isSelected) cards)
         ]
+
+
+cardBackView =
+    div [ class "card" ] [ text Card.unicardBack ]
 
 
 cardView : (Card -> Bool) -> Card -> Html Msg
