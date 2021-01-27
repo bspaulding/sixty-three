@@ -55,3 +55,9 @@ img {
 .card.clubs {
   color: black;
 }
+
+.scores {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

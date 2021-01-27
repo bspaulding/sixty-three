@@ -45,6 +45,7 @@ type alias Model =
     , lastErrorMsg : Maybe String
     , tempBid : Int
     , selectedCards : Set String -- CardId really just Card.toString
+    , decodingErrors : List D.Error
     }
 
 
@@ -59,6 +60,7 @@ init =
       , lastErrorMsg = Nothing
       , tempBid = 0
       , selectedCards = Set.empty
+      , decodingErrors = []
       }
     , Cmd.none
     )
@@ -99,8 +101,8 @@ update msg model =
                 Ok decodedMessage ->
                     handleWsMessage model decodedMessage
 
-                Err _ ->
-                    ( model, Cmd.none )
+                Err e ->
+                    ( { model | decodingErrors = [ e ] ++ model.decodingErrors }, Cmd.none )
 
         CreateRoom ->
             ( model, WSMessage.createRoom )
@@ -230,6 +232,7 @@ view model =
 
             Just err ->
                 div [ class "error" ] [ text err ]
+        , div [] (List.map (\e -> pre [ class "error" ] [ text (D.errorToString e) ]) model.decodingErrors)
         , case model.roomId of
             Just roomId ->
                 roomView roomId model
@@ -262,10 +265,36 @@ createOrJoinRoomView model =
         ]
 
 
+scoreView : GameState.GameState -> Html Msg
+scoreView state =
+    let
+        ( teamOddScore, teamEvenScore ) =
+            GameState.getTotalScore state
+    in
+    div [ class "scores" ]
+        [ table []
+            [ thead []
+                [ tr [] [ th [ colspan 2 ] [ text "Score" ] ]
+                , tr []
+                    [ th [] [ text "Player 1/3" ]
+                    , th [] [ text "Player 2/4" ]
+                    ]
+                ]
+            , tbody []
+                [ tr []
+                    [ td [] [ text (String.fromInt teamOddScore) ]
+                    , td [] [ text (String.fromInt teamEvenScore) ]
+                    ]
+                ]
+            ]
+        ]
+
+
 gameView : Model -> GamePlayer -> GameState.GameState -> Html Msg
 gameView model player state =
     div []
-        [ case state.currentBid of
+        [ scoreView state
+        , case state.currentBid of
             Nothing ->
                 div [] [ text "No one has bid yet." ]
 

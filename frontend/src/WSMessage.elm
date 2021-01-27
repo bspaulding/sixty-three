@@ -62,7 +62,7 @@ wsMessageDecoder type_ =
             D.map2 PlayerNameChanged (D.field "connId" D.string) (D.field "name" D.string)
 
         "State" ->
-            D.map State (D.field "payload" GameState.gameStateDecoder)
+            D.map State (D.field "payload" GameState.decode)
 
         _ ->
             D.fail <| "Unknown message type '" ++ type_ ++ "'"
