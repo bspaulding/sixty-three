@@ -1,7 +1,7 @@
 port module Main exposing (..)
 
 import Browser
-import Card exposing (Card(..), cardDescription, unicard)
+import Card exposing (Card(..), unicard)
 import Dict
 import GameAction exposing (GameAction(..))
 import GamePlayer exposing (GamePlayer)
@@ -11,6 +11,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
 import Maybe
+import Set exposing (Set)
 import String
 import Suit exposing (Suit(..))
 import Tuple
@@ -43,6 +44,7 @@ type alias Model =
     , gameState : Maybe GameState.GameState
     , lastErrorMsg : Maybe String
     , tempBid : Int
+    , selectedCards : Set String -- CardId really just Card.toString
     }
 
 
@@ -56,6 +58,7 @@ init =
       , gameState = Nothing
       , lastErrorMsg = Nothing
       , tempBid = 0
+      , selectedCards = Set.empty
       }
     , Cmd.none
     )
@@ -78,6 +81,8 @@ type Msg
     | BidChanged String
     | TakeGameAction GameAction
     | CardSelected Card
+    | DiscardSelected
+    | PassSelected
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -127,7 +132,50 @@ update msg model =
             ( model, WSMessage.sendGameAction gameAction )
 
         CardSelected card ->
-            ( model, cardAction model.gameState card )
+            ( { model
+                | selectedCards =
+                    let
+                        cardKey =
+                            Card.toString card
+                    in
+                    if Set.member cardKey model.selectedCards then
+                        Set.remove cardKey model.selectedCards
+
+                    else
+                        Set.insert cardKey model.selectedCards
+              }
+            , Cmd.none
+              -- cardAction model.gameState card
+            )
+
+        DiscardSelected ->
+            ( { model | selectedCards = Set.empty }
+            , WSMessage.sendGameAction (Discard (getSelectedCards model))
+            )
+
+        PassSelected ->
+            ( { model | selectedCards = Set.empty }
+            , WSMessage.sendGameAction (PassCards (getSelectedCards model))
+            )
+
+
+getSelectedCards : Model -> List Card
+getSelectedCards model =
+    let
+        hand =
+            case ( model.connId, model.gameState ) of
+                ( Just connId, Just game ) ->
+                    case Dict.get connId game.playersByConnId of
+                        Just gamePlayer ->
+                            Maybe.withDefault [] <| Dict.get (GamePlayer.toString gamePlayer) game.hands
+
+                        Nothing ->
+                            []
+
+                _ ->
+                    []
+    in
+    List.filter (\c -> Set.member (Card.toString c) model.selectedCards) hand
 
 
 cardAction : Maybe GameState.GameState -> Card -> Cmd msg
@@ -250,7 +298,7 @@ gameView model player state =
                                 div [] [ text "you have discarded! waiting for everyone else..." ]
 
                           else
-                            div [] [ text "click on cards to discard them" ]
+                            div [] [ text "click on cards to select them" ]
                         ]
 
           else if state.playerInControl == player then
@@ -263,14 +311,29 @@ gameView model player state =
                 div [] []
 
             Just hand ->
-                div [] [ playerHandView ( playerName model player, hand ) ]
+                div []
+                    [ if GameState.biddingOver state && not (GameState.allPlayersDiscarded state) then
+                        div []
+                            [ button [ onClick DiscardSelected ] [ text "Discard" ]
+                            , button [ onClick PassSelected ] [ text "Pass" ]
+                            ]
+
+                      else
+                        text ""
+                    , playerHandView (playerName model player) hand (cardIsSelected model)
+                    ]
         ]
+
+
+cardIsSelected : Model -> Card -> Bool
+cardIsSelected model card =
+    Set.member (Card.toString card) model.selectedCards
 
 
 cardsInPlayView : Dict.Dict String Card.Card -> Html Msg
 cardsInPlayView cardByPlayer =
     div [] <|
-        List.map (\( p, card ) -> div [ style "display" "inline-block" ] [ cardView card, div [] [ text p ] ]) (Dict.toList cardByPlayer)
+        List.map (\( p, card ) -> div [ style "display" "inline-block" ] [ cardView (\_ -> False) card, div [] [ text p ] ]) (Dict.toList cardByPlayer)
 
 
 selectTrumpForm : Html Msg
@@ -338,16 +401,16 @@ bidFormView tempBid =
         ]
 
 
-playerHandView : ( String, List Card ) -> Html Msg
-playerHandView ( p, cards ) =
+playerHandView : String -> List Card -> (Card -> Bool) -> Html Msg
+playerHandView p cards isSelected =
     div []
         [ text p
-        , div [] (List.map cardView cards)
+        , div [] (List.map (cardView isSelected) cards)
         ]
 
 
-cardView : Card -> Html Msg
-cardView card =
+cardView : (Card -> Bool) -> Card -> Html Msg
+cardView isSelected card =
     let
         suitClass =
             case card of
@@ -362,7 +425,20 @@ cardView card =
                 |> String.toLower
                 |> String.replace " " "-"
     in
-    div [ id cardId, class "card", class suitClass, onClick (CardSelected card) ] [ text (unicard card) ]
+    div
+        [ id cardId
+        , class "card"
+        , class suitClass
+        , class
+            (if isSelected card then
+                "selected"
+
+             else
+                "not-selected"
+            )
+        , onClick (CardSelected card)
+        ]
+        [ text (unicard card) ]
 
 
 roomView : WSMessage.RoomId -> Model -> Html Msg
