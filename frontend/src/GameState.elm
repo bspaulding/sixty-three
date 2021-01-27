@@ -69,3 +69,8 @@ allPlayersDiscarded game =
         |> Dict.values
         |> List.map List.length
         |> List.all (\x -> x <= 6)
+
+
+trumpSelected : GameState -> Bool
+trumpSelected game =
+    game.trump /= Nothing

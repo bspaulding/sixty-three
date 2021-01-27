@@ -312,7 +312,7 @@ gameView model player state =
 
             Just hand ->
                 div []
-                    [ if GameState.biddingOver state && not (GameState.allPlayersDiscarded state) then
+                    [ if GameState.trumpSelected state && GameState.biddingOver state && not (GameState.allPlayersDiscarded state) then
                         div []
                             [ button [ onClick DiscardSelected ] [ text "Discard" ]
                             , button [ onClick PassSelected ] [ text "Pass" ]
