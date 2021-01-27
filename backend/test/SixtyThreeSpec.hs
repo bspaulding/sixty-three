@@ -335,7 +335,7 @@ spec = do
       let playerWithAce = List.find (\p -> Set.member (FaceCard Hearts Ace) (Set.fromList (getHand p state))) players
       playerWithAce `shouldBe` Just PlayerThree
 
-      getCurrentPlayer state `shouldBe` PlayerOne
+      getCurrentPlayer state `shouldBe` PlayerFour
 
       let statePassed = reducerSafe state (PlayerOne, PassCards [Joker])
       statePassed `shouldNotBe` Right state
@@ -391,6 +391,7 @@ spec = do
     it "must lead trump on the first round" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playAllDiscards $ playGame actions
+      state `shouldSatisfy` getAllPlayersDiscarded
       let hand = getHand PlayerFour state
 
       let notTrump = head $ filter (not . (isTrump Hearts)) hand
@@ -660,8 +661,8 @@ playAllTricks :: GameState -> GameState
 playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
 
 -- TODO: prefer to discard higher faced off trump
-playDiscard :: GameState -> GameState
-playDiscard state =
+playDiscard :: GameState -> Player -> GameState
+playDiscard state player =
   case getTrump state of
     Nothing -> state -- no trump wtf are we doing?
     Just t ->
@@ -671,8 +672,7 @@ playDiscard state =
         discardedCards = take (length hand - 6) nonTrumpCards
         nonTrumpCards = filter (not . isTrump t) hand
         hand = getHand player state
-        player = getCurrentPlayer state
 
 playAllDiscards :: GameState -> GameState
 playAllDiscards state =
-  foldl (\s _ -> playDiscard s) state [0 .. 3]
+  foldl playDiscard state players

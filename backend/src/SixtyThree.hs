@@ -185,7 +185,18 @@ reducerSafe state (player, action)
               kitty = kitty',
               g = g'
             }
-  | isDiscard action = case action of
+  | isDiscardOrPassCards action = case action of
+    PassCards cards ->
+      case trump state of
+        Just t ->
+          let partner' = partner player
+              newHand = Map.findWithDefault [] partner' (hands state) ++ cards
+              newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
+              newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
+              playerHasAce = Set.member (FaceCard t Ace) (Set.fromList (getHand player state))
+              passingTheJoker = Set.member Joker (Set.fromList cards)
+           in if not playerHasAce && passingTheJoker then Left "You cannot pass the joker if you do not have the ace." else Right state {hands = newHands}
+        Nothing -> Left "You cannot pass cards until trump has been selected."
     Discard cards ->
       case trump state of
         Nothing -> Left "cannot discard if trump not selected!"
@@ -200,7 +211,6 @@ reducerSafe state (player, action)
                       Right
                         state
                           { hands = Map.insert player newHand (hands state),
-                            playerInControl = enumNext player,
                             discarded = discarded state ++ cards
                           }
                     else Left "You must keep at least six cards in your hand."
@@ -269,19 +279,9 @@ reducerSafe state (player, action)
             state
               { trump = Just suit,
                 kitty = [],
-                hands = Map.insert player newHand (hands state)
+                hands = Map.insert player newHand (hands state),
+                playerInControl = player
               }
-    PassCards cards ->
-      case trump state of
-        Just t ->
-          let partner' = partner player
-              newHand = Map.findWithDefault [] partner' (hands state) ++ cards
-              newPlayerHand = Set.toList $ Set.difference (Set.fromList (Map.findWithDefault [] player (hands state))) (Set.fromList cards)
-              newHands = Map.insert player newPlayerHand $ Map.insert partner' newHand (hands state)
-              playerHasAce = Set.member (FaceCard t Ace) (Set.fromList (getHand player state))
-              passingTheJoker = Set.member Joker (Set.fromList cards)
-           in if not playerHasAce && passingTheJoker then Left "You cannot pass the joker if you do not have the ace." else Right state {hands = newHands}
-        Nothing -> Left "You cannot pass cards until trump has been selected."
     _ -> Right state
   | playerInControl state /= player = Left "It is not your turn!"
   | otherwise = Right state

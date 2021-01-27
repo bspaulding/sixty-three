@@ -31,6 +31,8 @@ instance ToJSON GameAction where
 instance FromJSON GameAction where
   parseJSON = genericParseJSON options
 
-isDiscard :: GameAction -> Bool
-isDiscard (Discard _) = True
-isDiscard _ = False
+isDiscardOrPassCards :: GameAction -> Bool
+isDiscardOrPassCards (Discard _) = True
+isDiscardOrPassCards (PassCards _) = True
+isDiscardOrPassCards _ = False
+
