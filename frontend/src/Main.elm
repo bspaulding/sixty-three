@@ -47,6 +47,7 @@ type alias Model =
     , tempBid : Int
     , selectedCards : Set String -- CardId really just Card.toString
     , decodingErrors : List D.Error
+    , debugMode : Bool
     }
 
 
@@ -61,6 +62,7 @@ defaultInitState =
     , tempBid = 0
     , selectedCards = Set.empty
     , decodingErrors = []
+    , debugMode = False
     }
 
 
@@ -98,6 +100,7 @@ midGameInitState =
             , trump = Just Diamonds
             , previousRounds = []
             }
+    , debugMode = True
     }
 
 
@@ -254,7 +257,11 @@ handleWsMessage : Model -> WSMessage.WSMessage -> ( Model, Cmd Msg )
 handleWsMessage model wsMsg =
     case wsMsg of
         WSMessage.IdentifyConnection connId ->
-            ( { model | connId = Just connId }, Cmd.none )
+            if model.debugMode then
+                ( model, Cmd.none )
+
+            else
+                ( { model | connId = Just connId }, Cmd.none )
 
         WSMessage.PlayerNameChanged connId name ->
             ( { model | playersById = Dict.insert connId (Player connId name) model.playersById }, Cmd.none )
