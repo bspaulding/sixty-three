@@ -50,19 +50,60 @@ type alias Model =
     }
 
 
+defaultInitState =
+    { connId = Nothing
+    , playersById = Dict.empty
+    , roomId = Nothing
+    , tempRoomId = ""
+    , tempName = ""
+    , gameState = Nothing
+    , lastErrorMsg = Nothing
+    , tempBid = 0
+    , selectedCards = Set.empty
+    , decodingErrors = []
+    }
+
+
+midGameInitState : Model
+midGameInitState =
+    { connId = Just "player-three"
+    , playersById =
+        Dict.fromList
+            [ ( "player-three", { id = "player-three", name = "player-three" } )
+            , ( "player-one", { id = "player-one", name = "player-one" } )
+            , ( "player-two", { id = "player-two", name = "player-two" } )
+            , ( "player-four", { id = "player-four", name = "player-four" } )
+            ]
+    , roomId = Just "prtc"
+    , tempRoomId = ""
+    , tempName = ""
+    , tempBid = 0
+    , selectedCards = Set.empty
+    , decodingErrors = []
+    , lastErrorMsg = Nothing
+    , gameState =
+        Just
+            { bidPassed = Dict.fromList [ ( "PlayerOne", True ), ( "PlayerThree", True ), ( "PlayerFour", True ) ]
+            , cardsInPlay = Dict.fromList [ ( "PlayerFour", FaceCard Diamonds Ace ), ( "PlayerThree", FaceCard Diamonds Queen ), ( "PlayerTwo", Joker ) ]
+            , currentBid = Just ( PlayerFour, 25 )
+            , hands =
+                Dict.fromList
+                    [ ( "PlayerFour", [ FaceCard Diamonds Three, FaceCard Diamonds Nine, FaceCard Diamonds Jack, FaceCard Diamonds King, FaceCard Spades Three ] )
+                    , ( "PlayerOne", [ FaceCard Hearts Seven, FaceCard Diamonds Five, FaceCard Diamonds Eight, FaceCard Clubs Six, FaceCard Clubs Eight, FaceCard Spades Five ] )
+                    , ( "PlayerThree", [ FaceCard Hearts Four, FaceCard Hearts Five, FaceCard Diamonds Six, FaceCard Diamonds Seven, FaceCard Spades Two ] )
+                    , ( "PlayerTwo", [ FaceCard Hearts Two, FaceCard Diamonds Two, FaceCard Diamonds Four, FaceCard Diamonds Ten, FaceCard Clubs Two ] )
+                    ]
+            , playerInControl = PlayerOne
+            , playersByConnId = Dict.fromList [ ( "player-four", PlayerFour ), ( "player-three", PlayerThree ), ( "player-one", PlayerOne ), ( "player-two", PlayerTwo ) ]
+            , trump = Just Diamonds
+            , previousRounds = []
+            }
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { connId = Nothing
-      , playersById = Dict.empty
-      , roomId = Nothing
-      , tempRoomId = ""
-      , tempName = ""
-      , gameState = Nothing
-      , lastErrorMsg = Nothing
-      , tempBid = 0
-      , selectedCards = Set.empty
-      , decodingErrors = []
-      }
+    ( defaultInitState
     , Cmd.none
     )
 
