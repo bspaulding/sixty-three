@@ -1,6 +1,5 @@
 # TODOs
 
-- show the score somewhere
-- show your partner's name / the teams so they know
+- show tricks taken so people know
 - make UI pretty
 - mask gamestate per connection
