@@ -5,6 +5,7 @@ import Dict
 import GamePlayer exposing (GamePlayer(..))
 import HaskellMapDecoder exposing (haskellMap)
 import Json.Decode as D
+import Json.Decode.Pipeline as DP
 import Round exposing (Round)
 import Suit exposing (Suit)
 
@@ -17,24 +18,23 @@ type alias GameState =
     , currentBid : Maybe ( GamePlayer, Int )
     , playersByConnId : Dict.Dict String GamePlayer
     , bidPassed : Dict.Dict String Bool
-
-    -- , tricks : List (Dict.Dict String Card.Card)
+    , tricks : List (Dict.Dict String Card.Card)
     , previousRounds : List Round
     }
 
 
 decode : D.Decoder GameState
 decode =
-    D.map8 GameState
-        (D.field "playerInControl" GamePlayer.decode)
-        (D.field "hands" (haskellMap D.string (D.list Card.cardDecoder)))
-        (D.field "cardsInPlay" (haskellMap D.string Card.cardDecoder))
-        (D.field "trump" (D.maybe Suit.decode))
-        (D.field "currentBid" (D.maybe (D.map2 Tuple.pair (D.index 0 GamePlayer.decode) (D.index 1 D.int))))
-        (D.field "playersByConnId" (D.dict GamePlayer.decode))
-        -- (D.field "tricks" (D.list (haskellMap D.string Card.cardDecoder)))
-        (D.field "bidPassed" (haskellMap D.string D.bool))
-        (D.field "previousRounds" (D.list Round.decode))
+    D.succeed GameState
+        |> DP.required "playerInControl" GamePlayer.decode
+        |> DP.required "hands" (haskellMap D.string (D.list Card.cardDecoder))
+        |> DP.required "cardsInPlay" (haskellMap D.string Card.cardDecoder)
+        |> DP.required "trump" (D.maybe Suit.decode)
+        |> DP.required "currentBid" (D.maybe (D.map2 Tuple.pair (D.index 0 GamePlayer.decode) (D.index 1 D.int)))
+        |> DP.required "playersByConnId" (D.dict GamePlayer.decode)
+        |> DP.required "bidPassed" (haskellMap D.string D.bool)
+        |> DP.required "tricks" (D.list (haskellMap D.string Card.cardDecoder))
+        |> DP.required "previousRounds" (D.list Round.decode)
 
 
 biddingOver : GameState -> Bool

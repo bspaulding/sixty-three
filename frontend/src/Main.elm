@@ -99,6 +99,7 @@ midGameInitState =
             , playersByConnId = Dict.fromList [ ( "player-four", PlayerFour ), ( "player-three", PlayerThree ), ( "player-one", PlayerOne ), ( "player-two", PlayerTwo ) ]
             , trump = Just Diamonds
             , previousRounds = []
+            , tricks = []
             }
     , debugMode = True
     }
