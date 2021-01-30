@@ -69,9 +69,6 @@ img {
 
   width: 50vw;
   height: 50vw;
-
-  /* debug */
-  border: 1px solid yellow;
 }
 
 .cards-in-play.PlayerOne {
