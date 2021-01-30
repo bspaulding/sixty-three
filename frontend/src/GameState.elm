@@ -1,7 +1,7 @@
 module GameState exposing (..)
 
-import Card
-import Dict
+import Card exposing (Card(..))
+import Dict exposing (Dict)
 import GamePlayer exposing (GamePlayer(..))
 import HaskellMapDecoder exposing (haskellMap)
 import Json.Decode as D
@@ -125,3 +125,26 @@ calcRoundScore ( ( bidder, bid ), scoresList ) =
                 teamEven1
     in
     ( teamOdd, teamEven )
+
+
+scoreTrick : Suit -> Dict String Card -> ( GamePlayer, Int )
+scoreTrick trumpSuit trick =
+    let
+        scores =
+            List.map (Card.score trumpSuit) <| Dict.values trick
+
+        totalScore =
+            List.foldl (+) 0 scores
+
+        sortedCards =
+            List.sortWith (\( _, a ) ( _, b ) -> Card.compare trumpSuit b a) (Dict.toList trick)
+
+        winner =
+            sortedCards
+                |> List.head
+                |> Maybe.withDefault ( "OOPS", Joker )
+                |> Tuple.first
+                |> GamePlayer.fromString
+                |> Maybe.withDefault PlayerOne
+    in
+    ( winner, totalScore )

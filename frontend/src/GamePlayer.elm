@@ -15,22 +15,32 @@ decode =
     D.string
         |> D.andThen
             (\playerString ->
-                case playerString of
-                    "PlayerOne" ->
-                        D.succeed PlayerOne
+                case fromString playerString of
+                    Just player ->
+                        D.succeed player
 
-                    "PlayerTwo" ->
-                        D.succeed PlayerTwo
-
-                    "PlayerThree" ->
-                        D.succeed PlayerThree
-
-                    "PlayerFour" ->
-                        D.succeed PlayerFour
-
-                    _ ->
+                    Nothing ->
                         D.fail ("Could not decode a GamePlayer from '" ++ playerString ++ "'")
             )
+
+
+fromString : String -> Maybe GamePlayer
+fromString playerString =
+    case playerString of
+        "PlayerOne" ->
+            Just PlayerOne
+
+        "PlayerTwo" ->
+            Just PlayerTwo
+
+        "PlayerThree" ->
+            Just PlayerThree
+
+        "PlayerFour" ->
+            Just PlayerFour
+
+        _ ->
+            Nothing
 
 
 toString : GamePlayer -> String

@@ -53,3 +53,19 @@ decode =
                     _ ->
                         D.fail ("Could not decode a Suit from '" ++ s ++ "'")
             )
+
+
+oppositeTrump : Suit -> Suit
+oppositeTrump s =
+    case s of
+        Hearts ->
+            Diamonds
+
+        Diamonds ->
+            Hearts
+
+        Spades ->
+            Clubs
+
+        Clubs ->
+            Spades

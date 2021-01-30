@@ -86,12 +86,12 @@ midGameInitState =
     , gameState =
         Just
             { bidPassed = Dict.fromList [ ( "PlayerOne", True ), ( "PlayerThree", True ), ( "PlayerFour", True ) ]
-            , cardsInPlay = Dict.fromList [ ( "PlayerFour", FaceCard Diamonds Ace ), ( "PlayerThree", FaceCard Diamonds Queen ), ( "PlayerTwo", Joker ) ]
+            , cardsInPlay = Dict.fromList []
             , currentBid = Just ( PlayerFour, 25 )
             , hands =
                 Dict.fromList
                     [ ( "PlayerFour", [ FaceCard Diamonds Three, FaceCard Diamonds Nine, FaceCard Diamonds Jack, FaceCard Diamonds King, FaceCard Spades Three ] )
-                    , ( "PlayerOne", [ FaceCard Hearts Seven, FaceCard Diamonds Five, FaceCard Diamonds Eight, FaceCard Clubs Six, FaceCard Clubs Eight, FaceCard Spades Five ] )
+                    , ( "PlayerOne", [ FaceCard Hearts Seven, FaceCard Diamonds Five, FaceCard Clubs Six, FaceCard Clubs Eight, FaceCard Spades Five ] )
                     , ( "PlayerThree", [ FaceCard Hearts Four, FaceCard Hearts Five, FaceCard Diamonds Six, FaceCard Diamonds Seven, FaceCard Spades Two ] )
                     , ( "PlayerTwo", [ FaceCard Hearts Two, FaceCard Diamonds Two, FaceCard Diamonds Four, FaceCard Diamonds Ten, FaceCard Clubs Two ] )
                     ]
@@ -99,7 +99,9 @@ midGameInitState =
             , playersByConnId = Dict.fromList [ ( "player-four", PlayerFour ), ( "player-three", PlayerThree ), ( "player-one", PlayerOne ), ( "player-two", PlayerTwo ) ]
             , trump = Just Diamonds
             , previousRounds = []
-            , tricks = []
+            , tricks =
+                [ Dict.fromList [ ( "PlayerFour", FaceCard Diamonds Ace ), ( "PlayerThree", FaceCard Diamonds Queen ), ( "PlayerTwo", Joker ), ( "PlayerOne", FaceCard Diamonds Eight ) ]
+                ]
             }
     , debugMode = True
     }
@@ -107,7 +109,8 @@ midGameInitState =
 
 init : ( Model, Cmd Msg )
 init =
-    ( defaultInitState
+    ( midGameInitState
+      --defaultInitState
     , Cmd.none
     )
 
@@ -378,13 +381,30 @@ gameView model player state =
                         [ text <| "trump is " ++ Suit.toString suit
                         , if List.length (Maybe.withDefault [] (Dict.get (GamePlayer.toString player) state.hands)) <= 6 then
                             if GameState.allPlayersDiscarded state then
+                                let
+                                    cardsInPlay =
+                                        if Dict.isEmpty state.cardsInPlay then
+                                            Maybe.withDefault Dict.empty (List.head state.tricks)
+
+                                        else
+                                            state.cardsInPlay
+                                in
                                 div []
                                     [ if state.playerInControl == player then
                                         div [] [ text "click a card to play it" ]
 
                                       else
                                         div [] [ text ("waiting for " ++ playerName model state.playerInControl ++ " to play a card.") ]
-                                    , cardsInPlayView player state.cardsInPlay
+                                    , div [ class "winning-player" ]
+                                        [ if Dict.size cardsInPlay == 4 then
+                                            case GameState.scoreTrick suit cardsInPlay of
+                                                ( winningPlayer, _ ) ->
+                                                    text (playerName model winningPlayer ++ " won!")
+
+                                          else
+                                            text ""
+                                        ]
+                                    , cardsInPlayView player cardsInPlay
                                     ]
 
                             else

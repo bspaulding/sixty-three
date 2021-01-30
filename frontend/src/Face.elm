@@ -116,3 +116,51 @@ decode =
                     _ ->
                         D.fail ("Could not decode a Face from '" ++ s ++ "'")
             )
+
+
+compare : Face -> Face -> Order
+compare aface bface =
+    Basics.compare (rank aface) (rank bface)
+
+
+rank : Face -> Int
+rank f =
+    case f of
+        Ace ->
+            14
+
+        King ->
+            13
+
+        Queen ->
+            12
+
+        Jack ->
+            11
+
+        Ten ->
+            10
+
+        Nine ->
+            9
+
+        Eight ->
+            8
+
+        Seven ->
+            7
+
+        Six ->
+            6
+
+        Five ->
+            5
+
+        Four ->
+            4
+
+        Three ->
+            3
+
+        Two ->
+            2

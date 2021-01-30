@@ -225,3 +225,92 @@ faceDescription face =
 
         Ace ->
             "Ace"
+
+
+score : Suit -> Card -> Int
+score trumpSuit card =
+    case card of
+        FaceCard suit face ->
+            case ( suit == trumpSuit, suit == Suit.oppositeTrump trumpSuit, face ) of
+                ( True, False, Ace ) ->
+                    1
+
+                ( True, False, King ) ->
+                    25
+
+                ( True, False, Jack ) ->
+                    1
+
+                ( True, False, Ten ) ->
+                    1
+
+                ( True, False, Nine ) ->
+                    9
+
+                ( True, False, Five ) ->
+                    5
+
+                ( False, True, Five ) ->
+                    5
+
+                ( True, False, Two ) ->
+                    1
+
+                _ ->
+                    0
+
+        Joker ->
+            15
+
+
+isTrump : Suit -> Card -> Bool
+isTrump t card =
+    case card of
+        FaceCard suit Five ->
+            suit == t || suit == Suit.oppositeTrump t
+
+        FaceCard suit _ ->
+            suit == t
+
+        Joker ->
+            True
+
+
+compare : Suit -> Card -> Card -> Order
+compare trumpSuit a b =
+    case ( a, b ) of
+        ( FaceCard asuit aface, FaceCard bsuit bface ) ->
+            case ( isTrump trumpSuit a, isTrump trumpSuit b ) of
+                ( True, True ) ->
+                    case ( asuit == trumpSuit, bsuit == trumpSuit ) of
+                        ( True, False ) ->
+                            GT
+
+                        ( False, True ) ->
+                            LT
+
+                        _ ->
+                            Face.compare aface bface
+
+                ( True, False ) ->
+                    GT
+
+                ( False, True ) ->
+                    LT
+
+                ( False, False ) ->
+                    Face.compare aface bface
+
+        ( Joker, _ ) ->
+            if isTrump trumpSuit b then
+                LT
+
+            else
+                GT
+
+        ( _, Joker ) ->
+            if isTrump trumpSuit a then
+                GT
+
+            else
+                LT
