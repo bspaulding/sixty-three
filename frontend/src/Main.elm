@@ -398,8 +398,8 @@ gameView model player state =
                                     , div [ class "winning-player" ]
                                         [ if Dict.size cardsInPlay == 4 then
                                             case GameState.scoreTrick suit cardsInPlay of
-                                                ( winningPlayer, _ ) ->
-                                                    text (playerName model winningPlayer ++ " won!")
+                                                ( winningPlayer, score ) ->
+                                                    text (playerName model winningPlayer ++ " takes the trick for " ++ String.fromInt score ++ " points.")
 
                                           else
                                             text ""
