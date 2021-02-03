@@ -95,7 +95,7 @@ midGameInitState =
                     , ( "PlayerThree", [ FaceCard Hearts Four, FaceCard Hearts Five, FaceCard Diamonds Six, FaceCard Diamonds Seven, FaceCard Spades Two ] )
                     , ( "PlayerTwo", [ FaceCard Hearts Two, FaceCard Diamonds Two, FaceCard Diamonds Four, FaceCard Diamonds Ten, FaceCard Clubs Two ] )
                     ]
-            , playerInControl = PlayerOne
+            , playerInControl = PlayerFour
             , playersByConnId = Dict.fromList [ ( "player-four", PlayerFour ), ( "player-three", PlayerThree ), ( "player-one", PlayerOne ), ( "player-two", PlayerTwo ) ]
             , trump = Just Diamonds
             , previousRounds = []
