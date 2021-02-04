@@ -263,6 +263,16 @@ score trumpSuit card =
             15
 
 
+scoreIfTrump : Card -> Int
+scoreIfTrump card =
+    case card of
+        FaceCard suit _ ->
+            score suit card
+
+        Joker ->
+            score Hearts card
+
+
 isTrump : Suit -> Card -> Bool
 isTrump t card =
     case card of

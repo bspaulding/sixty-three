@@ -12,11 +12,13 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as D
 import Maybe
+import Modal exposing (Modal(..))
 import Set exposing (Set)
 import String
 import Suit exposing (Suit(..))
 import Tuple
 import WSMessage
+import Maybe
 
 
 
@@ -48,6 +50,7 @@ type alias Model =
     , selectedCards : Set String -- CardId really just Card.toString
     , decodingErrors : List D.Error
     , debugMode : Bool
+    , modals : Dict.Dict String Bool
     }
 
 
@@ -63,12 +66,14 @@ defaultInitState =
     , selectedCards = Set.empty
     , decodingErrors = []
     , debugMode = False
+    , modals = Dict.empty
     }
 
 
 midGameInitState : Model
 midGameInitState =
     { connId = Just "player-three"
+    , modals = Dict.empty
     , playersById =
         Dict.fromList
             [ ( "player-three", { id = "player-three", name = "player-three" } )
@@ -134,6 +139,7 @@ type Msg
     | CardSelected Card
     | DiscardSelected
     | PassSelected
+    | ToggleModal Modal
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -212,6 +218,15 @@ update msg model =
             ( { model | selectedCards = Set.empty }
             , WSMessage.sendGameAction (PassCards (getSelectedCards model))
             )
+
+        ToggleModal m ->
+            let modalId = Modal.id m
+            in
+            ( { model | modals = if Maybe.withDefault False (Dict.get modalId model.modals) then
+                                    Dict.remove modalId model.modals 
+                                    else
+                                    Dict.insert modalId True model.modals
+                                    }, Cmd.none )
 
 
 weAreTricking : Model -> Bool
@@ -314,6 +329,52 @@ view model =
         ]
 
 
+cardRanksView : Html Msg
+cardRanksView =
+    let
+        trump =
+            Hearts
+
+        cards =
+            [ Joker ]
+                ++ List.map (FaceCard trump) Face.faces
+
+        sortedCards =
+            List.sortWith (Card.compare trump) cards |> List.reverse
+    in
+    div [ class "card-ranks-view" ] (List.map cardRanksViewItem sortedCards)
+
+
+modal : Bool -> msg -> List (Html msg) -> Html msg
+modal isVisible onCloseMsg contents =
+    if isVisible then
+        div [ class "modal" ]
+            [ div [ class "modal-backdrop" ] []
+            , div [ class "modal-inner" ]
+                [ button [ class "reset", class "modal-close", onClick onCloseMsg ] [ text "x" ]
+                , div [ class "modal-contents" ] contents
+                ]
+            ]
+
+    else
+        div [] []
+
+
+cardRanksViewItem : Card -> Html Msg
+cardRanksViewItem card =
+    let
+        faceStr =
+            case card of
+                FaceCard _ face ->
+                    Face.toString face
+
+                Joker ->
+                    "Joker"
+    in
+    div []
+        [ text (faceStr ++ " - " ++ String.fromInt (Card.scoreIfTrump card)) ]
+
+
 setNameView : Model -> Html Msg
 setNameView model =
     div []
@@ -405,6 +466,12 @@ gameView model player state =
                                             text ""
                                         ]
                                     , cardsInPlayView player cardsInPlay
+                                    , if Maybe.withDefault False <| Dict.get (Modal.id CardRanksModal) model.modals then
+                                        modal True (ToggleModal CardRanksModal) [ cardRanksView ]
+
+                                      else
+                                        div [] []
+                                    , button [onClick (ToggleModal CardRanksModal)] [ text "Show Card Values" ]
                                     ]
 
                             else

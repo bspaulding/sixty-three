@@ -20,6 +20,11 @@ type Face
     | Ace
 
 
+faces : List Face
+faces =
+    [ Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace ]
+
+
 toString : Face -> String
 toString face =
     case face of
