@@ -18,7 +18,6 @@ import String
 import Suit exposing (Suit(..))
 import Tuple
 import WSMessage
-import Maybe
 
 
 
@@ -220,13 +219,20 @@ update msg model =
             )
 
         ToggleModal m ->
-            let modalId = Modal.id m
+            let
+                modalId =
+                    Modal.id m
             in
-            ( { model | modals = if Maybe.withDefault False (Dict.get modalId model.modals) then
-                                    Dict.remove modalId model.modals 
-                                    else
-                                    Dict.insert modalId True model.modals
-                                    }, Cmd.none )
+            ( { model
+                | modals =
+                    if Maybe.withDefault False (Dict.get modalId model.modals) then
+                        Dict.remove modalId model.modals
+
+                    else
+                        Dict.insert modalId True model.modals
+              }
+            , Cmd.none
+            )
 
 
 weAreTricking : Model -> Bool
@@ -342,7 +348,12 @@ cardRanksView =
         sortedCards =
             List.sortWith (Card.compare trump) cards |> List.reverse
     in
-    div [ class "card-ranks-view" ] (List.map cardRanksViewItem sortedCards)
+    div [ class "card-ranks-view" ]
+        [ table []
+            [ thead [] [ th [] [ text "Card" ], th [] [ text "Points" ] ]
+            , tbody [] (List.map cardRanksViewItem sortedCards)
+            ]
+        ]
 
 
 modal : Bool -> msg -> List (Html msg) -> Html msg
@@ -371,8 +382,8 @@ cardRanksViewItem card =
                 Joker ->
                     "Joker"
     in
-    div []
-        [ text (faceStr ++ " - " ++ String.fromInt (Card.scoreIfTrump card)) ]
+    tr []
+        [ td [] [ text faceStr ], td [] [ text <| String.fromInt (Card.scoreIfTrump card) ] ]
 
 
 setNameView : Model -> Html Msg
@@ -471,7 +482,7 @@ gameView model player state =
 
                                       else
                                         div [] []
-                                    , button [onClick (ToggleModal CardRanksModal)] [ text "Show Card Values" ]
+                                    , button [ onClick (ToggleModal CardRanksModal) ] [ text "Show Card Values" ]
                                     ]
 
                             else
