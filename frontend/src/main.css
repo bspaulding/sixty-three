@@ -14,16 +14,14 @@ body {
     "Bitstream Vera Sans", "Helvetica Neue", sans-serif;
   margin: 0;
   text-align: center;
-  color: #293c4b;
+  color: #fafafa;
+
+  background-color: #0c8a00;
+  background-image: url("/public/felt.png");
 }
 
 h1 {
   font-size: 30px;
-}
-
-img {
-  margin: 20px 0;
-  max-width: 200px;
 }
 
 .error {
@@ -35,9 +33,17 @@ img {
   margin: 8px;
 }
 
+.player-hand-view {
+  display: flex;
+  justify-content: space-around;
+  padding: 0px 8vw;
+}
+
 .card {
-  font-size: 20vw;
-  display: inline-block;
+}
+
+.card>img {
+  width: 14vw;
 }
 
 .card.selected {

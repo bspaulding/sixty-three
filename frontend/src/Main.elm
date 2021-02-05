@@ -629,10 +629,7 @@ bidFormView tempBid =
 
 playerHandView : String -> List Card -> (Card -> Bool) -> Html Msg
 playerHandView p cards isSelected =
-    div []
-        [ text p
-        , div [] (List.map (cardView isSelected) cards)
-        ]
+    div [ class "player-hand-view" ] (List.map (cardView isSelected) cards)
 
 
 cardBackView =
@@ -649,6 +646,14 @@ cardView isSelected card =
 
                 FaceCard suit _ ->
                     String.toLower <| Suit.toString suit
+
+        svgName =
+            case card of
+                Joker ->
+                    "black_joker"
+
+                FaceCard suit face ->
+                    Face.toString face ++ "_of_" ++ Suit.toString suit |> String.toLower
 
         cardId =
             Card.toString card
@@ -668,7 +673,7 @@ cardView isSelected card =
             )
         , onClick (CardSelected card)
         ]
-        [ text (unicard card) ]
+        [ img [ src ("/cards/" ++ svgName ++ ".svg") ] [] ]
 
 
 roomView : WSMessage.RoomId -> Model -> Html Msg
