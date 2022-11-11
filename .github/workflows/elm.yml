@@ -18,8 +18,8 @@ jobs:
       uses: actions/cache@v2.1.3
       with:
         path: frontend/node_modules
-        key: create-elm-app-1
+        key: create-elm-app-2
     - name: Install create-elm-app
-      run: cd frontend && npm i create-elm-app
+      run: cd frontend && npm ci
     - name: Run tests
-      run: cd frontend && ./node_modules/.bin/elm-app test
+      run: cd frontend && npm run elm-app -- test
