@@ -113,8 +113,8 @@ midGameInitState =
 
 init : ( Model, Cmd Msg )
 init =
-    ( midGameInitState
-      --defaultInitState
+    ( --midGameInitState
+      defaultInitState
     , Cmd.none
     )
 
