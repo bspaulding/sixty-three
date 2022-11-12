@@ -15,7 +15,6 @@ COPY frontend/package-lock.json package-lock.json
 RUN npm ci
 COPY frontend/src src
 COPY frontend/public public
-COPY frontend/elm-stuff elm-stuff
 COPY frontend/elm.json elm.json
 RUN npm run elm-app -- build
 
