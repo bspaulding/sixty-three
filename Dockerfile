@@ -8,11 +8,16 @@ RUN echo 'allow-newer: true' > ~/.stack/config.yaml
 RUN cd /opt/build && stack install --system-ghc
 
 # Build frontend
-FROM node:12 as build-elm
+FROM node:16 as build-elm
 WORKDIR /app
-RUN npm i create-elm-app
-COPY frontend .
-RUN ./node_modules/.bin/elm-app build
+COPY frontend/package.json package.json
+COPY frontend/package-lock.json package-lock.json
+RUN npm ci
+COPY frontend/src src
+COPY frontend/public public
+COPY frontend/elm-stuff elm-stuff
+COPY frontend/elm.json elm.json
+RUN npm run elm-app -- build
 
 # Runner
 FROM ubuntu:18.04
