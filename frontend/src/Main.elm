@@ -431,6 +431,11 @@ scoreView state =
 
 gameView : Model -> GamePlayer -> GameState.GameState -> Html Msg
 gameView model player state =
+    if GameState.getGameOver state then
+    div [] [scoreView state,
+    text "Game is Over!"
+    ]
+    else
     div []
         [ scoreView state
         , case state.currentBid of
@@ -450,7 +455,8 @@ gameView model player state =
 
                 Just suit ->
                     div []
-                        [ text <| "trump is " ++ Suit.toString suit
+                        [ text <| "trump is "
+                        , span [id "trump-suit"] [text <| Suit.toString suit]
                         , if List.length (Maybe.withDefault [] (Dict.get (GamePlayer.toString player) state.hands)) <= 6 then
                             if GameState.allPlayersDiscarded state then
                                 let
@@ -496,7 +502,7 @@ gameView model player state =
             bidFormView model.tempBid
 
           else
-            div [] [ text <| "Waiting for " ++ playerName model state.playerInControl ]
+            div [] [ text <| "Waiting for a bid from " ++ playerName model state.playerInControl ]
         , case Dict.get (GamePlayer.toString player) state.hands of
             Nothing ->
                 div [] []
@@ -504,9 +510,9 @@ gameView model player state =
             Just hand ->
                 div []
                     [ if GameState.trumpSelected state && GameState.biddingOver state && not (GameState.allPlayersDiscarded state) then
-                        div []
-                            [ button [ onClick DiscardSelected ] [ text "Discard" ]
-                            , button [ onClick PassSelected ] [ text "Pass" ]
+                        div [style "margin" "20px 0px 40px"]
+                            [ button [ id "discard-cards", onClick DiscardSelected ] [ text "Discard" ]
+                            , button [ id "pass-cards", onClick PassSelected ] [ text "Pass" ]
                             ]
 
                       else
@@ -568,10 +574,10 @@ selectTrumpForm =
         [ text "Congrats, you won the bid!"
         , div []
             [ text "Please select a trump suit:"
-            , button [ onClick (TakeGameAction (PickTrump Hearts)) ] [ text "Hearts" ]
-            , button [ onClick (TakeGameAction (PickTrump Diamonds)) ] [ text "Diamonds" ]
-            , button [ onClick (TakeGameAction (PickTrump Clubs)) ] [ text "Clubs" ]
-            , button [ onClick (TakeGameAction (PickTrump Spades)) ] [ text "Spades" ]
+            , button [ id "select-trump-hearts", onClick (TakeGameAction (PickTrump Hearts)) ] [ text "Hearts" ]
+            , button [ id "select-trump-diamonds", onClick (TakeGameAction (PickTrump Diamonds)) ] [ text "Diamonds" ]
+            , button [ id "select-trump-clubs", onClick (TakeGameAction (PickTrump Clubs)) ] [ text "Clubs" ]
+            , button [ id "select-trump-spades", onClick (TakeGameAction (PickTrump Spades)) ] [ text "Spades" ]
             ]
         ]
 
@@ -621,9 +627,9 @@ bidFormView : Int -> Html Msg
 bidFormView tempBid =
     div []
         [ span [] [ text "Enter Bid: " ]
-        , input [ type_ "number", onInput BidChanged ] []
-        , button [ onClick (TakeGameAction (GameAction.Bid tempBid)) ] [ text "Submit Bid" ]
-        , button [ onClick (TakeGameAction GameAction.BidPass) ] [ text "Pass" ]
+        , input [ type_ "number", id "enter-bid", onInput BidChanged ] []
+        , button [ id "submit-bid", onClick (TakeGameAction (GameAction.Bid tempBid)) ] [ text "Submit Bid" ]
+        , button [ id "pass-bid", onClick (TakeGameAction GameAction.BidPass) ] [ text "Pass" ]
         ]
 
 
