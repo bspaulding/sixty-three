@@ -390,8 +390,8 @@ setNameView : Model -> Html Msg
 setNameView model =
     div []
         [ text "Enter a name:"
-        , input [ type_ "text", name "name", value model.tempName, onInput TempNameChanged ] []
-        , button [ onClick SubmitName ] [ text "Submit" ]
+        , input [ type_ "text", id "player-name", name "name", value model.tempName, onInput TempNameChanged ] []
+        , button [ id "submit-player-name", onClick SubmitName ] [ text "Submit" ]
         ]
 
 

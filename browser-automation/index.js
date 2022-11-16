@@ -1,8 +1,8 @@
 const playwright = require("playwright");
 
 async function signIn(page, name, roomId) {
-  await page.fill('input[name="name"]', name);
-  await page.click("button");
+  await page.fill("input#player-name", name);
+  await page.click("button#submit-player-name");
 
   if (!roomId) {
     await page.click("button#create-room");
