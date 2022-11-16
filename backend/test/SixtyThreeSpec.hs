@@ -6,6 +6,7 @@ module SixtyThreeSpec (spec) where
 import Card
 import qualified Data.List as List
 import qualified Data.Map as Map
+import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import GameAction
 import GameState
@@ -17,7 +18,7 @@ import System.Random
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
-import Prelude (foldl, head, print)
+import Prelude (foldl, head, print, putStrLn)
 
 playGame :: [(Player, GameAction)] -> GameState
 playGame = foldl reducer initialGameState
@@ -388,6 +389,20 @@ spec = do
       Set.fromList . getHand player <$> stateDiscarded `shouldBe` Right (Set.difference (Set.fromList hand) (Set.fromList cardsToDiscard))
 
   describe "tricking" $ do
+    it "winner of the trick should become controlling player" $ do
+      let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      state `shouldSatisfy` getAllPlayersDiscarded
+
+      let state2 = playTrickRound state
+      (length . tricks) state2 `shouldBe` 1
+      let (winner, _) = scoreTrick (Maybe.fromMaybe Hearts $ trump state2) $ (head . tricks) state2
+      getCurrentPlayer state2 `shouldBe` winner
+
+      let state3 = playTrickRound state2
+      (length . tricks) state3 `shouldBe` 2
+      let (winner, _) = scoreTrick (Maybe.fromMaybe Hearts $ trump state3) $ (head . tricks) state3
+      getCurrentPlayer state3 `shouldBe` winner
+
     it "must lead trump on the first round" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
       let state = playAllDiscards $ playGame actions

@@ -249,6 +249,9 @@ reducerSafe state (player, action)
               let newHand = filter (card /=) $ hand
                   newCardsInPlay = Map.insert player card (cardsInPlay state)
                   roundIsOver = Map.size newCardsInPlay == 4
+                  -- todo unsafe but what is better
+                  trumpSuit = head $ maybeToList $ trump state
+                  (trickWinner, _) = scoreTrick trumpSuit newCardsInPlay
               in Right $
                     maybeFinishRound $
                       state
@@ -266,7 +269,9 @@ reducerSafe state (player, action)
                             if roundIsOver
                               then newCardsInPlay : tricks state
                               else tricks state,
-                          playerInControl = enumNext player
+                          playerInControl = if roundIsOver
+                                               then trickWinner
+                                               else enumNext player
                         }
             else if trump state == Nothing
               then Left "You cannot play a card until trump is selected."
