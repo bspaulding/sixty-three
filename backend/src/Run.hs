@@ -12,6 +12,6 @@ import System.Random (getStdGen)
 
 run :: RIO App ()
 run = do
-  logInfo "Running!"
+  logInfo "Running on port 3000"
   initialState <- newMVar newServerStateWS
   liftIO $ runEnv 3000 (app initialState reducerSafeConns initializer)
