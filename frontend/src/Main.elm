@@ -295,13 +295,13 @@ handleWsMessage model wsMsg =
             ( { model | playersById = Dict.insert connId (Player connId name) model.playersById }, Cmd.none )
 
         WSMessage.JoinedRoomResponse roomId playerNamesById ->
-            ( { model | roomId = Just roomId, playersById = playerNamesById |> Dict.toList |> List.map (\( connId, name ) -> ( connId, Player connId name )) |> Dict.fromList }, Cmd.none )
+            ( { model | roomId = Just roomId, playersById = playerNamesById |> Dict.toList |> List.map (\( connId, name ) -> ( connId, Player connId name )) |> Dict.fromList , lastErrorMsg = Nothing}, Cmd.none )
 
         WSMessage.CreateRoomResponse roomId ->
-            ( { model | roomId = Just roomId }, Cmd.none )
+            ( { model | roomId = Just roomId , lastErrorMsg = Nothing}, Cmd.none )
 
         WSMessage.State gameState ->
-            ( { model | gameState = Just gameState }, Cmd.none )
+            ( { model | gameState = Just gameState, lastErrorMsg = Nothing }, Cmd.none )
 
         WSMessage.ErrorResponse err ->
             ( { model | lastErrorMsg = Just err }, Cmd.none )
