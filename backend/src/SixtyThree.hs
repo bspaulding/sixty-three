@@ -64,7 +64,7 @@ type DealtCards = ((Hand, HandKitty), (Hand, HandKitty), (Hand, HandKitty), (Han
 deal :: RandomGen g => [Card] -> g -> (DealtCards, g)
 deal unshuffled gen =
   if all hasAceOrFace [hand1, hand2, hand3, hand4]
-    then (((hand1, kitty1), (hand2, kitty2), (hand3, kitty3), (hand4, kitty4), kitty), gen')
+    then (dealt, gen')
     else deal cards gen'
   where
     (cards, gen') = shuffle unshuffled gen
@@ -79,6 +79,7 @@ deal unshuffled gen =
         , take 3 $ drop 36 cards
         , take 5 $ drop 39 cards
         ]
+    dealt = ((hand1, kitty1), (hand2, kitty2), (hand3, kitty3), (hand4, kitty4), kitty)
 
 hasAceOrFace :: [Card] -> Bool
 hasAceOrFace cards = not $ null acesAndFaces
@@ -245,7 +246,7 @@ reducerSafe state (player, action)
           newState' = if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
             then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed}
             else state {bidPassed = newBidPassed}
-          newState = givePlayerKitty player newState
+          newState = givePlayerKitty player newState'
           winner = maybe player id $ fst <$> currentBid newState
       in Right newState { playerInControl = if getBiddingComplete newState then winner else enumNext player}
     Play card ->
@@ -298,12 +299,13 @@ reducerSafe state (player, action)
     PickTrump suit ->
       let newHand = kitty state ++ Map.findWithDefault [] player (hands state)
        in Right
+          (givePlayerKitty player $
             state
               { trump = Just suit,
                 kitty = [],
                 hands = Map.insert player newHand (hands state),
                 playerInControl = player
-              }
+              })
     _ -> Right state
   | playerInControl state /= player = Left "It is not your turn!"
   | otherwise = Right state

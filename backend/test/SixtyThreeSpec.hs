@@ -30,7 +30,7 @@ prop_ace_or_face i =
   withMaxSuccess 1000 $
     all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
   where
-    ((hand1, _), (hand2, _), (hand3, _), (hand4, _), _) = fst $ deal deck (mkStdGen i)
+    ((hand1, _kitty1), (hand2, _kitty2), (hand3, _kitty3), (hand4, _kitty4), _kitty) = fst $ deal deck (mkStdGen i)
 
 prop_is_trump :: Suit -> Card -> Property
 prop_is_trump trumpSuit card =
@@ -443,16 +443,12 @@ spec = do
       getCardInPlay PlayerFour <$> statePlayed `shouldBe` Right (Just card')
 
     it "disallows playing a card not in the player's hand" $ do
-      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
-      let state = playGame actions
+      let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let state = playAllDiscards $ playGame actions
       getCurrentPlayer state `shouldBe` PlayerFour
       let notYourCard = Prelude.head $ getHand PlayerOne state
 
-      let state1 = reducer state (PlayerFour, Play notYourCard)
-      getCardInPlay PlayerFour state1 `shouldBe` Nothing
-      getHand PlayerOne state1 `shouldSatisfy` any (notYourCard ==)
-      getHand PlayerFour state1 `shouldSatisfy` not . any (notYourCard ==)
-      getCurrentPlayer state1 `shouldBe` PlayerFour
+      reducerSafe state (PlayerFour, Play notYourCard) `shouldBe` Left "You cannot play a card that is not in your hand."
 
     it "cannot play a card if you already have a card in play" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
