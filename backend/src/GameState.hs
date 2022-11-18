@@ -19,6 +19,7 @@ data GameState = GameState
     currentBid :: Maybe (Player, Integer),
     bidPassed :: Map.Map Player Bool,
     hands :: Map.Map Player [Card],
+    kitties :: Map.Map Player [Card],
     kitty :: [Card],
     tricks :: [Map.Map Player Card],
     playerInControl :: Player,
@@ -47,6 +48,7 @@ initialGameState =
       currentBid = Nothing,
       bidPassed = Map.empty,
       hands = Map.empty,
+      kitties = Map.empty,
       kitty = [],
       tricks = [],
       playerInControl = PlayerOne,
@@ -84,6 +86,15 @@ getKitty = kitty
 getHand :: Player -> GameState -> [Card]
 getHand player state =
   Map.findWithDefault [] player (hands state)
+
+getPlayerKitty :: Player -> GameState -> [Card]
+getPlayerKitty player state = Map.findWithDefault [] player (kitties state)
+
+givePlayerKitty :: Player -> GameState -> GameState
+givePlayerKitty player state = state
+  { kitties = Map.delete player (kitties state)
+  , hands = Map.insertWith (++) player (getPlayerKitty player state) (hands state)
+  }
 
 getCardInPlay :: Player -> GameState -> Maybe Card
 getCardInPlay player state = Map.lookup player (cardsInPlay state)

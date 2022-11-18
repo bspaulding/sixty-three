@@ -30,7 +30,7 @@ prop_ace_or_face i =
   withMaxSuccess 1000 $
     all hasAceOrFace [hand1, hand2, hand3, hand4] `shouldBe` True
   where
-    (hand1, hand2, hand3, hand4, kitty) = fst $ deal deck (mkStdGen i)
+    ((hand1, _), (hand2, _), (hand3, _), (hand4, _), _) = fst $ deal deck (mkStdGen i)
 
 prop_is_trump :: Suit -> Card -> Property
 prop_is_trump trumpSuit card =
@@ -198,20 +198,28 @@ spec = do
 
   describe "deal" $ do
     it "returns four hands, kitty, and rest" $ do
-      let (hand1, hand2, hand3, hand4, kitty) = fst $ deal deck (mkStdGen 1)
-      length hand1 `shouldBe` 12
-      length hand2 `shouldBe` 12
-      length hand3 `shouldBe` 12
-      length hand4 `shouldBe` 12
+      let ((hand1, kitty1), (hand2, kitty2), (hand3, kitty3), (hand4, kitty4), kitty) = fst $ deal deck (mkStdGen 1)
+      length hand1 `shouldBe` 9
+      length hand2 `shouldBe` 9
+      length hand3 `shouldBe` 9
+      length hand4 `shouldBe` 9
+      length kitty1 `shouldBe` 3
+      length kitty2 `shouldBe` 3
+      length kitty3 `shouldBe` 3
+      length kitty4 `shouldBe` 3
       length kitty `shouldBe` 5
 
     it "deal action deals cards" $ do
       let state = playGame [(dealer initialGameState, Deal)]
       getBiddingComplete state `shouldBe` False
-      length (getHand PlayerOne state) `shouldBe` 12
-      length (getHand PlayerTwo state) `shouldBe` 12
-      length (getHand PlayerThree state) `shouldBe` 12
-      length (getHand PlayerFour state) `shouldBe` 12
+      length (getHand PlayerOne state) `shouldBe` 9
+      length (getHand PlayerTwo state) `shouldBe` 9
+      length (getHand PlayerThree state) `shouldBe` 9
+      length (getHand PlayerFour state) `shouldBe` 9
+      length (getPlayerKitty PlayerOne state) `shouldBe` 3
+      length (getPlayerKitty PlayerTwo state) `shouldBe` 3
+      length (getPlayerKitty PlayerThree state) `shouldBe` 3
+      length (getPlayerKitty PlayerFour state) `shouldBe` 3
       length (getKitty state) `shouldBe` 5
 
     it "always deals hands with ace or face" $ property prop_ace_or_face
@@ -608,7 +616,8 @@ playHappyPathRound initialState = do
   getBiddingComplete state `shouldBe` True
   getCurrentPlayer state `shouldBe` theDealer
 
-  -- we've each got 12 cards before discarding
+  -- we've each got 12 cards before discarding,
+  -- unless you won the bid, then you have 17
   length (getHand PlayerOne state) `shouldBe` if theDealer == PlayerOne then 17 else 12
   length (getHand PlayerTwo state) `shouldBe` if theDealer == PlayerTwo then 17 else 12
   length (getHand PlayerThree state) `shouldBe` if theDealer == PlayerThree then 17 else 12

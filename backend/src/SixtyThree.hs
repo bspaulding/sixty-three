@@ -53,19 +53,32 @@ deck :: [Card]
 deck =
   Joker : [FaceCard suit face | suit <- suits, face <- faces]
 
-deal :: RandomGen g => [Card] -> g -> (([Card], [Card], [Card], [Card], [Card]), g)
+-- TODO: maybe would like to use typed-fixed sized lists/vectors here?
+-- https://blog.jle.im/entry/fixed-length-vector-types-in-haskell.html
+type Hand = [Card] -- TODO: (Card, Card, Card, Card, Card, Card, Card, Card, Card)
+type HandKitty = [Card] -- TODO: (Card, Card, Card)
+type BidderKitty = [Card] -- TODO: (Card, Card, Card, Card, Card)
+
+type DealtCards = ((Hand, HandKitty), (Hand, HandKitty), (Hand, HandKitty), (Hand, HandKitty), BidderKitty)
+
+deal :: RandomGen g => [Card] -> g -> (DealtCards, g)
 deal unshuffled gen =
   if all hasAceOrFace [hand1, hand2, hand3, hand4]
-    then (dealt, gen')
+    then (((hand1, kitty1), (hand2, kitty2), (hand3, kitty3), (hand4, kitty4), kitty), gen')
     else deal cards gen'
   where
     (cards, gen') = shuffle unshuffled gen
-    hand1 = take 12 cards
-    hand2 = take 12 $ drop 12 cards
-    hand3 = take 12 $ drop 24 cards
-    hand4 = take 12 $ drop 36 cards
-    kitty_ = drop 48 cards
-    dealt = (hand1, hand2, hand3, hand4, kitty_)
+    [hand1, hand2, hand3, hand4, kitty1, kitty2, kitty3, kitty4, kitty]
+      = [ take 9 cards
+        , take 9 $ drop 9 cards
+        , take 9 $ drop 15 cards
+        , take 9 $ drop 21 cards
+        , take 3 $ drop 27 cards
+        , take 3 $ drop 30 cards
+        , take 3 $ drop 33 cards
+        , take 3 $ drop 36 cards
+        , take 5 $ drop 39 cards
+        ]
 
 hasAceOrFace :: [Card] -> Bool
 hasAceOrFace cards = not $ null acesAndFaces
@@ -178,11 +191,12 @@ reducerSafe :: GameState -> (Player, GameAction) -> Either String GameState
 reducerSafe state (player, action)
   | getGameOver state = Right state
   | dealer state == player && action == Deal =
-    let ((hand1, hand2, hand3, hand4, kitty'), g') = deal deck (g state)
+    let (((hand1, kitty1), (hand2, kitty2), (hand3, kitty3), (hand4, kitty4), kitty'), g') = deal deck (g state)
      in Right
           state
             { hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)],
               kitty = kitty',
+              kitties = Map.fromList [(PlayerOne, kitty1), (PlayerTwo, kitty2), (PlayerThree, kitty3), (PlayerFour, kitty4)],
               g = g'
             }
   | isDiscardOrPassCards action = case action of
@@ -228,9 +242,10 @@ reducerSafe state (player, action)
           Nothing -> Right state {currentBid = Just (player, amount), playerInControl = enumNext player}
     BidPass ->
       let newBidPassed = Map.insert player True (bidPassed state)
-          newState = if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
+          newState' = if currentBid state == Nothing && 3 == length (filter id $ Map.elems newBidPassed)
             then state {currentBid = Just (dealer state, 25), bidPassed = newBidPassed}
             else state {bidPassed = newBidPassed}
+          newState = givePlayerKitty player newState
           winner = maybe player id $ fst <$> currentBid newState
       in Right newState { playerInControl = if getBiddingComplete newState then winner else enumNext player}
     Play card ->
