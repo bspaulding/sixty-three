@@ -1,4 +1,5 @@
 const playwright = require("playwright");
+const yargs = require("yargs");
 
 async function signIn(page, name, roomId) {
   await page.fill("input#player-name", name);
@@ -25,8 +26,15 @@ async function signInOnNewPage(context, name, roomId) {
 }
 
 (async () => {
-  const headless = true;
-  const exitOnGameOver = true;
+  const argv = require("yargs/yargs")(process.argv.slice(2)).argv;
+  // const argv = yargs.boolean("headless").boolean("exit-on-game-over").help();
+
+  const headless = !!argv.headless;
+  const exitOnGameOver = !!argv["exit-on-game-over"];
+  console.log(`Running with the following options: `, {
+    headless,
+    exitOnGameOver,
+  });
 
   const browserType = "chromium";
   const browser = await playwright[browserType].launch({ headless });
