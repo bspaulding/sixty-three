@@ -398,32 +398,36 @@ spec = do
 
   describe "tricking" $ do
     it "winner of the trick should become controlling player" $ do
-      let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      state `shouldSatisfy` getAllPlayersDiscarded
+      case playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)] of
+        Right state -> do
+          state `shouldSatisfy` getAllPlayersDiscarded
 
-      let state2 = playTrickRound state
-      (length . tricks) state2 `shouldBe` 1
-      let (winner, _) = scoreTrick (Maybe.fromMaybe Hearts $ trump state2) $ (head . tricks) state2
-      getCurrentPlayer state2 `shouldBe` winner
+          case playTrickRound state of
+            Right state2 -> do
+              (length . tricks) state2 `shouldBe` 1
+              let (winner, _) = scoreTrick (Maybe.fromMaybe Hearts $ trump state2) $ (head . tricks) state2
+              getCurrentPlayer state2 `shouldBe` winner
 
-      let state3 = playTrickRound state2
-      (length . tricks) state3 `shouldBe` 2
-      let (winner, _) = scoreTrick (Maybe.fromMaybe Hearts $ trump state3) $ (head . tricks) state3
-      getCurrentPlayer state3 `shouldBe` winner
+              case playTrickRound state2 of
+                Right state3 -> do
+                  (length . tricks) state3 `shouldBe` 2
+                  let (winner, _) = scoreTrick (Maybe.fromMaybe Hearts $ trump state3) $ (head . tricks) state3
+                  getCurrentPlayer state3 `shouldBe` winner
 
     it "must lead trump on the first round" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playAllDiscards $ playGame actions
-      state `shouldSatisfy` getAllPlayersDiscarded
-      let hand = getHand PlayerFour state
+      case playAllDiscards $ playGame actions of
+        Right state -> do
+          state `shouldSatisfy` getAllPlayersDiscarded
+          let hand = getHand PlayerFour state
 
-      let notTrump = head $ filter (not . (isTrump Hearts)) hand
-      let playedNotTrump = reducerSafe state (PlayerFour, Play notTrump)
-      playedNotTrump `shouldBe` Left "You must lead with trump on the first round."
+          let notTrump = head $ filter (not . (isTrump Hearts)) hand
+          let playedNotTrump = reducerSafe state (PlayerFour, Play notTrump)
+          playedNotTrump `shouldBe` Left "You must lead with trump on the first round."
 
-      let trump = head $ filter (isTrump Hearts) hand
-      let playedTrump = reducerSafe state (PlayerFour, Play trump)
-      playedTrump `shouldSatisfy` isRight
+          let trump = head $ filter (isTrump Hearts) hand
+          let playedTrump = reducerSafe state (PlayerFour, Play trump)
+          playedTrump `shouldSatisfy` isRight
 
     it "can't play a card until trump is declared and all players have discarded" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass)]
@@ -437,81 +441,92 @@ spec = do
       let stateNotDoneDiscarding = reducerSafe stateTrump (PlayerFour, Play card)
       stateNotDoneDiscarding `shouldBe` Left "You cannot play a card until everyone has discarded."
 
-      let stateDiscarded = playAllDiscards stateTrump
-      let card' = Prelude.head $ getHand PlayerFour stateDiscarded
-      let statePlayed = reducerSafe stateDiscarded (PlayerFour, Play card')
-      getCardInPlay PlayerFour <$> statePlayed `shouldBe` Right (Just card')
+      case playAllDiscards stateTrump of
+        Right stateDiscarded -> do
+          let card' = Prelude.head $ getHand PlayerFour stateDiscarded
+          let statePlayed = reducerSafe stateDiscarded (PlayerFour, Play card')
+          getCardInPlay PlayerFour <$> statePlayed `shouldBe` Right (Just card')
 
     it "disallows playing a card not in the player's hand" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playAllDiscards $ playGame actions
-      getCurrentPlayer state `shouldBe` PlayerFour
-      let notYourCard = Prelude.head $ getHand PlayerOne state
+      case playAllDiscards $ playGame actions of
+        Right state -> do
+          getCurrentPlayer state `shouldBe` PlayerFour
+          let notYourCard = Prelude.head $ getHand PlayerOne state
 
-      reducerSafe state (PlayerFour, Play notYourCard) `shouldBe` Left "You cannot play a card that is not in your hand."
+          reducerSafe state (PlayerFour, Play notYourCard) `shouldBe` Left "You cannot play a card that is not in your hand."
 
     it "cannot play a card if you already have a card in play" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playAllDiscards $ playGame actions
-      let card = Prelude.head $ getHand PlayerFour state
-      let state1 = reducer state (PlayerFour, Play card)
-      -- sanity check there's a card in play
-      getCardInPlay PlayerFour state1 `shouldBe` Just card
+      case playAllDiscards $ playGame actions of
+        Right state -> do
+          let card = Prelude.head $ getHand PlayerFour state
+          let state1 = reducer state (PlayerFour, Play card)
+          -- sanity check there's a card in play
+          getCardInPlay PlayerFour state1 `shouldBe` Just card
 
-      -- now try to play another card
-      let card2 = Prelude.head $ getHand PlayerFour state1
-      card2 /= card `shouldBe` True
-      let state2 = reducer state1 (PlayerFour, Play card2)
-      getCardInPlay PlayerFour state2 `shouldBe` Just card
-      getHand PlayerFour state2 `shouldSatisfy` any (card /=)
-      getHand PlayerFour state2 `shouldSatisfy` any (card2 ==)
+          -- now try to play another card
+          let card2 = Prelude.head $ getHand PlayerFour state1
+          card2 /= card `shouldBe` True
+          let state2 = reducer state1 (PlayerFour, Play card2)
+          getCardInPlay PlayerFour state2 `shouldBe` Just card
+          getHand PlayerFour state2 `shouldSatisfy` any (card /=)
+          getHand PlayerFour state2 `shouldSatisfy` any (card2 ==)
 
     it "playing a card puts it in play and removes it from your hand" $ do
       let actions = [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
-      let state = playAllDiscards $ playGame actions
-      let card = Prelude.head $ getHand PlayerFour state
-      let state1 = reducer state (PlayerFour, Play card)
-      getHand PlayerFour state1 `shouldSatisfy` (not . any (card ==))
-      getCardInPlay PlayerFour state1 `shouldBe` Just card
-      getCurrentPlayer state1 `shouldSatisfy` not . (PlayerFour ==)
-      length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
+      case playAllDiscards $ playGame actions of
+        Right state -> do
+          let card = Prelude.head $ getHand PlayerFour state
+          let state1 = reducer state (PlayerFour, Play card)
+          getHand PlayerFour state1 `shouldSatisfy` (not . any (card ==))
+          getCardInPlay PlayerFour state1 `shouldBe` Just card
+          getCurrentPlayer state1 `shouldSatisfy` not . (PlayerFour ==)
+          length (getHand PlayerFour state1) `shouldBe` length (getHand PlayerFour state) - 1
 
     let getNotTrump = \state player -> Prelude.head $ filter (not . (isTrump Hearts)) (getHand player state)
     let getTrump = \state player -> Prelude.head $ filter (isTrump Hearts) (getHand player state)
 
     it "can play off trump if lead with off trump" $ do
-      let state = playTrickRound $ playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      let biddedState = playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
+      case playAllDiscards biddedState of
+        Right stateDiscarded -> do
+          let state = playTrickRound stateDiscarded
 
-      getCurrentPlayer state `shouldBe` PlayerFour
-      let cardOne = getNotTrump state PlayerFour
-      let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
-      Map.lookup PlayerFour (cardsInPlay cardOnePlayed) `shouldBe` Just cardOne
+          case state of
+            Right state -> do
+              getCurrentPlayer state `shouldBe` PlayerFour
+              let cardOne = getNotTrump state PlayerFour
+              let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
+              Map.lookup PlayerFour (cardsInPlay cardOnePlayed) `shouldBe` Just cardOne
 
-      getCurrentPlayer cardOnePlayed `shouldBe` PlayerOne
-      let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
-      let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
+              getCurrentPlayer cardOnePlayed `shouldBe` PlayerOne
+              let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
+              let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
 
-      getCurrentPlayer cardTwoPlayed `shouldBe` PlayerTwo
-      let cardThree = getNotTrump cardTwoPlayed PlayerTwo
-      let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
-      getCurrentPlayer <$> cardThreePlayed `shouldBe` Right PlayerThree
-      cardThreePlayed `shouldSatisfy` isRight
-      (\s -> Map.lookup PlayerTwo (cardsInPlay s)) <$> cardThreePlayed `shouldBe` Right (Just cardThree)
+              getCurrentPlayer cardTwoPlayed `shouldBe` PlayerTwo
+              let cardThree = getNotTrump cardTwoPlayed PlayerTwo
+              let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
+              getCurrentPlayer <$> cardThreePlayed `shouldBe` Right PlayerThree
+              cardThreePlayed `shouldSatisfy` isRight
+              (\s -> Map.lookup PlayerTwo (cardsInPlay s)) <$> cardThreePlayed `shouldBe` Right (Just cardThree)
 
     it "cannot play off trump if lead with trump" $ do
       let state = playAllDiscards $ playGame [(dealer initialGameState, Deal), (PlayerOne, BidPass), (PlayerTwo, BidPass), (PlayerThree, BidPass), (PlayerFour, PickTrump Hearts)]
 
-      let cardOne = getTrump state PlayerFour
-      let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
-      firstCardPlayed cardOnePlayed `shouldBe` Just cardOne
+      case state of
+        Right state -> do
+          let cardOne = getTrump state PlayerFour
+          let cardOnePlayed = reducer state (PlayerFour, Play cardOne)
+          firstCardPlayed cardOnePlayed `shouldBe` Just cardOne
 
-      let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
-      let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
-      firstCardPlayed cardTwoPlayed `shouldBe` Just cardOne
+          let cardTwo =  getNextCardToPlay (trump cardOnePlayed) (getHand PlayerOne cardOnePlayed)
+          let cardTwoPlayed = reducer cardOnePlayed (PlayerOne, Play cardTwo)
+          firstCardPlayed cardTwoPlayed `shouldBe` Just cardOne
 
-      let cardThree = getNotTrump cardTwoPlayed PlayerTwo
-      let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
-      cardThreePlayed `shouldBe` Left "You cannot play off trump if trump was lead."
+          let cardThree = getNotTrump cardTwoPlayed PlayerTwo
+          let cardThreePlayed = reducerSafe cardTwoPlayed (PlayerTwo, Play cardThree)
+          cardThreePlayed `shouldBe` Left "You cannot play off trump if trump was lead."
 
     it "have no trump left but lead with trump" $ do
       -- TODO: irl you would just discard and not play any further, this reveals to all that you have no trump
@@ -520,41 +535,55 @@ spec = do
     it "happy path game" $ do
       let dealt = reducer initialGameState (getDealer initialGameState, Deal)
       state1 <- playHappyPathRound dealt
-      getTotalScore state1 `shouldBe` (47, -25)
-      getGameOver state1 `shouldBe` False
+      getTotalScore <$> state1 `shouldBe` Right (47, -25)
+      getGameOver <$> state1 `shouldBe` Right False
 
-      state2 <- playHappyPathRound state1
-      getTotalScore state2 `shouldBe` (22, 24)
-      getGameOver state2 `shouldBe` False
+      case state1 of
+        Right state1 -> do
+          state2 <- playHappyPathRound state1
+          getTotalScore <$> state2 `shouldBe` Right (22, 24)
+          getGameOver <$> state2 `shouldBe` Right False
 
-      state3 <- playHappyPathRound state2
-      getTotalScore state3 `shouldBe` (28, 81)
-      getGameOver state3 `shouldBe` False
+          case state2 of
+            Right state2 -> do
+              state3 <- playHappyPathRound state2
+              getTotalScore <$> state3 `shouldBe` Right (28, 81)
+              getGameOver <$> state3 `shouldBe` Right False
 
-      state4 <- playHappyPathRound state3
-      getTotalScore state4 `shouldBe` (60, 112)
-      getGameOver state4 `shouldBe` False
+              case state3 of
+                Right state3 -> do
+                  state4 <- playHappyPathRound state3
+                  getTotalScore <$> state4 `shouldBe` Right (60, 112)
+                  getGameOver <$> state4 `shouldBe` Right False
 
-      state5 <- playHappyPathRound state4
-      getTotalScore state5 `shouldBe` (66, 169)
-      getGameOver state5 `shouldBe` False
+                  case state4 of
+                    Right state4 -> do
+                      state5 <- playHappyPathRound state4
+                      getTotalScore <$> state5 `shouldBe` Right (66, 169)
+                      getGameOver <$> state5 `shouldBe` Right False
 
-      state6 <- playHappyPathRound state5
-      getTotalScore state6 `shouldBe` (129, 169)
-      getGameOver state6 `shouldBe` False
+                      case state5 of
+                        Right state5 -> do
+                          state6 <- playHappyPathRound state5
+                          getTotalScore <$> state6 `shouldBe` Right (129, 169)
+                          getGameOver <$> state6 `shouldBe` Right False
 
-      -- TODO: Maybe auto-play the last round? This might be weird for users.
-      state7 <- playHappyPathRound state6
-      getTotalScore state7 `shouldBe` (166, 195)
-      getGameOver state7 `shouldBe` False
+                          -- TODO: Maybe auto-play the last round? This might be weird for users.
+                          case state6 of
+                            Right state6 -> do
+                              state7 <- playHappyPathRound state6
+                              getTotalScore <$> state7 `shouldBe` Right (166, 195)
+                              getGameOver <$> state7 `shouldBe` Right False
 
-      state8 <- playHappyPathRound state7
-      getTotalScore state8 `shouldBe` (227, 197)
-      getGameOver state8 `shouldBe` True
+                              case state7 of
+                                Right state7 -> do
+                                  state8 <- playHappyPathRound state7
+                                  getTotalScore <$> state8 `shouldBe` (Right (227, 197))
+                                  getGameOver <$> state8 `shouldBe` Right True
 
     it "disallows any actions if the game is over" $ property prop_game_over
 
-    it "passing cards because you have too many trump" $ do
+    it "can pass cards if you have too many trump" $ do
       let hand1 = map (FaceCard Hearts) (drop 1 faces)
       let hand2 = map (FaceCard Diamonds) (drop 1 faces)
       let hand3 = map (FaceCard Spades) (drop 1 faces)
@@ -565,6 +594,7 @@ spec = do
       let state' =
             (playGame actions)
               { kitty = kitty,
+                kitties = Map.empty, -- ignoring actual hand kitties for simplicity
                 hands = Map.fromList [(PlayerOne, hand1), (PlayerTwo, hand2), (PlayerThree, hand3), (PlayerFour, hand4)]
               }
       let state = reducer state' (PlayerFour, PickTrump Clubs)
@@ -609,6 +639,7 @@ playHappyPathRound initialState = do
   let theDealer = dealer initialState
   let actions = [(enumNext theDealer, BidPass), ((enumNext . enumNext) theDealer, BidPass), ((enumNext . enumNext . enumNext) theDealer, BidPass), (theDealer, PickTrump Hearts)]
   let state = playGameFrom initialState actions
+  trump state `shouldBe` Just Hearts
   getBiddingComplete state `shouldBe` True
   getCurrentPlayer state `shouldBe` theDealer
 
@@ -621,41 +652,54 @@ playHappyPathRound initialState = do
   getKitty state `shouldBe` []
 
   let stateDiscarded = playAllDiscards state
-  getAllPlayersDiscarded stateDiscarded `shouldBe` True
+  case stateDiscarded of
+    Right stateDiscarded -> do
+      getTrump stateDiscarded `shouldBe` Just Hearts
+      getAllPlayersDiscarded stateDiscarded `shouldBe` True
 
-  -- we've each got 6 cards after discarding
-  length (getHand PlayerOne stateDiscarded) `shouldBe` 6
-  length (getHand PlayerTwo stateDiscarded) `shouldBe` 6
-  length (getHand PlayerThree stateDiscarded) `shouldBe` 6
-  length (getHand PlayerFour stateDiscarded) `shouldBe` 6
+      -- we've each got 6 cards after discarding
+      length (getHand PlayerOne stateDiscarded) `shouldBe` 6
+      length (getHand PlayerTwo stateDiscarded) `shouldBe` 6
+      length (getHand PlayerThree stateDiscarded) `shouldBe` 6
+      length (getHand PlayerFour stateDiscarded) `shouldBe` 6
 
-  -- sidebar here...
-  let state4 = playTrickRound stateDiscarded
-  -- after one round of plays, each player should have one less card in their hands
-  length (getHand PlayerOne state4) `shouldBe` 5
-  length (getHand PlayerTwo state4) `shouldBe` 5
-  length (getHand PlayerThree state4) `shouldBe` 5
-  length (getHand PlayerFour state4) `shouldBe` 5
-  let expectedTrick =
-        Map.fromList
-          [ (PlayerOne, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerOne stateDiscarded)
-          , (PlayerTwo, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerTwo stateDiscarded)
-          , (PlayerThree, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerThree stateDiscarded)
-          , (PlayerFour, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerFour stateDiscarded)
-          ]
-  getTricks state4 `shouldBe` [expectedTrick]
+      -- sidebar here...
+      let state4 = playTrickRound stateDiscarded
+      -- after one round of plays, each player should have one less card in their hands
+      (length . (getHand PlayerOne)) <$> state4 `shouldBe` Right 5
+      (length . (getHand PlayerTwo)) <$> state4 `shouldBe` Right 5
+      (length . (getHand PlayerThree)) <$> state4 `shouldBe` Right 5
+      (length . (getHand PlayerFour)) <$> state4 `shouldBe` Right 5
+      let expectedTrick =
+            Map.fromList
+              [ (PlayerOne, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerOne stateDiscarded)
+              , (PlayerTwo, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerTwo stateDiscarded)
+              , (PlayerThree, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerThree stateDiscarded)
+              , (PlayerFour, getNextCardToPlay (trump stateDiscarded) $ getHand PlayerFour stateDiscarded)
+              ]
+      getTricks <$> state4 `shouldBe` Right [expectedTrick]
 
   -- ok let's start from zero and play all the tricks
-  let state5 = playAllTricks stateDiscarded
+  getTrump <$> stateDiscarded `shouldBe` Right (Just Hearts)
+  stateDiscarded `shouldSatisfy` isRight
+  putStrLn $ "stateDiscarded = " <> show stateDiscarded
+  let state5 = case stateDiscarded of
+                 Right s -> playAllTricks s
+                 Left e -> Left e
+  state5 `shouldSatisfy` isRight
+  putStrLn $ "state5 = " <> show state5
 
-  let scores = snd <$> getLastRound state5
+  let scores = case state5 of
+                 Right s -> snd <$> getLastRound s
+                 Left e -> Nothing
+  putStrLn $ "scores = " <> show scores
   let totalScore = foldl (+) 0 <$> Map.elems <$> scores
   totalScore `shouldBe` Just 63
 
   -- assert round was reset and ready for next
-  getDealer state5 `shouldBe` enumNext (dealer initialState)
-  getCurrentPlayer state5 `shouldBe` enumNext (enumNext (dealer initialState))
-  getCardInPlay PlayerOne state5 `shouldBe` Nothing
+  getDealer <$> state5 `shouldBe` Right (enumNext (dealer initialState))
+  getCurrentPlayer <$> state5 `shouldBe` Right (enumNext (enumNext (dealer initialState)))
+  getCardInPlay PlayerOne <$> state5 `shouldBe` Right Nothing
 
   return state5
 
@@ -666,33 +710,49 @@ getNextCardToPlay maybeTrump hand = Prelude.head $ trumpCards ++ notTrumpCards
     trumpCards = filter (isTrumpMaybe maybeTrump) hand
     notTrumpCards = filter (not . (isTrumpMaybe maybeTrump)) hand
 
-playTurn :: GameState -> GameState
-playTurn state = reducer state (player, Play card)
+playTurn :: GameState -> Either String GameState
+playTurn state =
+  case (trump state, trump <$> state') of
+    (Just _, Right Nothing) -> state' -- Left $ "Lost trump playing " <> show (player, card) <> " on state " <> show state <> ". Result state was " <> show state' <> ". hand = " <> show hand
+    _ -> state'
   where
     player = getCurrentPlayer state
     hand = getHand player state
     card = getNextCardToPlay (trump state) hand
+    state' = reducerSafe state (player, Play card)
 
 -- play a one trick round
-playTrickRound :: GameState -> GameState
-playTrickRound state = foldl (\s _ -> playTurn s) state [0 .. 3]
+playTrickRound :: GameState -> Either String GameState
+playTrickRound state = foldl r (Right state) [0 .. 3]
+  where
+    r :: Either String GameState -> a -> Either String GameState
+    r (Left e) _ = Left e
+    r (Right s) _ = playTurn s
 
-playAllTricks :: GameState -> GameState
-playAllTricks state = foldl (\s _ -> playTrickRound s) state [0 .. 11]
+playAllTricks :: GameState -> Either String GameState
+playAllTricks initialState = foldl r (Right initialState) [0 .. 5]
+  where
+    r :: Either String GameState -> a -> Either String GameState
+    r (Left e) _ = Left e
+    r (Right s) _ = playTrickRound s
 
 -- TODO: prefer to discard higher faced off trump
-playDiscard :: GameState -> Player -> GameState
+playDiscard :: GameState -> Player -> Either String GameState
 playDiscard state player =
   case getTrump state of
-    Nothing -> state -- no trump wtf are we doing?
+    Nothing -> Left "Trying to simulate a discard turn, but no trump is selected!"
     Just t ->
-      reducer state (player, GameAction.Discard discardedCards)
+      reducerSafe state (player, GameAction.Discard discardedCards)
       where
         -- TODO: there's a bug here i think if you don't have enough non trump cards need to pass
         discardedCards = take (length hand - 6) nonTrumpCards
         nonTrumpCards = filter (not . isTrump t) hand
         hand = getHand player state
 
-playAllDiscards :: GameState -> GameState
+playAllDiscards :: GameState -> Either String GameState
 playAllDiscards state =
-  foldl playDiscard state players
+  foldl r (Right state) players
+  where
+    r :: Either String GameState -> Player -> Either String GameState
+    r (Left e) _ = Left e
+    r (Right s) p = playDiscard s p
