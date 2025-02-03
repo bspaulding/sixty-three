@@ -41,9 +41,9 @@ async function signInOnNewPage(context, name, roomId) {
 
   await pages[0].click("#start-game");
 
-  // todo: would like to let every player say they are done, but error case would stall forever, so early exiting
   let playersDone = 0;
-  while (playersDone === 0) {
+  while (playersDone < 4) {
+    playersDone = 0;
     for (let i = 0; i < pages.length; i += 1) {
       let isDone = await nextMove(pages[i], pageNames[i]);
       playersDone += isDone ? 1 : 0;
