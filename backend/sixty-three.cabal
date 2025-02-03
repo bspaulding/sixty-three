@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e0e278eb67baafaf8b234325129c6bd8c374589e064c50d41a48e62201933064
+-- hash: 943e4e1e6d7314eb888083eb4404a6760c01034e931f7056463facde42c6f493
 
 name:           sixty-three
 version:        0.1.0.0
@@ -48,13 +48,13 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
-    , base >=4.11 && <10
+    , base >=4.17 && <10
     , bytestring
     , containers
     , http-types
-    , random >=1.2.0
+    , random
     , rio >=0.1.12.0
-    , splitmix >=0.1.0.3
+    , splitmix >=0.1.1
     , text
     , uuid
     , wai
@@ -73,15 +73,15 @@ executable sixty-three-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
-    , base >=4.11 && <10
+    , base >=4.17 && <10
     , bytestring
     , containers
     , http-types
     , optparse-simple
-    , random >=1.2.0
+    , random
     , rio >=0.1.12.0
     , sixty-three
-    , splitmix >=0.1.0.3
+    , splitmix >=0.1.1
     , text
     , uuid
     , wai
@@ -107,15 +107,15 @@ test-suite sixty-three-test
   build-depends:
       QuickCheck
     , aeson
-    , base >=4.11 && <10
+    , base >=4.17 && <10
     , bytestring
     , containers
     , hspec
     , http-types
-    , random >=1.2.0
+    , random
     , rio >=0.1.12.0
     , sixty-three
-    , splitmix >=0.1.0.3
+    , splitmix >=0.1.1
     , text
     , uuid
     , wai

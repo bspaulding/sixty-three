@@ -17,8 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/20.yaml
+resolver: lts-23.7
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -39,10 +38,8 @@ packages:
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
-#
 extra-deps:
-- random-1.2.0
-- splitmix-0.1.0.3
+- random-1.2.1.3@sha256:117541ba0a177397a3333f94870f789ef050dca31b0688a19824b2bc401b8823,6237
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
