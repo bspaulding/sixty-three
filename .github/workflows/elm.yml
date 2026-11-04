@@ -12,14 +12,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-    - name: Cache
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - name: Cache Elm packages
       uses: actions/cache@v4
       with:
-        path: frontend/node_modules
-        key: create-elm-app-2
-    - name: Install create-elm-app
+        path: ~/.elm
+        key: elm-${{ hashFiles('frontend/elm.json') }}
+    - name: Install dependencies
       run: cd frontend && npm ci
     - name: Run tests
-      run: cd frontend && npm run elm-app -- test
+      run: cd frontend && npm test
+    - name: Build
+      run: cd frontend && npm run build
