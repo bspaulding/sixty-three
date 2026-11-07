@@ -6,7 +6,7 @@ RUN mkdir -p ~/.stack
 RUN cd /opt/build && stack install --system-ghc
 
 # Build frontend
-FROM node:16 as build-elm
+FROM node:22 as build-elm
 WORKDIR /app
 COPY frontend/package.json package.json
 COPY frontend/package-lock.json package-lock.json
@@ -14,7 +14,9 @@ RUN npm ci
 COPY frontend/src src
 COPY frontend/public public
 COPY frontend/elm.json elm.json
-RUN npm run elm-app -- build
+COPY frontend/index.html index.html
+COPY frontend/vite.config.js vite.config.js
+RUN npm run build
 
 # Runner
 FROM ubuntu:18.04

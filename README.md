@@ -12,6 +12,6 @@ Development
 
 The backend is written in Haskell, using Stack for dependency management. You'll want to install [ghcup](haskell.org/ghcup), and then `stack build` in the `backend` directory.
 
-The frontend is written in [Elm](elm-lang.org). You will need [nodejs](nodejs.org) installed and should `npm ci && npm run elm-app start` in the `frontend` directory.
+The frontend is written in [Elm](elm-lang.org). You will need [nodejs](nodejs.org) installed and should `npm ci && npm start` (Vite dev server on port 3001; it connects to the backend on port 3000) in the `frontend` directory.
 
 There are also some acceptance tests written using JavaScript in the `browser_automation` directory. `npm ci && node index.js` in there to run those.
